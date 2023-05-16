@@ -7,6 +7,7 @@ readme = "README.md"
 
 [tool.poetry.dependencies]
 python = "^3.10"
+h3 = "^3.7.6"
 
 
 [tool.poetry_bumpversion.file."worldex/__init__.py"]
