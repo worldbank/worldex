@@ -67,10 +67,7 @@ export default {
         },
         fillH3() {
             const map = this.$refs.map.leafletObject;
-            if (this.h3Ovelay !== null) {
-                this.h3Ovelay.removeFrom(this.$refs.map.leafletObject);
-                this.h3Ovelay = null;
-            }
+
             const bounds = map.getBounds();
             const boundsGeoJSON = {
                 type: 'Feature',
@@ -103,17 +100,29 @@ export default {
                         fillOpacity: 0.01
                     };
                 }
-            })
-
-            this.h3Ovelay.on("remove", () => {
+            }).on("remove", () => {
                 console.log("remove");
-                // this.fillH3();
+                // wait for 200ms to remove the layer
+                setTimeout(() => {
+                    this.h3Ovelay = null;
+                    this.fillH3();
+                }, 500);
             });
 
             this.h3Ovelay.addTo(map);
         },
+        createH3Overlay() {
+            const map = this.$refs.map.leafletObject;
+
+            if (this.h3Ovelay !== null) {
+                // The overlay will be recreated when the layer is removed.
+                map.removeLayer(this.h3Ovelay)
+            } else {
+                this.fillH3();
+            }
+        },
         handleMapMoveEnd() {
-            this.fillH3();
+            this.createH3Overlay();
         },
         getH3Resolution() {
             const map = this.$refs.map.leafletObject;
@@ -187,9 +196,12 @@ export default {
             handler: function (search) {
                 this.clearOverlays();
 
+
                 const url = this.$config.buildSearchUrl(this.$route.query.search);
                 //  `https://nominatim.openstreetmap.org/search.php?q=${q}&format=jsonv2&polygon_geojson=1`
                 this.$http.get(url).then((res) => {
+                    const map = this.$refs.map.leafletObject;
+
                     this.data = res.data
 
                     if (this.data.length === 0) {
@@ -208,16 +220,12 @@ export default {
                     this.fitMapToBounds(focus.boundingbox)
 
 
-                    if (this.overlay !== null) {
-                        this.overlay.removeFrom(this.$refs.map.leafletObject)
-                    }
+                    this.overlay = L.geoJSON(focus.geojson).addTo(map);
 
-                    this.overlay = L.geoJSON(focus.geojson).addTo(this.$refs.map.leafletObject);
-
-                    this.fillH3();
+                    this.createH3Overlay();
 
                     if (!this.registered) {
-                        this.$refs.map.leafletObject.on('moveend', this.handleMapMoveEnd);
+                        map.on('moveend', this.handleMapMoveEnd);
                         this.registered = true;
                     }
 
