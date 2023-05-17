@@ -40,8 +40,10 @@ export default {
             data: null,
             center: [0, 0],
             overlay: null,
+            h3Ovelay: null,
             hexagonsGeoJSON: null,
             map: null,
+            registered: false,
         };
     },
     methods: {
@@ -58,8 +60,8 @@ export default {
         },
         fillH3() {
             const map = this.$refs.map.leafletObject;
-            if (this.hexagonsGeoJSON !== null) {
-                this.hexagonsGeoJSON.removeFrom(map);
+            if (this.h3Ovelay !== null) {
+                this.h3Ovelay.removeFrom(map);
             }
             // polygonToCells
 
@@ -95,7 +97,7 @@ export default {
             };
 
             // // Create a Leaflet GeoJSON layer and add it to the map
-            L.geoJSON(this.hexagonsGeoJSON, {
+            this.h3Ovelay = L.geoJSON(this.hexagonsGeoJSON, {
                 style: function (feature) {
                     return {
                         fillColor: 'green',
@@ -143,6 +145,11 @@ export default {
                     this.overlay = L.geoJSON(focus.geojson).addTo(this.$refs.map.leafletObject);
 
                     this.fillH3();
+
+                    if (!this.registered) {
+                        this.$refs.map.leafletObject.on('moveend', this.handleMapMoveEnd);
+                        this.registered = true;
+                    }
 
                     // this.$refs.map.leafletObject.fitBounds(this.data[0].boundingbox.map((x) => parseFloat(x))
                     // this.$refs.map.leafletObject.setView([lat, lon], 5);
