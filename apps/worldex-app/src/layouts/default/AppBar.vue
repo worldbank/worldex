@@ -27,7 +27,13 @@ export default {
     setSearch() {
       this.$router.push({ name: '', query: { search: this.search } })
     }
-
+  },
+  watch: {
+    '$route.query.search': {
+      handler: function (search) {
+        this.search = search
+      }
+    }
   }
 }
 </script>

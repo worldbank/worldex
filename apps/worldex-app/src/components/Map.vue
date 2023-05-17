@@ -1,5 +1,5 @@
 <template>
-    <div style="height: 100%; width: 100vw;">
+    <div id="map-container">
         <l-map ref="map" :zoom="zoom" :center="center" :use-global-leaflet="false">
             <l-tile-layer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" layer-type="base"
                 name="OpenStreetMap"></l-tile-layer>
@@ -9,7 +9,7 @@
 
 <script>
 import "leaflet/dist/leaflet.css";
-// import L from "leaflet";
+import L from "leaflet";
 import { LMap, LTileLayer } from "@vue-leaflet/vue-leaflet";
 
 export default {
@@ -25,6 +25,7 @@ export default {
             zoom: 2,
             data: null,
             center: [0, 0],
+            overlay: null,
         };
     },
     methods: {
@@ -45,7 +46,7 @@ export default {
         '$route.query.search': {
             handler: function (search) {
                 const q = this.$route.query.search
-                const url = `https://nominatim.openstreetmap.org/search.php?q=${q}&format=jsonv2`
+                const url = `https://nominatim.openstreetmap.org/search.php?q=${q}&format=jsonv2&polygon_geojson=1`
                 this.$http.get(url).then((res) => {
                     this.data = res.data
 
@@ -53,14 +54,23 @@ export default {
                         return
                     }
 
+                    const focus = this.data[0]
+
                     // Data in string, so convert string to float
-                    const lat = parseFloat(this.data[0].lat)
-                    const lon = parseFloat(this.data[0].lon)
+                    const lat = parseFloat(focus.lat)
+                    const lon = parseFloat(focus.lon)
 
                     this.center = [lat, lon]
                     // this.zoom = this.data[0].place_rank
 
-                    this.fitMapToBounds(this.data[0].boundingbox)
+                    this.fitMapToBounds(focus.boundingbox)
+
+
+                    if (this.overlay !== null) {
+                        this.overlay.removeFrom(this.$refs.map.leafletObject)
+                    }
+
+                    this.overlay = L.geoJSON(focus.geojson).addTo(this.$refs.map.leafletObject);
 
                     // this.$refs.map.leafletObject.fitBounds(this.data[0].boundingbox.map((x) => parseFloat(x))
                     // this.$refs.map.leafletObject.setView([lat, lon], 5);
@@ -75,6 +85,11 @@ export default {
 };
 </script>
 
-<style></style>
+<style>
+#map-container {
+    height: 100%;
+    width: 100vw;
+}
+</style>
 
 <!--  -->
