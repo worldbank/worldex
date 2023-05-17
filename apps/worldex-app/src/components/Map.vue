@@ -64,11 +64,9 @@ export default {
             const map = this.$refs.map.leafletObject;
             if (this.h3Ovelay !== null) {
                 this.h3Ovelay.removeFrom(this.$refs.map.leafletObject);
+                this.h3Ovelay = null;
             }
-            // polygonToCells
-
             const bounds = map.getBounds();
-
             const boundsGeoJSON = {
                 type: 'Feature',
                 geometry: {
@@ -82,45 +80,12 @@ export default {
                     ]]
                 }
             };
-            const hexagons = geojson2h3.featureToH3Set(boundsGeoJSON, 5);
-
-
-            // const boundsPoly = [[
-            //     [bounds.getSouth(), bounds.getWest()],
-            //     [bounds.getNorth(), bounds.getWest()],
-            //     [bounds.getNorth(), bounds.getEast()],
-            //     [bounds.getSouth(), bounds.getEast()],
-            //     [bounds.getSouth(), bounds.getWest()]
-            // ]]
-            // console.log(boundsPoly);
-
-            // const hexagons = polygonToCells(boundsPoly, 5);
-
-
-
-
-
-
-
-            // const hexagons = polyfill(bounds, 5);
-
-
+            const hexagons = geojson2h3.featureToH3Set(boundsGeoJSON, this.getH3Resolution());
             console.log(hexagons);
 
             // Convert H3 hexagons to GeoJSON format
-            // this.hexagonsGeoJSON = {
-            //     type: 'FeatureCollection',
-            //     features: hexagons.map(h3Index => ({
-            //         type: 'Feature',
-            //         properties: {},
-            //         geometry: {
-            //             type: 'Polygon',
-            //             coordinates: [cellToBoundary(h3Index, true)]
-            //         }
-            //     }))
-            // };
-
             this.hexagonsGeoJSON = geojson2h3.h3SetToMultiPolygonFeature(hexagons, true);
+            // this.hexagonsGeoJSON = geojson2h3.h3SetToFeatureCollection(hexagons);  // This creates problems when removing the layer.
 
             // // Create a Leaflet GeoJSON layer and add it to the map
             this.h3Ovelay = L.geoJSON(this.hexagonsGeoJSON, {
@@ -144,6 +109,46 @@ export default {
         },
         handleMapMoveEnd() {
             this.fillH3();
+        },
+        getH3Resolution() {
+            const map = this.$refs.map.leafletObject;
+
+            // return this.calculateResolution(map.getBounds());
+
+            // const areaInSquareMeters = this.bound2GeoJSON(map).properties.area;
+            return this.$compute.calculateResolution(map.getBounds());
+        },
+        bound2GeoJSON(map) {
+            const bounds = map.getBounds();
+
+            const boundsGeoJSON = {
+                type: 'Polygon',
+                coordinates: [[
+                    [bounds.getWest(), bounds.getSouth()],
+                    [bounds.getWest(), bounds.getNorth()],
+                    [bounds.getEast(), bounds.getNorth()],
+                    [bounds.getEast(), bounds.getSouth()],
+                    [bounds.getWest(), bounds.getSouth()]
+                ]]
+            };
+            return boundsGeoJSON
+        },
+        calculateResolution(bounds) {
+            const area = this.calculateArea(bounds);
+            // Define your resolution-to-area mapping based on your requirements
+            const resolutionMap = [
+                { resolution: 1, areaThreshold: 100000000 },
+                { resolution: 2, areaThreshold: 50000000 },
+                { resolution: 3, areaThreshold: 10000000 },
+                // Add more resolution levels and area thresholds as needed
+            ];
+
+            // Find the highest resolution level where the bounding area is below the threshold
+            const selectedResolution = resolutionMap.find(
+                level => area < level.areaThreshold
+            );
+
+            return selectedResolution ? selectedResolution.resolution : 0;
         },
     },
     watch: {
@@ -177,12 +182,12 @@ export default {
 
                     this.overlay = L.geoJSON(focus.geojson).addTo(this.$refs.map.leafletObject);
 
-                    // this.fillH3();
+                    this.fillH3();
 
-                    // if (!this.registered) {
-                    //     this.$refs.map.leafletObject.on('moveend', this.handleMapMoveEnd);
-                    //     this.registered = true;
-                    // }
+                    if (!this.registered) {
+                        this.$refs.map.leafletObject.on('moveend', this.handleMapMoveEnd);
+                        this.registered = true;
+                    }
 
                     // this.$refs.map.leafletObject.fitBounds(this.data[0].boundingbox.map((x) => parseFloat(x))
                     // this.$refs.map.leafletObject.setView([lat, lon], 5);

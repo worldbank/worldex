@@ -18,6 +18,7 @@ import { registerPlugins } from '@/plugins'
 
 // Libraries
 import config from './config'
+import compute from './compute'
 
 // Styles
 // import 'leaflet/dist/leaflet.css';
@@ -32,5 +33,6 @@ app.config.globalProperties.$window = window
 
 // Register custom config
 app.config.globalProperties.$config = config
+app.config.globalProperties.$compute = compute
 
 app.mount('#app')

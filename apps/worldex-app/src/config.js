@@ -22,6 +22,7 @@ export default {
             cartodbVoyagerLabelsUnderMap: "https://cartodb-basemaps-{s}.global.ssl.fastly.net/rastertiles/voyager_nolabels/{z}/{x}/{y}.png",
             cartodbVoyagerLabelsOnlyMap: "https://cartodb-basemaps-{s}.global.ssl.fastly.net/rastertiles/voyager_only_labels/{z}/{x}/{y}.png",
             cartodbVoyagerNoLabelsMap: "https://cartodb-basemaps-{s}.global.ssl.fastly.net/rastertiles/voyager_nolabels_under/{z}/{x}/{y}.png",
+            mapboxStreetsMap: "https://api.mapbox.com/styles/v1/mapbox/streets-v11/tiles/{z}/{x}/{y}?access_token={accessToken}",
         },
     },
     buildSearchUrl(query) {
