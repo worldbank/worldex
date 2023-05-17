@@ -129,7 +129,8 @@ export default {
             console.log("turf.area", areaSqKM);
 
             // const areaInSquareMeters = this.bound2GeoJSON(map).properties.area;
-            return this.$compute.calculateResolution(map.getBounds());
+            // return this.$compute.calculateResolution(map.getBounds());
+            return this.$compute.calculateResolution(areaSqKM);
         },
         bound2GeoJSON(map) {
             const bounds = map.getBounds();

@@ -19,6 +19,7 @@ import { registerPlugins } from '@/plugins'
 // Libraries
 import config from './config'
 import compute from './compute'
+import h3const from './h3const'
 
 // Styles
 // import 'leaflet/dist/leaflet.css';
@@ -34,5 +35,6 @@ app.config.globalProperties.$window = window
 // Register custom config
 app.config.globalProperties.$config = config
 app.config.globalProperties.$compute = compute
+app.config.globalProperties.$h3const = h3const
 
 app.mount('#app')
