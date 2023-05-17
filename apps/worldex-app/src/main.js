@@ -20,7 +20,7 @@ import { registerPlugins } from '@/plugins'
 import config from './config'
 
 // Styles
-import 'leaflet/dist/leaflet.css';
+// import 'leaflet/dist/leaflet.css';
 
 const app = createApp(App)
 
