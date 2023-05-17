@@ -10,7 +10,12 @@
 
 <script>
 import "leaflet/dist/leaflet.css";
+import 'leaflet-draw/dist/leaflet.draw.css';
+import * as turf from '@turf/turf'
+
 import L from "leaflet";
+import 'leaflet-geometryutil';
+import 'leaflet-draw';
 import geojson2h3 from 'geojson2h3';
 
 import { polygonToCells, cellToBoundary } from 'h3-js';
@@ -114,6 +119,14 @@ export default {
             const map = this.$refs.map.leafletObject;
 
             // return this.calculateResolution(map.getBounds());
+            const geoJSON = this.bound2GeoJSON(map)
+            console.log("geoJSON", geoJSON.coordinates);
+
+
+            var area = L.GeometryUtil.geodesicArea(L.polygon(geoJSON.coordinates).getLatLngs()[0]);
+            var areaSqKM = turf.area(turf.polygon(geoJSON.coordinates)) / 1000000; // Convert to square kilometers;
+            console.log("geodesicArea", area);
+            console.log("turf.area", areaSqKM);
 
             // const areaInSquareMeters = this.bound2GeoJSON(map).properties.area;
             return this.$compute.calculateResolution(map.getBounds());
