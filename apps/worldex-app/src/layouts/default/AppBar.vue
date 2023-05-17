@@ -7,15 +7,28 @@
         </v-col>
         <v-col md="10">
           <v-text-field class="main-search" v-model="search" append-inner-icon="mdi-magnify" label="Search" single-line
-            hide-details></v-text-field>
+            @keydown.enter="setSearch" @click:appendInner="setSearch" hide-details></v-text-field>
         </v-col>
       </v-row>
     </v-app-bar-title>
   </v-app-bar>
 </template>
 
-<script setup>
-  //
+<script>
+//
+export default {
+  data() {
+    return {
+      search: '',
+    }
+  },
+  methods: {
+    setSearch() {
+      this.$router.push({ name: '', query: { search: this.search } })
+    }
+
+  }
+}
 </script>
 
 <style>
