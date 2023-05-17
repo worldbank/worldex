@@ -45,8 +45,8 @@ export default {
 
         '$route.query.search': {
             handler: function (search) {
-                const q = this.$route.query.search
-                const url = `https://nominatim.openstreetmap.org/search.php?q=${q}&format=jsonv2&polygon_geojson=1`
+                const url = this.$config.buildSearchUrl(this.$route.query.search);
+                //  `https://nominatim.openstreetmap.org/search.php?q=${q}&format=jsonv2&polygon_geojson=1`
                 this.$http.get(url).then((res) => {
                     this.data = res.data
 
