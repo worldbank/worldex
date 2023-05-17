@@ -4,17 +4,31 @@
             <l-tile-layer :url="this.$config.nominatim.styles.cartodbBaseMap" layer-type="base"
                 name="OpenStreetMap"></l-tile-layer>
         </l-map>
+        <!-- <div id="map"></div> -->
     </div>
 </template>
 
 <script>
 import "leaflet/dist/leaflet.css";
 import L from "leaflet";
+import { polygonToCells, cellToBoundary } from 'h3-js';
 import { LMap, LTileLayer } from "@vue-leaflet/vue-leaflet";
 
 export default {
     mounted() {
         window.map = this;
+
+        // this.map = L.map('map').setView(this.center, this.zoom);
+        // L.tileLayer(this.$config.nominatim.styles.cartodbBaseMap, {
+        //     attribution: 'Map data &copy; <a href="https://www.openstreetmap.org/">OpenStreetMap</a> contributors',
+        //     maxZoom: 18,
+        // }).addTo(this.map);
+
+        // this.$refs.map.leafletObject.on('load', () => {
+        //     this.fillH3();
+        //     this.$refs.map.leafletObject.on('moveend', this.handleMapMoveEnd);
+        // });
+
     },
     components: {
         LMap,
@@ -26,6 +40,8 @@ export default {
             data: null,
             center: [0, 0],
             overlay: null,
+            hexagonsGeoJSON: null,
+            map: null,
         };
     },
     methods: {
@@ -39,7 +55,61 @@ export default {
                 [parseFloat(boundingBox[1]), parseFloat(boundingBox[3])],
             ]
             );
-        }
+        },
+        fillH3() {
+            const map = this.$refs.map.leafletObject;
+            if (this.hexagonsGeoJSON !== null) {
+                this.hexagonsGeoJSON.removeFrom(map);
+            }
+            // polygonToCells
+
+            const bounds = map.getBounds();
+            const boundsPoly = [[
+                [bounds.getSouth(), bounds.getWest()],
+                [bounds.getNorth(), bounds.getWest()],
+                [bounds.getNorth(), bounds.getEast()],
+                [bounds.getSouth(), bounds.getEast()],
+                [bounds.getSouth(), bounds.getWest()]
+            ]]
+            console.log(boundsPoly);
+
+            const hexagons = polygonToCells(boundsPoly, 5);
+
+
+            // const hexagons = polyfill(bounds, 5);
+
+
+            console.log(hexagons);
+
+            // Convert H3 hexagons to GeoJSON format
+            this.hexagonsGeoJSON = {
+                type: 'FeatureCollection',
+                features: hexagons.map(h3Index => ({
+                    type: 'Feature',
+                    properties: {},
+                    geometry: {
+                        type: 'Polygon',
+                        coordinates: [cellToBoundary(h3Index, true)]
+                    }
+                }))
+            };
+
+            // // Create a Leaflet GeoJSON layer and add it to the map
+            L.geoJSON(this.hexagonsGeoJSON, {
+                style: function (feature) {
+                    return {
+                        fillColor: 'green',
+                        weight: 2,
+                        opacity: 0.5,
+                        color: 'white',
+                        fillOpacity: 0.1
+                    };
+                }
+            }).addTo(map);
+        },
+        handleMapMoveEnd() {
+            this.fillH3();
+        },
     },
     watch: {
 
@@ -71,6 +141,8 @@ export default {
                     }
 
                     this.overlay = L.geoJSON(focus.geojson).addTo(this.$refs.map.leafletObject);
+
+                    this.fillH3();
 
                     // this.$refs.map.leafletObject.fitBounds(this.data[0].boundingbox.map((x) => parseFloat(x))
                     // this.$refs.map.leafletObject.setView([lat, lon], 5);
