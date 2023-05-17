@@ -1,7 +1,7 @@
 <template>
     <div id="map-container">
         <l-map ref="map" :zoom="zoom" :center="center" :use-global-leaflet="false">
-            <l-tile-layer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" layer-type="base"
+            <l-tile-layer :url="this.$config.nominatim.styles.cartodbBaseMap" layer-type="base"
                 name="OpenStreetMap"></l-tile-layer>
         </l-map>
     </div>
