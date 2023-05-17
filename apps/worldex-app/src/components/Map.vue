@@ -100,7 +100,7 @@ export default {
                         weight: 2,
                         opacity: 0.5,
                         color: 'white',
-                        fillOpacity: 0.1
+                        fillOpacity: 0.01
                     };
                 }
             })
@@ -164,11 +164,29 @@ export default {
 
             return selectedResolution ? selectedResolution.resolution : 0;
         },
+        clearOverlays() {
+            if (this.$refs.map === undefined) {
+                return;
+            }
+
+            const map = this.$refs.map.leafletObject;
+            if (this.overlay !== null) {
+                map.removeLayer(this.overlay);
+                this.overlay = null;
+            }
+            if (this.h3Ovelay !== null) {
+                map.removeLayer(this.h3Ovelay);
+                this.h3Ovelay = null;
+            }
+
+        },
     },
     watch: {
 
         '$route.query.search': {
             handler: function (search) {
+                this.clearOverlays();
+
                 const url = this.$config.buildSearchUrl(this.$route.query.search);
                 //  `https://nominatim.openstreetmap.org/search.php?q=${q}&format=jsonv2&polygon_geojson=1`
                 this.$http.get(url).then((res) => {
