@@ -6,3 +6,6 @@ RUN apt-get update && \
     pip install cmake pgxnclient
 
 RUN pgxn install h3
+
+RUN mkdir -p /docker-entrypoint-initdb.d
+COPY ./initdb-extensions.sh /docker-entrypoint-initdb.d/extensions.sh
