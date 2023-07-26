@@ -1,0 +1,9 @@
+services:
+  db:
+    image: postgis/postgis:15-3.3
+    volumes:
+      - ./data/db:/var/lib/postresql/data
+    environment:
+      - POSTGRES_DB=postgres
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
