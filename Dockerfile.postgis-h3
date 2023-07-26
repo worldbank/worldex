@@ -1,8 +1,0 @@
-FROM postgis/postgis:15-3.3
-
-RUN apt-get update && \
-    apt-get install -y software-properties-common gcc make python-dev python3-pip \
-    libpq-dev postgresql-server-dev-15 && \
-    pip install cmake pgxnclient
-
-RUN pgxn install h3
