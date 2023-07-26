@@ -1,6 +1,6 @@
 services:
   db:
-    image: postgis/postgis:15-3.3
+    image: postgis-h3:0.1
     volumes:
       - ./data/db:/var/lib/postresql/data
     environment:
