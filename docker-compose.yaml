@@ -1,6 +1,16 @@
 services:
+  api:
+    build:
+      context: ./api
+    command: poetry run uvicorn main:app --reload --host 0.0.0.0 --port 8000
+    container_name: api
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./api:/code
   db:
-    image: postgis-h3:0.1
+    build: ./postgis-h3
+    container_name: db
     volumes:
       - ./data/db:/var/lib/postresql/data
     environment:
