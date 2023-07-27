@@ -14,6 +14,6 @@ services:
     volumes:
       - ./data/db:/var/lib/postresql/data
     environment:
-      - POSTGRES_DB=postgres
+      - POSTGRES_DB=worldex
       - POSTGRES_USER=postgres
       - POSTGRES_PASSWORD=postgres
