@@ -1,6 +1,7 @@
 import uvicorn
 from fastapi import Depends, FastAPI
 from databases import Database
+from services import get_h3_resolution
 
 app = FastAPI()
 database = Database("postgresql+asyncpg://worldex:postgres@db/worldex")
@@ -22,7 +23,10 @@ async def root():
 
 @app.get("/h3_tiles/")
 async def get_h3_tiles(z: int, x: int, y: int):
-    results = await database.fetch_all(f"SELECT h3_polygon_to_cells(ST_Transform(ST_TileEnvelope({z}, {x}, {y}), 4326), 5)")
+    h3_resolution = get_h3_resolution(z)
+    results = await database.fetch_all(f"""
+        SELECT h3_polygon_to_cells(ST_Transform(ST_TileEnvelope({z}, {x}, {y}), 4326), {h3_resolution});
+    """)
     return {result[0] for result in results}
 
 if __name__ == "__main__":
