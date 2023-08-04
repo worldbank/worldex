@@ -26,4 +26,5 @@ ZOOM_TO_H3_RESOLUTION = {
 H3_RESOLUTION_TO_ZOOM = { v: k for k, v in ZOOM_TO_H3_RESOLUTION.items() }
 
 def get_h3_resolution(zoom: int) -> int:
-    return ZOOM_TO_H3_RESOLUTION.get(zoom, math.floor((zoom - 1) * 0.7))
+    zoom = math.floor(zoom)
+    return ZOOM_TO_H3_RESOLUTION.get(zoom, 1 if zoom < 5 else 15)

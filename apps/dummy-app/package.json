@@ -1,0 +1,132 @@
+{
+  "name": "dummy-app",
+  "version": "0.1.0",
+  "private": true,
+  "dependencies": {
+    "@auth0/auth0-react": "^1.12.1",
+    "@carto/react-api": "^2.2.3",
+    "@carto/react-basemaps": "^2.2.3",
+    "@carto/react-core": "^2.2.3",
+    "@carto/react-redux": "^2.2.3",
+    "@carto/react-ui": "^2.2.3",
+    "@carto/react-widgets": "^2.2.3",
+    "@carto/react-workers": "^2.2.3",
+    "@craco/craco": "^7.1.0",
+    "@deck.gl/carto": "^8.9.22",
+    "@emotion/react": "^11.11.1",
+    "@emotion/styled": "^11.11.0",
+    "@formatjs/intl-getcanonicallocales": "^1.9.2",
+    "@formatjs/intl-locale": "^2.4.47",
+    "@formatjs/intl-numberformat": "^7.4.3",
+    "@formatjs/intl-pluralrules": "^4.3.3",
+    "@mui/icons-material": "^5.14.3",
+    "@mui/material": "^5.14.3",
+    "@nebula.gl/edit-modes": "^1.0.4",
+    "@nebula.gl/layers": "^1.0.4",
+    "@reduxjs/toolkit": "^1.9.5",
+    "@turf/bbox-clip": "^6.5.0",
+    "@turf/bbox-polygon": "^6.5.0",
+    "@turf/boolean-intersects": "^6.5.0",
+    "@turf/boolean-within": "^6.5.0",
+    "@types/react": "^18.2.18",
+    "@types/react-dom": "^18.2.7",
+    "@types/react-redux": "^7.1.25",
+    "deck.gl": "^8.9.22",
+    "deepmerge": "^4.3.1",
+    "echarts": "^5.4.3",
+    "echarts-for-react": "^3.0.2",
+    "eslint-config-prettier": "^8.9.0",
+    "eslint-plugin-prettier": "^3.4.1",
+    "h3-js": "^3.7.2",
+    "history": "^5.3.0",
+    "husky": "^7.0.4",
+    "hygen": "^6.2.11",
+    "lint-staged": "^11.2.6",
+    "maplibre-gl": "^2.4.0",
+    "prettier": "^2.8.8",
+    "react": "^18.2.0",
+    "react-app-polyfill": "^3.0.0",
+    "react-dom": "^18.2.0",
+    "react-is": "^18.2.0",
+    "react-map-gl": "^7.1.3",
+    "react-redux": "^8.1.2",
+    "react-router-dom": "^6.14.2",
+    "react-scripts": "^5.0.1"
+  },
+  "scripts": {
+    "start": "craco start",
+    "build": "craco build",
+    "test": "craco test",
+    "eject": "react-scripts eject",
+    "lint": "eslint './**/*.{js,jsx}' --ignore-path .gitignore",
+    "format": "prettier --write . --ignore-path .gitignore",
+    "hygen": "hygen",
+    "updateSupportedBrowsers": "echo \"var browserRegex = $(npx browserslist-useragent-regexp --allowHigherVersions);\" > public/supportedBrowsers.js"
+  },
+  "eslintConfig": {
+    "root": true,
+    "env": {
+      "browser": true
+    },
+    "plugins": [
+      "prettier"
+    ],
+    "rules": {
+      "prettier/prettier": "warn",
+      "no-console": "warn",
+      "no-debugger": "warn"
+    },
+    "extends": [
+      "react-app",
+      "prettier"
+    ]
+  },
+  "browserslist": {
+    "production": [
+      "defaults",
+      "not ie 11"
+    ],
+    "development": [
+      "last 1 chrome version",
+      "last 1 firefox version",
+      "last 1 safari version"
+    ]
+  },
+  "overrides": {
+    "@deck.gl/core": "^8.9.19",
+    "@deck.gl/layers": "^8.9.19",
+    "@deck.gl/extensions": "^8.9.19",
+    "@deck.gl/geo-layers": "^8.9.19",
+    "@luma.gl/core": "^8.5.20"
+  },
+  "resolutions": {
+    "@deck.gl/core": "^8.9.19",
+    "@deck.gl/layers": "^8.9.19",
+    "@deck.gl/extensions": "^8.9.19",
+    "@deck.gl/geo-layers": "^8.9.19",
+    "@luma.gl/core": "^8.5.20"
+  },
+  "prettier": {
+    "printWidth": 90,
+    "arrowParens": "always",
+    "semi": true,
+    "tabWidth": 2,
+    "singleQuote": true,
+    "jsxSingleQuote": true
+  },
+  "husky": {
+    "hooks": {
+      "pre-commit": "lint-staged"
+    }
+  },
+  "lint-staged": {
+    "*.+(js|jsx)": [
+      "yarn lint --max-warnings 0",
+      "git add"
+    ],
+    "*.+(js|jsx|json|css|md)": [
+      "yarn format",
+      "git add"
+    ]
+  }
+}

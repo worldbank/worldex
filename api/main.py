@@ -39,7 +39,9 @@ async def get_h3_tiles(z: int, x: int, y: int):
     results = await database.fetch_all(f"""
         SELECT h3_polygon_to_cells(ST_Transform(ST_TileEnvelope({z}, {x}, {y}), 4326), {h3_resolution});
     """)
-    return {result[0] for result in results}
+    return [{
+        "index": result[0]
+    } for result in results]
 
 if __name__ == "__main__":
     uvicorn.run(app, port=8000, host='0.0.0.0')
