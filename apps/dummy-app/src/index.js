@@ -7,7 +7,6 @@
 import { createRoot } from 'react-dom/client';
 import { Provider } from 'react-redux';
 import { BrowserRouter } from 'react-router-dom';
-import { Auth0Provider } from '@auth0/auth0-react';
 import { createCartoSlice } from '@carto/react-redux';
 import { setDefaultCredentials } from '@deck.gl/carto';
 import App from './App';
@@ -31,28 +30,3 @@ const AppProvider = (
 const container = document.getElementById('root');
 const root = createRoot(container);
 root.render(AppProvider);
-
-// function OauthProvider({ children }) {
-//   if (!initialState.oauth) {
-//     return children;
-//   }
-//   const { domain, clientId, scopes, audience, organizationId } = initialState.oauth;
-
-//   if (!clientId) {
-//     alert('Need to define a clientId. Please check the file store/initalStateSlice.js');
-//   }
-
-//   return (
-//     <Auth0Provider
-//       domain={domain}
-//       clientId={clientId}
-//       {...(organizationId !== '' ? { organization: organizationId } : {})}
-//       redirectUri={window.location.origin}
-//       scopes={scopes.join(' ')}
-//       audience={audience}
-//       cacheLocation='localstorage'
-//     >
-//       {children}
-//     </Auth0Provider>
-//   );
-// }

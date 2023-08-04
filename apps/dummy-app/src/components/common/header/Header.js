@@ -34,7 +34,7 @@ export default function Header() {
       position='relative'
       showBurgerMenu
       onClickMenu={handleDrawerToggle}
-      brandLogo={<Logo />}
+      // brandLogo={<Logo />}
       brandText='React Demo'
     >
       <Hidden mdUp>
