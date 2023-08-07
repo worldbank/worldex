@@ -45,7 +45,7 @@ export default function Content() {
 
       <GridTitle item>
         <Typography variant='h3' color='inherit'>
-          React Demo
+          WorldEx
         </Typography>
       </GridTitle>
 

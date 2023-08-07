@@ -70,7 +70,6 @@ export default function MapContainer() {
       {hidden ? null : (
         <StyledZoomControl showCurrentZoom className='zoomControl' />
       )}
-      {!isGmaps && <StyledCartoLogoMap />}
     </GridMapWrapper>
   );
 }
