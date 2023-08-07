@@ -35,7 +35,7 @@ export default function Header() {
       showBurgerMenu
       onClickMenu={handleDrawerToggle}
       // brandLogo={<Logo />}
-      brandText='React Demo'
+      brandText='Worldex'
     >
       <Hidden mdUp>
         <DrawerMenu drawerOpen={drawerOpen} handleDrawerToggle={handleDrawerToggle} />
