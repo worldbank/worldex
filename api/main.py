@@ -8,7 +8,7 @@ app = FastAPI()
 database = Database("postgresql+asyncpg://worldex:postgres@db/worldex")
 
 origins = [
-    "https://127.0.0.1:3000",
+    "http://localhost:5173",
 ]
 
 app.add_middleware(
