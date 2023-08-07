@@ -2,7 +2,6 @@ import { lazy } from 'react';
 import { BASEMAPS } from '@carto/react-basemaps';
 import ZoomControl from 'components/common/ZoomControl';
 import { getLayers } from 'components/layers';
-import { ReactComponent as CartoLogoMap } from 'assets/img/carto-logo-map.svg';
 import { useSelector } from 'react-redux';
 import { Grid, useMediaQuery, Theme, GridProps } from '@mui/material';
 import { styled } from '@mui/material/styles';
@@ -46,13 +45,6 @@ const StyledZoomControl = styled(ZoomControl)(({ theme }) => ({
   [theme.breakpoints.down('sm')]: {
     display: 'none',
   },
-}));
-
-const StyledCartoLogoMap = styled(CartoLogoMap)(({ theme }) => ({
-  position: 'absolute',
-  bottom: theme.spacing(4),
-  left: '50%',
-  transform: 'translateX(-50%)',
 }));
 
 export default function MapContainer() {
