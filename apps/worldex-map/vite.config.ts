@@ -18,16 +18,14 @@ export default defineConfig({
     }),
     viteTsconfigPaths(),
     svgrPlugin(),
-    // handlebars({
-    //   partialDirectory: resolve(__dirname, 'src/partials'),
-    // }) as Plugin,
   ],
   server: {
-    port: 3000,
-    proxy: {
-      '/api-server/': '...',
-      '/authorization/': '...',
+    watch: {
+        usePolling: true,
     },
+    host: true,
+    strictPort: true,
+    port: 5173,
   },
   build: {
     outDir: 'build',

@@ -1,18 +1,15 @@
 services:
   ui:
     build:
-      context: ./apps/dummy-app/
+      context: ./apps/worldex-map/
       dockerfile: dev.Dockerfile
     command: yarn start
     ports:
-      - 3000:3000
+      - 5173:5173
     volumes:
-      - ./apps/dummy-app:/app
+      - ./apps/worldex-map:/app
     env_file:
-      - ./apps/dummy-app/.env
-    environment:
-      - HOST=0.0.0.0
-      - REACT_APP_API_URL=http://localhost:8000
+      - ./apps/worldex-map/.env
     depends_on:
       - api
   api:
