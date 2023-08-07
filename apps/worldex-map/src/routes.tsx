@@ -6,7 +6,6 @@ const Main = lazy(
   () => import(/* webpackPrefetch: true */ 'components/views/main/Main'),
 );
 const NotFound = lazy(() => import('components/views/NotFound'));
-const Login = lazy(() => import('components/views/login/Login'));
 // [hygen] Import views
 
 export const ROUTE_PATHS = {
@@ -31,7 +30,6 @@ const routes = [
       // [hygen] Add routes
     ],
   },
-  { path: ROUTE_PATHS.LOGIN, element: <Login /> },
   {
     path: '*',
     element: (
