@@ -1,4 +1,15 @@
 import { lazy } from 'react';
+import { useEffect } from 'react';
+import h3CellsSource from 'data/sources/h3CellsSource';
+import { H3_CELLS_LAYER_ID } from 'components/layers/H3CellsLayer';
+import { useDispatch } from 'react-redux';
+import {
+  addLayer,
+  removeLayer,
+  addSource,
+  removeSource,
+} from '@carto/react-redux';
+
 import LazyLoadComponent from 'components/common/LazyLoadComponent';
 import { Grid } from '@mui/material';
 import { styled } from '@mui/material/styles';
@@ -32,6 +43,23 @@ const GridMain = styled(Grid)(({ theme }) => ({
 }));
 
 export default function Main() {
+  const dispatch = useDispatch();
+  useEffect(() => {
+    dispatch(addSource(h3CellsSource));
+
+    dispatch(
+      addLayer({
+        id: H3_CELLS_LAYER_ID,
+        source: h3CellsSource.id,
+      }),
+    );
+
+    return () => {
+      dispatch(removeLayer(H3_CELLS_LAYER_ID));
+      dispatch(removeSource(h3CellsSource.id));
+    };
+  }, [dispatch]);
+
   // [hygen] Add useEffect
 
   return (
