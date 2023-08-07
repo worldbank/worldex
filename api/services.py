@@ -23,7 +23,8 @@ ZOOM_TO_H3_RESOLUTION = {
     24: 15,
 }
 
-H3_RESOLUTION_TO_ZOOM = { v: k for k, v in ZOOM_TO_H3_RESOLUTION.items() }
+H3_RESOLUTION_TO_ZOOM = {v: k for k, v in ZOOM_TO_H3_RESOLUTION.items()}
+
 
 def get_h3_resolution(zoom: int) -> int:
     zoom = math.floor(zoom)
