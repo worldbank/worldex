@@ -20,7 +20,7 @@ export default function H3Layer() {
           if (info?.object?.index) {
             info.object = {
               html: renderToStaticMarkup(
-                <Typography>{info.object.index}</Typography>
+                <Typography>Cell ID: {info.object.index}</Typography>
               ),
               style: {}
             }

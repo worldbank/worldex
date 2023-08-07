@@ -1,20 +1,36 @@
 services:
+  ui:
+    build:
+      context: ./apps/dummy-app/
+      dockerfile: dev.Dockerfile
+    command: yarn start
+    ports:
+      - 3000:3000
+    volumes:
+      - ./apps/dummy-app:/app
+    env_file:
+      - ./apps/dummy-app/.env
+    environment:
+      - HOST=0.0.0.0
+      - REACT_APP_API_URL=http://localhost:8000
+    depends_on:
+      - api
   api:
     build:
       context: ./api
     command: poetry run uvicorn main:app --reload --host 0.0.0.0 --port 8000
-    container_name: api
     ports:
-      - "8000:8000"
+      - 8000:8000
     volumes:
       - ./api:/code
+    depends_on:
+      - db
   db:
     build: ./postgis-h3
-    container_name: db
     volumes:
       - ./data/db:/var/lib/postresql/data
     ports:
-      - "5432:5432"
+      - 5432:5432
     environment:
       - POSTGRES_USER=worldex
       - POSTGRES_PASSWORD=postgres
