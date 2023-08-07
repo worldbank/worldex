@@ -1,15 +1,15 @@
 services:
   ui:
     build:
-      context: ./apps/worldex-map/
+      context: ./ui/
       dockerfile: dev.Dockerfile
     command: yarn start
     ports:
       - 5173:5173
     volumes:
-      - ./apps/worldex-map:/app
+      - ./ui:/app
     env_file:
-      - ./apps/worldex-map/.env
+      - ./ui/.env
     depends_on:
       - api
   api:
