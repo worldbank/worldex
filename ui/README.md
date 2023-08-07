@@ -4,7 +4,7 @@ Welcome to CARTO for React! The best way to develop Location Intelligence Apps u
 
 To get further information about CARTO for React visit our [documentation](https://docs.carto.com/react).
 
-This application has been kickstarted using the CARTO for React basic TypeScript template for CARTO 3. 
+This application has been kickstarted using the CARTO for React basic TypeScript template for CARTO 3.
 
 ## Available Scripts
 
@@ -14,7 +14,7 @@ In the project directory, you will find some scripts ready to run. Here you have
 
 Runs the app in the development mode.
 
-Open [https://127.0.0.1:3000](https://127.0.0.1:3000) to view it in the browser.
+Open [http://localhost:5173/](http://localhost:5173/) to view it in the browser.
 
 The page will reload if you make edits.
 
@@ -44,6 +44,6 @@ You don’t have to ever use `eject`. The curated feature set is suitable for sm
 
 ## Learn More
 
-You can learn more in the [Create React App documentation](https://create-react-app.dev/docs/getting-started/).
+You can learn more in the [Vite documentation](https://vitejs.dev/guide/#getting-started).
 
 To learn React, check out the [React documentation](https://reactjs.org/).

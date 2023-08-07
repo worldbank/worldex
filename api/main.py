@@ -19,6 +19,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+
 @app.on_event("startup")
 async def startup():
     await database.connect()
@@ -28,6 +29,7 @@ async def startup():
 async def shutdown():
     await database.disconnect()
 
+
 @app.get("/")
 async def root():
     return {"message": "Hello World"}
@@ -36,12 +38,13 @@ async def root():
 @app.get("/h3_tiles/{z}/{x}/{y}")
 async def get_h3_tiles(z: int, x: int, y: int):
     h3_resolution = get_h3_resolution(z)
-    results = await database.fetch_all(f"""
+    results = await database.fetch_all(
+        f"""
         SELECT h3_polygon_to_cells(ST_Transform(ST_TileEnvelope({z}, {x}, {y}), 4326), {h3_resolution});
-    """)
-    return [{
-        "index": result[0]
-    } for result in results]
+    """
+    )
+    return [{"index": result[0]} for result in results]
+
 
 if __name__ == "__main__":
-    uvicorn.run(app, port=8000, host='0.0.0.0')
+    uvicorn.run(app, port=8000, host="0.0.0.0")
