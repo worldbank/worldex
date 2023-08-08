@@ -37,8 +37,8 @@
     "echarts": "^5.4.3",
     "echarts-for-react": "^3.0.2",
     "eslint-config-airbnb-typescript": "^17.1.0",
-    "eslint-config-prettier": "^8.10.0",
-    "eslint-plugin-prettier": "^3.4.1",
+    "eslint-config-prettier": "^9.0.0",
+    "eslint-plugin-prettier": "^5.0.0",
     "firebase-tools": "^9.23.3",
     "h3-js": "^3.7.2",
     "history": "^5.3.0",
@@ -46,7 +46,7 @@
     "hygen": "^6.2.11",
     "lint-staged": "^11.2.6",
     "maplibre-gl": "^2.4.0",
-    "prettier": "^2.8.8",
+    "prettier": "^3.0.1",
     "react": "^18.2.0",
     "react-app-polyfill": "^3.0.0",
     "react-dom": "^18.2.0",
@@ -65,7 +65,8 @@
     "lint": "eslint './**/*.{ts,tsx}' --ignore-path .gitignore",
     "format": "prettier --write . --ignore-path .gitignore",
     "hygen": "hygen",
-    "updateSupportedBrowsers": "echo \"var browserRegex = $(npx browserslist-useragent-regexp --allowHigherVersions);\" > public/supportedBrowsers.js"
+    "updateSupportedBrowsers": "echo \"var browserRegex = $(npx browserslist-useragent-regexp --allowHigherVersions);\" > public/supportedBrowsers.js",
+    "prepare": "cd .. && husky install"
   },
   "eslintConfig": {
     "root": true,
@@ -122,19 +123,9 @@
     "trailingComma": "all",
     "useTabs": false
   },
-  "husky": {
-    "hooks": {
-      "pre-commit": "lint-staged"
-    }
-  },
   "lint-staged": {
-    "*.+(ts|tsx)": [
-      "yarn lint --max-warnings 0",
-      "git add"
-    ],
-    "*.+(ts|tsx|json|css|md)": [
-      "yarn format",
-      "git add"
+    "*.{js,css,ts,tsx,jsx}": [
+      "prettier --write", "eslint --fix"
     ]
   },
   "devDependencies": {
