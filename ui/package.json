@@ -36,8 +36,9 @@
     "deepmerge": "^4.3.1",
     "echarts": "^5.4.3",
     "echarts-for-react": "^3.0.2",
-    "eslint-config-prettier": "^8.10.0",
-    "eslint-plugin-prettier": "^3.4.1",
+    "eslint-config-airbnb-typescript": "^17.1.0",
+    "eslint-config-prettier": "^9.0.0",
+    "eslint-plugin-prettier": "^5.0.0",
     "firebase-tools": "^9.23.3",
     "h3-js": "^3.7.2",
     "history": "^5.3.0",
@@ -45,7 +46,7 @@
     "hygen": "^6.2.11",
     "lint-staged": "^11.2.6",
     "maplibre-gl": "^2.4.0",
-    "prettier": "^2.8.8",
+    "prettier": "^3.0.1",
     "react": "^18.2.0",
     "react-app-polyfill": "^3.0.0",
     "react-dom": "^18.2.0",
@@ -64,7 +65,8 @@
     "lint": "eslint './**/*.{ts,tsx}' --ignore-path .gitignore",
     "format": "prettier --write . --ignore-path .gitignore",
     "hygen": "hygen",
-    "updateSupportedBrowsers": "echo \"var browserRegex = $(npx browserslist-useragent-regexp --allowHigherVersions);\" > public/supportedBrowsers.js"
+    "updateSupportedBrowsers": "echo \"var browserRegex = $(npx browserslist-useragent-regexp --allowHigherVersions);\" > public/supportedBrowsers.js",
+    "prepare": "cd .. && husky install"
   },
   "eslintConfig": {
     "root": true,
@@ -127,19 +129,23 @@
     }
   },
   "lint-staged": {
-    "*.+(ts|tsx)": [
-      "yarn lint --max-warnings 0",
-      "git add"
-    ],
-    "*.+(ts|tsx|json|css|md)": [
-      "yarn format",
-      "git add"
+    "*.{js,css,ts,tsx,jsx}": [
+      "prettier --write", "eslint --fix"
     ]
   },
   "devDependencies": {
+    "@typescript-eslint/eslint-plugin": "^6.3.0",
+    "@typescript-eslint/parser": "^6.3.0",
     "@vitejs/plugin-react": "^4.0.4",
+    "eslint": "^8.2.0",
+    "eslint-config-airbnb": "19.0.4",
+    "eslint-plugin-import": "^2.25.3",
+    "eslint-plugin-jsx-a11y": "^6.5.1",
+    "eslint-plugin-react": "^7.28.0",
+    "eslint-plugin-react-hooks": "^4.3.0",
     "vite": "^4.4.8",
     "vite-plugin-checker": "^0.6.1",
+    "vite-plugin-eslint": "^1.8.1",
     "vite-plugin-svgr": "^3.2.0",
     "vite-tsconfig-paths": "^4.2.0"
   }

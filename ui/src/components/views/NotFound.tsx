@@ -1,4 +1,10 @@
-import { Button, Container, Grid, Link, Typography } from '@mui/material';
+import {
+  Button,
+  Container,
+  Grid,
+  Link,
+  Typography,
+} from '@mui/material';
 import { styled } from '@mui/material/styles';
 import { NavLink } from 'react-router-dom';
 import background404 from 'assets/img/404.svg';
@@ -29,25 +35,25 @@ export default function NotFound() {
     <ContainerNotFound>
       <GridContentWrapper container spacing={2}>
         <Grid item>
-          <Typography variant='h5'>Error 404</Typography>
+          <Typography variant="h5">Error 404</Typography>
         </Grid>
         <Grid item>
-          <Typography variant='h3'>
+          <Typography variant="h3">
             Whoops!
             <br />
             You’re lost at sea
           </Typography>
         </Grid>
         <Grid item>
-          <Typography variant='body1'>
+          <Typography variant="body1">
             The map you’re looking for doesn’t exist.
             <br />
             Use Location Intelligence to find your way home.
           </Typography>
         </Grid>
         <GridActionWrapper item>
-          <Link to={ROUTE_PATHS.DEFAULT} component={NavLink} underline='none'>
-            <Button variant='contained' color='primary' size='large'>
+          <Link to={ROUTE_PATHS.DEFAULT} component={NavLink} underline="none">
+            <Button variant="contained" color="primary" size="large">
               Take me home
             </Button>
           </Link>

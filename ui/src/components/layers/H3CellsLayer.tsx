@@ -10,9 +10,7 @@ export const H3_CELLS_LAYER_ID = 'h3CellsLayer';
 
 export default function H3CellsLayer() {
   const { h3CellsLayer } = useSelector((state: RootState) => state.carto.layers);
-  const source = useSelector((state) =>
-    selectSourceById(state, h3CellsLayer?.source),
-  );
+  const source = useSelector((state) => selectSourceById(state, h3CellsLayer?.source));
 
   if (h3CellsLayer && source) {
     return new TileLayer({
@@ -23,10 +21,13 @@ export default function H3CellsLayer() {
           if (info?.object?.index) {
             info.object = {
               html: renderToStaticMarkup(
-                <Typography>Cell ID: {info.object.index}</Typography>
+                <Typography>
+                  Cell ID:
+                  {info.object.index}
+                </Typography>,
               ),
-              style: {}
-            }
+              style: {},
+            };
           }
         }
       },
@@ -40,7 +41,7 @@ export default function H3CellsLayer() {
         filled: true,
         getLineWidth: 2,
         extruded: false,
-      })
+      }),
     });
   }
 }

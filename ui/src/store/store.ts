@@ -19,11 +19,10 @@ const staticReducers = {
   app: appSlice,
 };
 
-let store: AppStore = {
+const store: AppStore = {
   ...configureStore({
     reducer: staticReducers,
-    middleware: (getDefaultMiddleware: CurriedGetDefaultMiddleware) =>
-      getCustomMiddleware(getDefaultMiddleware),
+    middleware: (getDefaultMiddleware: CurriedGetDefaultMiddleware) => getCustomMiddleware(getDefaultMiddleware),
   }),
   asyncReducers: {},
   injectReducer: (key: string, asyncReducer: Reducer) => {
@@ -67,8 +66,8 @@ export default store;
 export type AppDispatch = typeof store.dispatch;
 export type RootState = ReturnType<typeof store.getState>;
 export type AppThunk<ReturnType = void> = ThunkAction<
-  ReturnType,
-  RootState,
-  unknown,
-  Action<string>
+ReturnType,
+RootState,
+unknown,
+Action<string>
 >;

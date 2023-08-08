@@ -24,9 +24,11 @@
     "types": ["vite/client", "vite-plugin-svgr/client"]
   },
   "include": [
-    "src"
+    "src",
+    ".eslintrc.cjs",
+    "vite.config.ts",
   ],
   "exclude": [
-    "node_modules"
+    "node_modules",
   ]
 }

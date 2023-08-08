@@ -1,5 +1,4 @@
-import { lazy } from 'react';
-import { useEffect } from 'react';
+import { lazy, useEffect } from 'react';
 import h3CellsSource from 'data/sources/h3CellsSource';
 import { H3_CELLS_LAYER_ID } from 'components/layers/H3CellsLayer';
 import { useDispatch } from 'react-redux';
@@ -15,22 +14,19 @@ import { Grid } from '@mui/material';
 import { styled } from '@mui/material/styles';
 
 const MapContainer = lazy(
-  () =>
-    import(
-      /* webpackChunkName: 'map-container' */ 'components/views/main/MapContainer'
-    ),
+  () => import(
+    /* webpackChunkName: 'map-container' */ 'components/views/main/MapContainer'
+  ),
 );
 const Sidebar = lazy(
-  () =>
-    import(
-      /* webpackChunkName: 'sidebar' */ 'components/views/main/sidebar/Sidebar'
-    ),
+  () => import(
+    /* webpackChunkName: 'sidebar' */ 'components/views/main/sidebar/Sidebar'
+  ),
 );
 const ErrorSnackbar = lazy(
-  () =>
-    import(
-      /* webpackChunkName: 'error-snackbar' */ 'components/common/ErrorSnackbar'
-    ),
+  () => import(
+    /* webpackChunkName: 'error-snackbar' */ 'components/common/ErrorSnackbar'
+  ),
 );
 
 const GridMain = styled(Grid)(({ theme }) => ({
