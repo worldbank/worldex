@@ -1,4 +1,4 @@
-{
+module.exports = {
     "env": {
         "browser": true,
         "es2020": true
@@ -11,6 +11,8 @@
         "plugin:@typescript-eslint/recommended"
     ],
     "overrides": [],
+    // ignoring the following carto-template files to avoid breaking them - we are unlikely to modify them anyway
+    "ignorePatterns": ["src/components/common/**"],
     "parser": "@typescript-eslint/parser",
     "parserOptions": {
         "ecmaVersion": 2020,
@@ -44,4 +46,4 @@
         "react/react-in-jsx-scope": "off",
         "react/require-default-props": "warn"
     }
-}
+};
