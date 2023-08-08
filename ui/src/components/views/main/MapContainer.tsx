@@ -3,7 +3,9 @@ import { BASEMAPS } from '@carto/react-basemaps';
 import ZoomControl from 'components/common/ZoomControl';
 import { getLayers } from 'components/layers';
 import { useSelector } from 'react-redux';
-import { Grid, useMediaQuery, Theme, GridProps } from '@mui/material';
+import {
+  Grid, useMediaQuery, Theme, GridProps,
+} from '@mui/material';
 import { styled } from '@mui/material/styles';
 
 const Map = lazy(
@@ -60,7 +62,7 @@ export default function MapContainer() {
     <GridMapWrapper item isGmaps={isGmaps}>
       <Map layers={layers} />
       {hidden ? null : (
-        <StyledZoomControl showCurrentZoom className='zoomControl' />
+        <StyledZoomControl showCurrentZoom className="zoomControl" />
       )}
     </GridMapWrapper>
   );

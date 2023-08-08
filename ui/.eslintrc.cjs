@@ -11,8 +11,15 @@ module.exports = {
         "plugin:@typescript-eslint/recommended"
     ],
     "overrides": [],
-    // ignoring the following carto-template files to avoid breaking them - we are unlikely to modify them anyway
-    "ignorePatterns": ["src/components/common/**"],
+    // # Ignoring React templated files we are unlikely to modify, to avoid breaking them
+    "ignorePatterns": [
+        "src/components/common/**",
+        "src/hooks/Auth0.ts",
+        "src/utils/formatter.ts",
+        "src/utils/htmlForFeature.ts",
+        "src/components/views/main/sidebar/**",
+        "src/data/sources/source.ts",
+    ],
     "parser": "@typescript-eslint/parser",
     "parserOptions": {
         "ecmaVersion": 2020,
