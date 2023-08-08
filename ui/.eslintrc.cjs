@@ -11,14 +11,15 @@ module.exports = {
         "plugin:@typescript-eslint/recommended"
     ],
     "overrides": [],
-    // # Ignoring React templated files we are unlikely to modify, to avoid breaking them
+    // Ignoring React templated files we are unlikely to modify, to avoid breaking them
     "ignorePatterns": [
         "src/components/common/**",
+        "src/components/views/main/sidebar/**",
+        "src/components/views/NotFound.tsx",
+        "src/data/sources/source.ts",
         "src/hooks/Auth0.ts",
         "src/utils/formatter.ts",
         "src/utils/htmlForFeature.ts",
-        "src/components/views/main/sidebar/**",
-        "src/data/sources/source.ts",
     ],
     "parser": "@typescript-eslint/parser",
     "parserOptions": {
@@ -30,6 +31,7 @@ module.exports = {
         "react",
         "@typescript-eslint"
     ],
+    // TODO: set reasonable rules from warn to error (default) and resolve offending files
     "rules": {
         "@typescript-eslint/ban-ts-comment": "warn",
         "@typescript-eslint/naming-convention": "warn",
