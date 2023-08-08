@@ -1,5 +1,5 @@
 import { defineConfig, Plugin } from 'vite';
-import { resolve } from 'path';
+import eslintPlugin from 'vite-plugin-eslint';
 import react from '@vitejs/plugin-react';
 import viteTsconfigPaths from 'vite-tsconfig-paths';
 import svgrPlugin from 'vite-plugin-svgr';
@@ -15,6 +15,10 @@ export default defineConfig({
       eslint: {
         lintCommand: 'eslint "./src/**/*.{ts,tsx}"',
       },
+    }),
+    eslintPlugin({
+      cache: false,
+      include: ['./src/**/*.ts', './src/**/*.tsx'],
     }),
     viteTsconfigPaths(),
     svgrPlugin(),
