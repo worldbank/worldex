@@ -13,10 +13,7 @@ export const initialState: InitialCarto3State = {
     dragRotate: false,
   },
   basemap: VOYAGER,
-  credentials: {
-    apiVersion: API_VERSIONS.V3,
-    apiBaseUrl: 'https://gcp-us-east1.api.carto.com',
-  },
+  credentials: {}, // carto-required but unnecessary
   googleApiKey: '', // only required when using a Google Basemap,
   googleMapId: '', // only required when using a Google Custom Basemap
   accountsUrl: 'http://app.carto.com/',
