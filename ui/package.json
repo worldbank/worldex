@@ -123,6 +123,11 @@
     "trailingComma": "all",
     "useTabs": false
   },
+  "husky": {
+    "hooks": {
+      "pre-commit": "lint-staged"
+    }
+  },
   "lint-staged": {
     "*.{js,css,ts,tsx,jsx}": [
       "prettier --write", "eslint --fix"
