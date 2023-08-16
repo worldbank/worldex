@@ -11,6 +11,9 @@ fastapi = "^0.100.0"
 uvicorn = {extras = ["standard"], version = "^0.23.1"}
 psycopg2-binary = "^2.9.6"
 databases = {extras = ["asyncpg"], version = "^0.7.0"}
+alembic = "^1.11.2"
+pydantic-settings = "^2.0.3"
+python-dotenv = "^1.0.0"
 
 
 [build-system]

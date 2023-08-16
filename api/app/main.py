@@ -1,11 +1,14 @@
 import uvicorn
+from .database import database
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from databases import Database
-from services import get_h3_resolution
+from .services import get_h3_resolution
+
+import app
+from app.models import HealthCheck
 
 app = FastAPI()
-database = Database("postgresql+asyncpg://worldex:postgres@db/worldex")
+
 
 origins = [
     "http://localhost:5173",
@@ -31,7 +34,7 @@ async def shutdown():
 
 
 @app.get("/")
-async def root():
+async def health_check():
     return {"message": "Hello World"}
 
 

@@ -13,15 +13,18 @@ services:
     depends_on:
       - api
   api:
+    # TODO: possibly mount poetry venv
     build:
       context: ./api
-    command: poetry run uvicorn main:app --reload --host 0.0.0.0 --port 8000
+    command: poetry run uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
     ports:
       - 8000:8000
     volumes:
       - ./api:/code
     depends_on:
       - db
+    # environment:
+    #   - DATABASE_URL: "postgresql+asyncpg://worldex:postgres@db/worldex"
   db:
     build: ./postgis-h3
     volumes:
