@@ -26,18 +26,6 @@ app.add_middleware(
 )
 
 
-@app.on_event("startup")
-async def startup():
-    pass
-    # await database.connect()
-
-
-@app.on_event("shutdown")
-async def shutdown():
-    pass
-    # await database.disconnect()
-
-
 @app.get("/", response_model=HealthCheck)
 async def health_check():
     return {
