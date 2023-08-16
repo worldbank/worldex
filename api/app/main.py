@@ -1,13 +1,16 @@
+# import app
 import uvicorn
-from .database import database
+from app import settings
+from app.models import HealthCheck
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+
+from .database import database
 from .services import get_h3_resolution
 
-import app
-from app.models import HealthCheck
-
-app = FastAPI()
+app = FastAPI(
+    title=settings.project_name
+)
 
 
 origins = [
@@ -35,7 +38,7 @@ async def shutdown():
 
 @app.get("/")
 async def health_check():
-    return {"message": "Hello World"}
+    return {"message": settings.project_name}
 
 
 @app.get("/h3_tiles/{z}/{x}/{y}")
