@@ -47,10 +47,12 @@ async def health_check():
 
 
 @app.get("/h3_tiles/{z}/{x}/{y}")
-async def get_h3_tiles(z: int, x: int, y: int, session: AsyncSession = Depends(get_async_session)):
+async def get_h3_tiles(
+    z: int, x: int, y: int, session: AsyncSession = Depends(get_async_session)
+):
     h3_resolution = get_h3_resolution(z)
     results = await session.execute(
-    f"""
+        f"""
         SELECT h3_polygon_to_cells(ST_Transform(ST_TileEnvelope({z}, {x}, {y}), 4326), {h3_resolution});
     """
     )

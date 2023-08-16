@@ -7,11 +7,8 @@ from sqlalchemy.orm import sessionmaker
 from sqlmodel.ext.asyncio.session import AsyncSession
 
 # TODO: turn off echo outside of dev environments
-async_engine = create_async_engine(
-    settings.db_async_connection,
-    echo=True,
-    future=True
-)
+async_engine = create_async_engine(settings.db_async_connection, echo=True, future=True)
+
 
 async def get_async_session() -> AsyncSession:
     async_session = sessionmaker(
@@ -19,5 +16,6 @@ async def get_async_session() -> AsyncSession:
     )
     async with async_session() as session:
         yield session
+
 
 Base = declarative_base()
