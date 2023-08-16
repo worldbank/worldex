@@ -9,7 +9,8 @@ from .database import database
 from .services import get_h3_resolution
 
 app = FastAPI(
-    title=settings.project_name
+    title=settings.project_name,
+    version=settings.version,
 )
 
 
@@ -36,9 +37,12 @@ async def shutdown():
     await database.disconnect()
 
 
-@app.get("/")
+@app.get("/", response_model=HealthCheck)
 async def health_check():
-    return {"message": settings.project_name}
+    return {
+        "name": settings.project_name,
+        "version": settings.version,
+    }
 
 
 @app.get("/h3_tiles/{z}/{x}/{y}")
