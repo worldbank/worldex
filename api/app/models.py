@@ -9,7 +9,7 @@ from sqlalchemy.orm import relationship
 class H3Index(UserDefinedType):
     def get_col_spec(self):
         return "H3INDEX"
-    
+
     # def bind_expression(self, bindvalue):
     #     pass
 
@@ -49,4 +49,4 @@ class H3Data(Base):
     dataset_id = Column(Integer, ForeignKey("datasets.id", ondelete="CASCADE"))
     # dataset = relationship("Dataset", back_populates="h3_data")
 
-    __table_args__ = (UniqueConstraint('dataset_id', 'h3_index'),)
+    __table_args__ = (UniqueConstraint("dataset_id", "h3_index"),)
