@@ -7,3 +7,8 @@ From within the project or api root
 pyenv install 3.10.11
 pyenv local 3.10.11
 ```
+
+# `poetry install`
+to install dependencies inside a poetry virtual environment
+
+When running commands within the api context such as `alembic` tou can either prepend your commands with `poetry run <command>` or activate the poetry virtualenv first with `poetry shell`
