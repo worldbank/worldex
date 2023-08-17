@@ -14,7 +14,7 @@ class H3Index(UserDefinedType):
     #     pass
 
     # def column_expression(self, col):
-    #     return func
+    #     pass
 
 
 class HealthCheck(BaseModel):
@@ -43,10 +43,8 @@ class H3Data(Base):
     __tablename__ = "h3_data"
 
     id = Column(Integer, primary_key=True)
-    # TODO: should be unique with dataset_id
     h3_index = Column(H3Index, index=True, nullable=False)
 
     dataset_id = Column(Integer, ForeignKey("datasets.id", ondelete="CASCADE"))
-    # dataset = relationship("Dataset", back_populates="h3_data")
 
     __table_args__ = (UniqueConstraint("dataset_id", "h3_index"),)
