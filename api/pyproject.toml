@@ -14,6 +14,12 @@ alembic = "^1.11.2"
 python-dotenv = "^1.0.0"
 sqlmodel = "^0.0.8"
 asyncpg = "^0.28.0"
+geopandas = "^0.13.2"
+pandas = "^2.0.3"
+shapely = "^2.0.1"
+h3 = "^3.7.6"
+h3pandas = "^0.2.4"
+h3ronpy = "^0.17.4"
 
 
 [build-system]
