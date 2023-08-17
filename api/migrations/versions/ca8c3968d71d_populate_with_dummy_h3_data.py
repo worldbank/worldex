@@ -46,11 +46,10 @@ def upgrade() -> None:
         sess.add(dataset)
         sess.commit()
 
-        hdf_to_db = gpd.GeoDataFrame(index=hdf.index.copy())
-        hdf_to_db = hdf_to_db[~hdf_to_db.index.duplicated(keep="first")]
-        hdf_to_db["dataset_id"] = dataset.id
-        print(hdf_to_db.head())
-        hdf_to_db.to_sql(
+        hdf_payload = gpd.GeoDataFrame(index=hdf.index.copy())
+        hdf_payload = hdf_payload[~hdf_payload.index.duplicated(keep="first")]
+        hdf_payload["dataset_id"] = dataset.id
+        hdf_payload.to_sql(
             "h3_data", conn, if_exists="append", dtype={"h3_index": H3Index}
         )
 
