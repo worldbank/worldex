@@ -21,10 +21,16 @@ export default function H3CellsLayer() {
           if (info?.object?.index) {
             info.object = {
               html: renderToStaticMarkup(
-                <Typography>
-                  Cell ID:
-                  {info.object.index}
-                </Typography>,
+                <>
+                  <Typography>
+                    Cell ID:
+                    {info.object.index}
+                  </Typography>
+                  <Typography>
+                    Dataset Count:
+                    {info.object.dataset_count}
+                  </Typography>
+                </>,
               ),
               style: {},
             };
@@ -37,7 +43,7 @@ export default function H3CellsLayer() {
         stroked: true,
         lineWidthMinPixels: 1,
         getLineColor: [255, 210, 0],
-        getFillColor: [255, 255, 255, 0],
+        getFillColor: (d: any) => [255, 210, 0, d.dataset_count > 0 ? 100 : 0],
         filled: true,
         getLineWidth: 2,
         extruded: false,
