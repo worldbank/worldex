@@ -4,6 +4,7 @@ from typing import Iterator, Union
 from shapely.geometry.linestring import LineString
 from shapely.geometry.multilinestring import MultiLineString
 
+# TODO: define this on request payload?
 ZOOM_TO_H3_RESOLUTION = {
     5: 1,
     6: 2,
@@ -32,7 +33,7 @@ H3_RESOLUTION_TO_ZOOM = {v: k for k, v in ZOOM_TO_H3_RESOLUTION.items()}
 
 def get_h3_resolution(zoom: int) -> int:
     zoom = math.floor(zoom)
-    return ZOOM_TO_H3_RESOLUTION.get(zoom, 1 if zoom < 5 else 15)
+    return ZOOM_TO_H3_RESOLUTION.get(zoom + 1, 1 if zoom < 4 else 15)
 
 
 def sequential_deduplication(func: Iterator[str]) -> Iterator[str]:
