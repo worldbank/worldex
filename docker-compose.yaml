@@ -20,11 +20,9 @@ services:
     ports:
       - 8000:8000
     volumes:
-      - ./api:/code
+      - ./api:/app
     depends_on:
       - db
-    # environment:
-    #   - DATABASE_URL: "postgresql+asyncpg://worldex:postgres@db/worldex"
   db:
     build: ./postgis-h3
     volumes:

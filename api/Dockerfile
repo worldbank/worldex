@@ -1,31 +1,47 @@
-FROM python:3.10.11-alpine as python-base
+# derived from https://github.com/orgs/python-poetry/discussions/1879#discussioncomment-216865
+FROM python:3.10-slim as python-base
 
-ENV POETRY_VERSION=1.5.1
-ENV POETRY_HOME=/opt/poetry
-ENV POETRY_VENV=/opt/poetry-venv
+ENV PYTHONBUFFERED=1 \
+    # don't write *.pyc
+    PYTHONDONTWRITEBYTECODE=1 \
+    PIP_NO_CACHE_DIR=off \
+    PIP_DISABLE_PIP_VERSION_CHECK=on \
+    PIP_DEFAULT_TIMEOUT=100 \
+    POETRY_VERSION=1.5.1\
+    POETRY_HOME="/opt/poetry"\
+    # create poetry virtualenv in project root
+    POETRY_VIRTUALENVS_IN_PROJECT=true \
+    POETRY_NO_INTERACTION=1 \
+    # requirements and virtualenv go here
+    PYSETUP_PATH="/opt/pysetup" \
+    VENV_PATH="/opt/pysetup/.venv"
 
-ENV POETRY_CACHE_DIR=/opt/.cache
+ENV PATH="$POETRY_HOME/bin:$VENV_PATH/bin:$PATH"
 
-FROM python-base as poetry-base
+# build deps, create virtualenv
+FROM python-base as builder-base
+RUN apt-get update \
+    && apt-get install --no-install-recommends -y curl build-essential
 
-RUN apk add gcc python3-dev \
-    && python3 -m venv $POETRY_VENV \
-    && $POETRY_VENV/bin/pip install -U pip setuptools \
-    && $POETRY_VENV/bin/pip install poetry==${POETRY_VERSION}
+RUN curl -sSL https://install.python-poetry.org | python3 -
 
-FROM poetry-base as worldex-api
-
-COPY --from=poetry-base ${POETRY_VENV} ${POETRY_VENV}
-
-ENV PATH="${PATH}:${POETRY_VENV}/bin"
-
-WORKDIR /code
+WORKDIR $PYSETUP_PATH
 COPY poetry.lock pyproject.toml ./
 
-RUN poetry check
-RUN poetry install --no-interaction --no-cache
+RUN poetry install --no-dev
 
-COPY ./ /code
+FROM python-base as development
+ENV FASTAPI_ENV=development
+WORKDIR $PYSETUP_PATH
+
+# copy built poetry and virtualenv
+COPY --from=builder-base $POETRY_HOME $POETRY_HOME
+COPY --from=builder-base $PYSETUP_PATH $PYSETUP_PATH
+
+RUN poetry install
+
+WORKDIR /app
+# no COPY of fastapi codebase - we're volume-mounting instead
 
 EXPOSE 8000
-CMD ["poetry", "run", "python", "main.py"]
+CMD ["uvicorn", "--reload", "main:app"]
