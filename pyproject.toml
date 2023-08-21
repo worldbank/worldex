@@ -13,6 +13,8 @@ python = "^3.10"
 h3 = "^3.7.6"
 pandas = "^2.0.1"
 numpy = "^1.24.3"
+geopandas = "^0.13.2"
+h3ronpy = "^0.17.4"
 
 
 [tool.poetry.group.lint.dependencies]
@@ -37,15 +39,17 @@ jupyter = "^1.0.0"
 playwright = "^1.28.0"
 setuptools = "^67.6.1"
 
+
+[tool.poetry.group.test.dependencies]
+pytest = "^7.4.0"
+
 [tool.ruff]
 select = [
-  "E",  # pycodestyle
-  "F",  # pyflakes
-  "I",  # isort
+  "E", # pycodestyle
+  "F", # pyflakes
+  "I", # isort
 ]
-exclude = [
-  "tests/integration_tests/examples/non-utf8-encoding.py",
-]
+exclude = ["tests/integration_tests/examples/non-utf8-encoding.py"]
 
 [tool.mypy]
 ignore_missing_imports = "True"
@@ -53,9 +57,11 @@ disallow_untyped_defs = "True"
 exclude = ["notebooks"]
 
 [tool.coverage.run]
-omit = [
-    "tests/*",
-]
+omit = ["tests/*"]
+
+[tool.pytest.ini_options]
+minversion = "7.0"
+testpaths = ["tests"]
 
 
 [tool.poetry_bumpversion.file."worldex/__init__.py"]
