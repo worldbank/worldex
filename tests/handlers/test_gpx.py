@@ -20,11 +20,11 @@ def gpx_test_file(tmp_path):
     yield gpx_path
 
 
-def test_gps_handler(gpx_test_file):
-    gpshandler = VectorHandler.from_file(gpx_test_file)
-    assert set(gpshandler.h3index()) == {614553222213795839, 614553206816505855}
+def test_gpx_handler(gpx_test_file):
+    gpxhandler = VectorHandler.from_file(gpx_test_file)
+    assert set(gpxhandler.h3index()) == {614553222213795839, 614553206816505855}
 
 
-def test_gps_handler_diff_resolution(gpx_test_file):
-    gpshandler = VectorHandler.from_file(gpx_test_file, resolution=15)
-    assert set(gpshandler.h3index()) == {646078419604526808, 646078404207453765}
+def test_gpx_handler_diff_resolution(gpx_test_file):
+    gpxhandler = VectorHandler.from_file(gpx_test_file, resolution=15)
+    assert set(gpxhandler.h3index()) == {646078419604526808, 646078404207453765}

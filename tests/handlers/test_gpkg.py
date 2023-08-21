@@ -18,8 +18,8 @@ def gpkg_test_file(tmp_path):
 
 
 def test_gpkg_handler(gpkg_test_file):
-    gpshandler = VectorHandler.from_file(gpkg_test_file)
-    assert set(gpshandler.h3index()) == {
+    handler = VectorHandler.from_file(gpkg_test_file)
+    assert set(handler.h3index()) == {
         614553222280904703,
         614553222777929727,
         614553222782124031,
@@ -39,5 +39,5 @@ def test_gpkg_handler(gpkg_test_file):
 
 
 def test_gpkg_handler_diff_resolution(gpkg_test_file):
-    gpshandler = VectorHandler.from_file(gpkg_test_file, resolution=4)
-    assert set(gpshandler.h3index()) == {596538564771053567, 596538831059025919}
+    handler = VectorHandler.from_file(gpkg_test_file, resolution=4)
+    assert set(handler.h3index()) == {596538564771053567, 596538831059025919}
