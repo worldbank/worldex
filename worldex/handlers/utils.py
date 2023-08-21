@@ -3,7 +3,7 @@ import pathlib
 import pandas as pd
 
 from ..types import File
-from .vector_handlers import VectorHandler, POSSIBLE_X, POSSIBLE_Y
+from .vector_handlers import POSSIBLE_X, POSSIBLE_Y, VectorHandler
 
 EXTENSION_HANDLER_MAPPING = {".gpx": VectorHandler}
 

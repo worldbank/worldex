@@ -1,11 +1,10 @@
-from typing import Optional, List
+from typing import List, Optional
 
 import geopandas as gpd
 from h3ronpy.arrow.vector import wkb_to_cells
 
-from .base import BaseHandler
 from ..types import File
-
+from .base import BaseHandler
 
 # Possible column names for a csv file
 POSSIBLE_X = ["x", "lon", "lng", "longitude"]
