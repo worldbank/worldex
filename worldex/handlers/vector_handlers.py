@@ -31,6 +31,8 @@ class VectorHandler(BaseHandler):
 
     def h3index(self) -> List[int]:
         """Safe to assume gps files are only a list of points"""
+        # TODO: Measure perfomance differences of using
+        # self.gdf.geometry.unary_union.to_wkb() for large files
         cells = (
             wkb_to_cells(self.gdf.geometry.to_wkb(), resolution=self.get_resolution())
             .flatten()
