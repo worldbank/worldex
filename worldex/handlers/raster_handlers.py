@@ -1,11 +1,10 @@
-from typing import Optional, List
+from typing import List, Optional
+
 import rasterio as rio
-
-
 from h3ronpy.pandas.raster import raster_to_dataframe
 
-from .base import BaseHandler
 from ..types import File
+from .base import BaseHandler
 
 
 class RasterHandler(BaseHandler):

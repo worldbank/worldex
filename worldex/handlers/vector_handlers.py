@@ -1,3 +1,4 @@
+from pathlib import Path
 from typing import List, Optional
 
 import geopandas as gpd
@@ -9,7 +10,7 @@ from .base import BaseHandler
 # Possible column names for a csv file
 POSSIBLE_X = ["x", "lon", "lng", "longitude"]
 POSSIBLE_Y = ["y", "lat", "latitude"]
-POSSIBLE_GEOM = ["geometry", "geo", "geom", "geography", "wkt"]
+POSSIBLE_GEOM = ["geometry", "geo", "geom", "geography", "wkt", "wkb", "ewkb", "json"]
 
 
 class VectorHandler(BaseHandler):
@@ -20,8 +21,13 @@ class VectorHandler(BaseHandler):
 
     @classmethod
     def from_file(cls, file: File, resolution: Optional[int] = None):
-        gdf = gpd.read_file(file)
-        return cls(gdf, resolution)
+        if isinstance(file, str):
+            file = Path(file)
+        if file.suffix == ".csv":
+            return cls.from_csv(file, resolution)
+        else:
+            gdf = gpd.read_file(file)
+            return cls(gdf, resolution)
 
     @classmethod
     def from_geodataframe(cls, gdf: gpd.GeoDataFrame, resolution: Optional[int] = None):
@@ -32,9 +38,15 @@ class VectorHandler(BaseHandler):
         """CSVs are a special case"""
         possible_x = ",".join(POSSIBLE_X)
         possible_y = ",".join(POSSIBLE_Y)
+        possible_geometry = ",".join(POSSIBLE_GEOM)
         gdf = gpd.read_file(
-            file, driver="CSV", x_possible_names=possible_x, y_possible_name=possible_y
+            file,
+            driver="CSV",
+            x_possible_names=possible_x,
+            y_possible_names=possible_y,
+            geom_possible_names=possible_geometry,
         )
+        gdf.set_crs(epsg=4326, inplace=True)
         return cls(gdf, resolution)
 
     def get_resolution(self) -> int:
