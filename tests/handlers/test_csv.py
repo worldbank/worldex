@@ -1,4 +1,3 @@
-import os
 from worldex.handlers.vector_handlers import VectorHandler
 
 

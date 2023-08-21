@@ -1,8 +1,8 @@
 import numpy as np
+import pytest
 import rasterio
 from rasterio.transform import from_origin
 
-import pytest
 from worldex.handlers.raster_handlers import RasterHandler
 
 

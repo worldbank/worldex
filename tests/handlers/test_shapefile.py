@@ -1,6 +1,7 @@
 import geopandas as gpd
-from shapely.geometry import Point, Polygon, LineString, MultiPolygon
 import pytest
+from shapely.geometry import Polygon
+
 from worldex.handlers.vector_handlers import VectorHandler
 
 
