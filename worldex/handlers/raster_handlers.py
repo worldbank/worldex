@@ -1,18 +1,20 @@
-from typing import List, Optional
-
+from typing import Optional, List
 import rasterio as rio
+
+
 from h3ronpy.pandas.raster import raster_to_dataframe
 
-from ..types import File
 from .base import BaseHandler
+from ..types import File
 
 
 class RasterHandler(BaseHandler):
     def __init__(self, rio_src, resolution: Optional[int] = None) -> None:
-        # TODO: handle reprojection when crs is not 4326
-        if rio_src.crs != rio.CRS.from_epsg(4326):
-            raise ValueError("Only accepts EPSG 4326")
-        self.src = rio_src
+        # h3 indexes are standardized to use epsg:4326 projection
+        if rio_src.crs != "EPSG:4326":
+            self.src = rio.vrt.WarpedVRT(rio_src, crs="EPSG:4326")
+        else:
+            self.src = rio_src
         self.resolution = resolution
 
     @classmethod
@@ -36,5 +38,7 @@ class RasterHandler(BaseHandler):
             self.src.transform,
             self.get_resolution(),
             nodata_value=0,
+            axis_order="xy",
+            compact=False,
         )
         return h3_df.cell.unique().tolist()

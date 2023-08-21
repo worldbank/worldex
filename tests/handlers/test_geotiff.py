@@ -60,12 +60,10 @@ def geotiff_test_file_epsg3857(tmp_path):
     yield output_file
 
 
-@pytest.mark.skip(reason="Supporting non epsg:4387 is not yet implemented")
 def test_geotiff_file_epsg3857(geotiff_test_file_epsg3857):
-    result = RasterHandler.from_file(geotiff_test_file_epsg3857)
+    result = RasterHandler.from_file(geotiff_test_file_epsg3857, 6)
     assert set(result.h3index()) == {
-        614552959832817663,
-        614552959830720511,
-        614552959839109119,
-        614552959826526207,
+        604470835045990399,
+        604470988859506687,
+        604470988993724415,
     }
