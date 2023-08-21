@@ -1,10 +1,8 @@
-from h3ronpy.pandas.raster import raster_to_dataframe
 from typing import Optional, List
-import geopandas as gpd
 import rasterio as rio
-from h3ronpy.arrow.vector import wkb_to_cells
 
-from worldex.types import File
+
+from h3ronpy.pandas.raster import raster_to_dataframe
 
 from .base import BaseHandler
 from ..types import File
@@ -12,6 +10,9 @@ from ..types import File
 
 class RasterHandler(BaseHandler):
     def __init__(self, rio_src, resolution: Optional[int] = None) -> None:
+        # TODO: handle reprojection when crs is not 4326
+        if rio_src.crs != rio.CRS.from_epsg(4326):
+            raise ValueError("Only accepts EPSG 4326")
         self.src = rio_src
         self.resolution = resolution
 
