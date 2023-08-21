@@ -23,3 +23,18 @@ to install pre-commit. Alternatively, see https://pre-commit.com/ for installati
 ### `pre-commit install`
 
 to then setup the pre-commit hooks.
+
+## Worldex package
+
+### Installing poetry
+
+```
+pip install poetry
+poetry install
+```
+
+### Running tests
+
+```
+poetry run python -m pytest
+```
