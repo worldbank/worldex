@@ -14,6 +14,20 @@ POSSIBLE_GEOM = ["geometry", "geo", "geom", "geography", "wkt"]
 
 
 class VectorHandler(BaseHandler):
+    def __init__(self, gdf: gpd.GeoDataFrame, resolution: Optional[int] = None) -> None:
+        # h3 indexes are standardized to use epsg:4326 projection
+        self.gdf = gdf.to_crs(epsg=4326)
+        self.resolution = resolution
+
+    @classmethod
+    def from_file(cls, file: File, resolution: Optional[int] = None):
+        gdf = gpd.read_file(file)
+        return cls(gdf, resolution)
+
+    @classmethod
+    def from_geodataframe(cls, gdf: gpd.GeoDataFrame, resolution: Optional[int] = None):
+        return cls(gdf, resolution)
+
     @classmethod
     def from_csv(cls, file: File, resolution: Optional[int] = None):
         """CSVs are a special case"""
@@ -30,7 +44,6 @@ class VectorHandler(BaseHandler):
         return self.resolution
 
     def h3index(self) -> List[int]:
-        """Safe to assume gps files are only a list of points"""
         # TODO: Measure perfomance differences of using
         # self.gdf.geometry.unary_union.to_wkb() for large files
         cells = (
