@@ -23,9 +23,9 @@ def gpx_test_file(tmp_path):
 
 def test_gpx_handler(gpx_test_file):
     gpxhandler = VectorHandler.from_file(gpx_test_file)
-    assert set(gpxhandler.h3index()) == {614553222213795839, 614553206816505855}
+    assert set(gpxhandler.h3index()) == {"88754e2b3dfffff", "88754e6499fffff"}
 
 
 def test_gpx_handler_diff_resolution(gpx_test_file):
     gpxhandler = VectorHandler.from_file(gpx_test_file, resolution=15)
-    assert set(gpxhandler.h3index()) == {646078419604526808, 646078404207453765}
+    assert set(gpxhandler.h3index()) == {"8f754e2b3d62645", "8f754e64992d6d8"}

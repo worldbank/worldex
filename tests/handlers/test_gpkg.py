@@ -21,24 +21,24 @@ def gpkg_test_file(tmp_path):
 def test_gpkg_handler(gpkg_test_file):
     handler = VectorHandler.from_file(gpkg_test_file)
     assert set(handler.h3index()) == {
-        614553222280904703,
-        614553222777929727,
-        614553222782124031,
-        614552959897829375,
-        614552959906217983,
-        614552959830720511,
-        614553222205407231,
-        614553222213795839,
-        614552959356764159,
-        614553222272516095,
-        614553222274613247,
-        614553222278807551,
-        614553222283001855,
-        614552959839109119,
-        614552959899926527,
+        "88754e6491fffff",
+        "88754a932dfffff",
+        "88754a9325fffff",
+        "88754e64dbfffff",
+        "88754e6499fffff",
+        "88754e64d9fffff",
+        "88754e66b7fffff",
+        "88754a9161fffff",
+        "88754a9365fffff",
+        "88754e66b3fffff",
+        "88754e64d3fffff",
+        "88754e64d7fffff",
+        "88754a936dfffff",
+        "88754a9367fffff",
+        "88754e64d1fffff",
     }
 
 
 def test_gpkg_handler_diff_resolution(gpkg_test_file):
     handler = VectorHandler.from_file(gpkg_test_file, resolution=4)
-    assert set(handler.h3index()) == {596538564771053567, 596538831059025919}
+    assert set(handler.h3index()) == {"84754e7ffffffff", "84754a9ffffffff"}

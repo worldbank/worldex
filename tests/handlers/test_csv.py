@@ -10,7 +10,7 @@ def test_csv_lat_lng(tmp_path):
     with open(csv_path, "w") as f:
         f.write(csv_string)
     handler = VectorHandler.from_file(csv_path)
-    assert set(handler.h3index()) == {614553222213795839, 614553206816505855}
+    assert set(handler.h3index()) == {"88754e2b3dfffff", "88754e6499fffff"}
 
 
 def test_csv_wkt(tmp_path):
@@ -22,7 +22,7 @@ Point(0.1 0.1),point2
     with open(csv_path, "w") as f:
         f.write(csv_string)
     handler = VectorHandler.from_file(csv_path)
-    assert set(handler.h3index()) == {614553222213795839, 614553206816505855}
+    assert set(handler.h3index()) == {"88754e2b3dfffff", "88754e6499fffff"}
 
 
 def test_csv_wkb(tmp_path):
@@ -34,4 +34,4 @@ def test_csv_wkb(tmp_path):
     with open(csv_path, "w") as f:
         f.write(csv_string)
     handler = VectorHandler.from_file(csv_path)
-    assert set(handler.h3index()) == {614553222213795839, 614553206816505855}
+    assert set(handler.h3index()) == {"88754e2b3dfffff", "88754e6499fffff"}

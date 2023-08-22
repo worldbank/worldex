@@ -3,6 +3,7 @@ from typing import List, Optional
 
 import geopandas as gpd
 from h3ronpy.arrow.vector import wkb_to_cells
+from h3ronpy.arrow import cells_to_string
 
 from ..types import File
 from .base import BaseHandler
@@ -57,10 +58,9 @@ class VectorHandler(BaseHandler):
     def h3index(self) -> List[int]:
         # TODO: Measure perfomance differences of using
         # self.gdf.geometry.unary_union.to_wkb() for large files
-        cells = (
+        cells = cells_to_string(
             wkb_to_cells(self.gdf.geometry.to_wkb(), resolution=self.get_resolution())
             .flatten()
             .unique()
-            .to_pylist()
-        )
+        ).to_pylist()
         return cells

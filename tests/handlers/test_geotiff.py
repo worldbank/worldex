@@ -31,10 +31,10 @@ def geotiff_test_file(tmp_path):
 def test_geotiff_file(geotiff_test_file):
     result = RasterHandler.from_file(geotiff_test_file)
     assert set(result.h3index()) == {
-        614552959832817663,
-        614552959830720511,
-        614552959839109119,
-        614552959826526207,
+        "88754a9325fffff",
+        "88754a9321fffff",
+        "88754a932dfffff",
+        "88754a9327fffff",
     }
 
 
@@ -63,7 +63,7 @@ def geotiff_test_file_epsg3857(tmp_path):
 def test_geotiff_file_epsg3857(geotiff_test_file_epsg3857):
     result = RasterHandler.from_file(geotiff_test_file_epsg3857, 6)
     assert set(result.h3index()) == {
-        604470835045990399,
-        604470988859506687,
-        604470988993724415,
+        "863832967ffffff",
+        "86383296fffffff",
+        "863830597ffffff",
     }
