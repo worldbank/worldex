@@ -26,7 +26,7 @@ export default function DeckGLComponent({ layers }: { layers: any[] }) {
   return (
     // @ts-ignore
     <DeckGL
-      viewState={{ ...viewState }}
+      initialViewState={{...viewState}}
       controller={true}
       layers={layers}
       onViewStateChange={handleViewStateChange}
