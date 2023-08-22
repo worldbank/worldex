@@ -3,6 +3,8 @@ import { styled } from '@mui/material/styles';
 import { setViewState, ViewState } from '@carto/react-redux';
 import { Typography } from '@carto/react-ui';
 import { renderToStaticMarkup } from 'react-dom/server';
+import { useMemo } from 'react';
+import { debounce } from '@mui/material';
 
 const TooltipContent = styled('div')(({ theme }) => ({
   color: theme.palette.common.white,
@@ -31,9 +33,13 @@ export function useMapHooks() {
 
   let isHovering = false;
 
-  const handleViewStateChange = ({ viewState }: { viewState: ViewState }) => {
+  const debouncedSetViewState = debounce((viewState: ViewState) => {
     // @ts-ignore
-    dispatch(setViewState(viewState));
+    dispatch(setViewState(viewState))
+  }, 100)
+
+  const handleViewStateChange = ({ viewState }: { viewState: ViewState }) => {
+    debouncedSetViewState(viewState);
   };
 
   const handleSizeChange = ({
@@ -44,7 +50,7 @@ export function useMapHooks() {
     height: number;
   }) => {
     // @ts-ignore
-    dispatch(setViewState({ width, height }));
+    debouncedSetViewState({ width, height });
   };
 
   const handleHover = ({ object }: any) => (isHovering = !!object);
@@ -80,6 +86,7 @@ export function useMapHooks() {
   };
 
   return {
+    debouncedSetViewState,
     handleViewStateChange,
     handleSizeChange,
     handleHover,
