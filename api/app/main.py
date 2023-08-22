@@ -40,13 +40,13 @@ async def get_h3_tiles(
 ):
     h3_resolution = get_h3_resolution(z)
     results = await session.execute(
-    f"""
+        f"""
         WITH parents AS (
             SELECT h3_polygon_to_cells(ST_Transform(ST_TileEnvelope({z}, {x}, {y}), 4326), {h3_resolution}) h3
         )
         SELECT parents.h3, COUNT(DISTINCT(h3_data.dataset_id)) dataset_count
         FROM h3_data
-        RIGHT JOIN parents ON parents.h3 @> h3_data.h3_index::h3index GROUP BY parents.h3;
+        JOIN parents ON h3_cell_to_parent(h3_data.h3_index, {h3_resolution}) = parents.h3 GROUP BY parents.h3;
     """
     )
     return [{"index": row[0], "dataset_count": row[1]} for row in results.fetchall()]
