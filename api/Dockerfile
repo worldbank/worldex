@@ -38,6 +38,7 @@ WORKDIR $PYSETUP_PATH
 COPY --from=builder-base $POETRY_HOME $POETRY_HOME
 COPY --from=builder-base $PYSETUP_PATH $PYSETUP_PATH
 
+RUN apt-get update && apt-get install --no-install-recommends -y curl
 RUN poetry install
 
 WORKDIR /app
