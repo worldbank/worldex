@@ -45,6 +45,7 @@ setuptools = "^67.6.1"
 pytest = "^7.4.0"
 
 [tool.ruff]
+ignore = ["E501"]
 select = [
   "E", # pycodestyle
   "F", # pyflakes

@@ -1,10 +1,10 @@
 from pathlib import Path
 from typing import List, Optional
 
-from shapely import Geometry
 import geopandas as gpd
-from h3ronpy.arrow.vector import wkb_to_cells
 from h3ronpy.arrow import cells_to_string
+from h3ronpy.arrow.vector import wkb_to_cells
+from shapely import Geometry
 
 from ..types import File
 from .base import BaseHandler

@@ -4,7 +4,6 @@ These tests ensure that we capture the results properly.
 """
 
 import geopandas as gpd
-import pytest
 from shapely.geometry import LineString, MultiLineString
 
 from worldex.handlers.vector_handlers import VectorHandler
