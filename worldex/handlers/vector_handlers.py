@@ -1,6 +1,7 @@
 from pathlib import Path
 from typing import List, Optional
 
+from shapely import Geometry
 import geopandas as gpd
 from h3ronpy.arrow.vector import wkb_to_cells
 from h3ronpy.arrow import cells_to_string
@@ -12,6 +13,16 @@ from .base import BaseHandler
 POSSIBLE_X = ["x", "lon", "lng", "longitude"]
 POSSIBLE_Y = ["y", "lat", "latitude"]
 POSSIBLE_GEOM = ["geometry", "geo", "geom", "geography", "wkt", "wkb", "ewkb", "json"]
+
+
+BUFFER_SIZE = 0.0000000001
+
+
+def process_geometry(geom: Geometry) -> Geometry:
+    if geom.geom_type in ["MultiLineString", "LineString"]:
+        return geom.buffer(BUFFER_SIZE)
+    else:
+        return geom
 
 
 class VectorHandler(BaseHandler):
@@ -52,10 +63,13 @@ class VectorHandler(BaseHandler):
         return self.resolution
 
     def h3index(self) -> List[int]:
-        # TODO: Measure perfomance differences of using
-        # self.gdf.geometry.unary_union.to_wkb() for large files
+        # TODO: Measure perfomance differences of using self.gdf.geometry.unary_union.to_wkb() for large files
+        # TODO: Measure perfomance degradation of using process_geometry/ geom.buffer for large files
         cells = cells_to_string(
-            wkb_to_cells(self.gdf.geometry.to_wkb(), resolution=self.get_resolution())
+            wkb_to_cells(
+                self.gdf.geometry.apply(process_geometry).to_wkb(),
+                resolution=self.get_resolution(),
+            )
             .flatten()
             .unique()
         ).to_pylist()

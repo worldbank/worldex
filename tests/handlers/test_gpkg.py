@@ -26,6 +26,7 @@ def test_gpkg_handler(gpkg_test_file):
         "88754a9325fffff",
         "88754e64dbfffff",
         "88754e6499fffff",
+        "88754e649bfffff",
         "88754e64d9fffff",
         "88754e66b7fffff",
         "88754a9161fffff",
