@@ -39,6 +39,9 @@ optional = true
 jupyter = "^1.0.0"
 playwright = "^1.28.0"
 setuptools = "^67.6.1"
+matplotlib = "^3.7.2"
+sqlalchemy = "^2.0.20"
+psycopg2-binary = "^2.9.7"
 
 
 [tool.poetry.group.test.dependencies]
