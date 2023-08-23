@@ -26,7 +26,7 @@ app.add_middleware(
 )
 
 
-@app.get("/", response_model=HealthCheck)
+@app.get("/health_check", response_model=HealthCheck)
 async def health_check():
     return {
         "name": settings.project_name,

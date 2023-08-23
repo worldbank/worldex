@@ -14,7 +14,6 @@ services:
     depends_on:
       - api
   api:
-    # TODO: possibly mount poetry venv
     build:
       context: ./api
     command: bash -c 'while !</dev/tcp/db/5432; do sleep 1; done; poetry run uvicorn app.main:app --reload --host 0.0.0.0 --port 8000'
@@ -24,6 +23,20 @@ services:
       - ./api:/app
     depends_on:
       - db
+    healthcheck:
+      test: curl --fail localhost:8000/health_check || exit 1
+  api-venv:
+    build:
+      context: ./api
+    volumes:
+      - ./api:/app
+      - /etc/passwd:/etc/passwd:ro
+      - /etc/group:/etc/group:ro
+    depends_on:
+      api:
+        condition: service_healthy
+    # restart: "no"
+    command: bash -c 'while !<.venv/; do sleep1; done; chown -R $USER:$USER .venv && echo "chowned .venv"'
   db:
     build: ./postgis-h3
     volumes:
