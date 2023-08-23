@@ -63,7 +63,10 @@ def geotiff_test_file_epsg3857(tmp_path):
 def test_geotiff_file_epsg3857(geotiff_test_file_epsg3857):
     result = RasterHandler.from_file(geotiff_test_file_epsg3857, 6)
     assert set(result.h3index()) == {
-        "863832967ffffff",
+        "8638362cfffffff",
         "86383296fffffff",
+        "863832947ffffff",
+        "86383294fffffff",
         "863830597ffffff",
+        "863832967ffffff",
     }

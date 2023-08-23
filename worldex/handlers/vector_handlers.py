@@ -31,10 +31,6 @@ class VectorHandler(BaseHandler):
             return cls(gdf, resolution)
 
     @classmethod
-    def from_geodataframe(cls, gdf: gpd.GeoDataFrame, resolution: Optional[int] = None):
-        return cls(gdf, resolution)
-
-    @classmethod
     def from_csv(cls, file: File, resolution: Optional[int] = None):
         """CSVs are a special case"""
         possible_x = ",".join(POSSIBLE_X)

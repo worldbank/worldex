@@ -22,10 +22,6 @@ class RasterHandler(BaseHandler):
         src = rio.open(file)
         return cls(src, resolution)
 
-    @classmethod
-    def from_rasterio(cls, src, resolution: Optional[int] = None):
-        return cls(src, resolution)
-
     def get_resolution(self) -> int:
         if self.resolution is None:
             return self.default_resolution
@@ -37,7 +33,7 @@ class RasterHandler(BaseHandler):
             self.src.read(1),
             self.src.transform,
             self.get_resolution(),
-            nodata_value=0,
+            nodata_value=self.src.nodata,
             axis_order="xy",
             compact=False,
         )
