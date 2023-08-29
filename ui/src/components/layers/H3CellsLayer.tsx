@@ -5,17 +5,28 @@ import { selectSourceById } from '@carto/react-redux';
 import { RootState } from 'store/store';
 import { Typography } from '@mui/material';
 import { renderToStaticMarkup } from 'react-dom/server';
+import { getH3Resolution } from 'utils/h3';
 
 export const H3_CELLS_LAYER_ID = 'h3CellsLayer';
 
 export default function H3CellsLayer() {
   const { h3CellsLayer } = useSelector((state: RootState) => state.carto.layers);
   const source = useSelector((state) => selectSourceById(state, h3CellsLayer?.source));
-
+  // viewstate zoom is not always in sync with the tile.index.z supplied to getTileData
+  const resolution = useSelector((state: RootState) => getH3Resolution(Math.floor(state.carto.viewState.zoom)));
   if (h3CellsLayer && source) {
     return new TileLayer({
       id: 'h3-layer',
       data: source.data,
+      loadOptions: {
+        fetch: {
+          method: 'POST',
+          body: JSON.stringify({ resolution }),
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        },
+      },
       onHover: (info: any) => {
         if (info?.object) {
           if (info?.object?.index) {
@@ -48,6 +59,9 @@ export default function H3CellsLayer() {
         getLineWidth: 2,
         extruded: false,
       }),
+      updateTriggers: {
+        getTileData: [resolution],
+      },
     });
   }
 }

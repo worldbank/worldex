@@ -1,7 +1,7 @@
 import uvicorn
 from app import settings
 from app.db import get_async_session
-from app.models import HealthCheck
+from app.models import HealthCheck, H3TileRequest
 from app.services import get_h3_resolution
 from fastapi import Depends, FastAPI
 from fastapi.middleware.cors import CORSMiddleware
@@ -34,11 +34,15 @@ async def health_check():
     }
 
 
-@app.get("/h3_tiles/{z}/{x}/{y}")
+@app.post("/h3_tiles/{z}/{x}/{y}")
 async def get_h3_tiles(
-    z: int, x: int, y: int, session: AsyncSession = Depends(get_async_session)
+    payload: H3TileRequest,
+    z: int,
+    x: int,
+    y: int,
+    session: AsyncSession = Depends(get_async_session),
 ):
-    h3_resolution = get_h3_resolution(z)
+    h3_resolution = payload.resolution
     results = await session.execute(
         f"""
         WITH parents AS (
