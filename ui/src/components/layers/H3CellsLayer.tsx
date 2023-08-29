@@ -9,6 +9,8 @@ import { getH3Resolution } from 'utils/h3';
 
 export const H3_CELLS_LAYER_ID = 'h3CellsLayer';
 
+// TODO: explore if it's possile to override {z} in url with
+// h3 resolution to minimize api calls between zooms
 export default function H3CellsLayer() {
   const { h3CellsLayer } = useSelector((state: RootState) => state.carto.layers);
   const source = useSelector((state) => selectSourceById(state, h3CellsLayer?.source));
