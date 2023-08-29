@@ -13,8 +13,8 @@ const ZOOM_H3_RESOLUTION_PAIRS = [
 
 export const getH3Resolution = (currentZoom: number, offset: number = 2): number => {
   if (currentZoom < 4) return 1;
-  const [foundZoom, foundResolution]: [number, number] = ZOOM_H3_RESOLUTION_PAIRS.find(
-    ([z, r]: [number, number]) => (z >= currentZoom + offset),
-  ) || ZOOM_H3_RESOLUTION_PAIRS.at(-1);
+  const [foundZoom, foundResolution]: [number, number] = (ZOOM_H3_RESOLUTION_PAIRS.find(
+    ([z, r]) => (z >= currentZoom + offset),
+  ) || ZOOM_H3_RESOLUTION_PAIRS.at(-1)) as [number, number];
   return foundResolution;
 };
