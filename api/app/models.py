@@ -22,6 +22,10 @@ class HealthCheck(BaseModel):
     version: str
 
 
+class H3TileRequest(BaseModel):
+    resolution: int
+
+
 class Dataset(Base):
     """
     Dataset metadata, including name

@@ -6,3 +6,4 @@ class Settings(BaseSettings):
     project_name: str
     version: str
     db_async_connection: str
+    db_echo_query: bool
