@@ -41,8 +41,8 @@ services:
     build: ./postgis-h3
     volumes:
       - pg_data:/var/lib/postresql/data
-    expose:
-      - 5432
+    ports:
+      - 5432:5432
     environment:
       - POSTGRES_USER=worldex
       - POSTGRES_PASSWORD=postgres
@@ -51,5 +51,14 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
+  pgweb:
+    image: sosedoff/pgweb
+    ports:
+      - 8081:8081
+    environment:
+      - DATABASE_URL=postgres://worldex:postgres@db/worldex?sslmode=disable
+    depends_on:
+      db:
+        condition: service_healthy
 volumes:
   pg_data:
