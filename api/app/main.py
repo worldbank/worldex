@@ -2,9 +2,9 @@ import uvicorn
 from app import settings
 from app.db import get_async_session
 from app.models import HealthCheck, H3TileRequest
-from app.services import get_h3_resolution
 from fastapi import Depends, FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from sqlalchemy import text
 from sqlmodel.ext.asyncio.session import AsyncSession
 
 app = FastAPI(
@@ -42,22 +42,23 @@ async def get_h3_tiles(
     y: int,
     session: AsyncSession = Depends(get_async_session),
 ):
-    h3_resolution = payload.resolution
-    results = await session.execute(
-        f"""
+    query = text(
+        """
         WITH bbox AS (
-            SELECT ST_Transform(ST_TileEnvelope({z}, {x}, {y}), 4326) AS bbox
+            SELECT ST_Transform(ST_TileEnvelope(:z, :x, :y), 4326) AS bbox
         ),
-        main AS (
-            SELECT h3_cell_to_parent(h3_index, {h3_resolution}) parent, COUNT(DISTINCT(dataset_id)) FROM h3_data
+        count AS (
+            SELECT h3_cell_to_parent(h3_index, :resolution) parent, COUNT(DISTINCT(dataset_id)) FROM h3_data
             WHERE ST_WITHIN(
                 h3_index::geometry,
                 (SELECT bbox FROM bbox)
             ) GROUP BY parent
         )
-        SELECT * FROM main WHERE ST_WITHIN(parent::geometry, (SELECT bbox FROM bbox));
+        SELECT * FROM count WHERE ST_WITHIN(parent::geometry, (SELECT bbox FROM bbox));
         """
     )
+    query = query.bindparams(z=z, x=x, y=y, resolution=payload.resolution)
+    results = await session.execute(query)
     return [{"index": row[0], "dataset_count": row[1]} for row in results.fetchall()]
 
 
