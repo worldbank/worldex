@@ -1,6 +1,7 @@
 import { lazy } from 'react';
 import ProtectedRoute from 'components/common/ProtectedRoute';
 import DefaultView from 'components/common/DefaultView';
+import { Navigate, useParams } from 'react-router-dom';
 
 const Main = lazy(
   () => import(/* webpackPrefetch: true */ 'components/views/main/Main'),
