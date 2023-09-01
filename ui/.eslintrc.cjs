@@ -53,6 +53,7 @@ module.exports = {
         "no-underscore-dangle": "warn",
         "react/no-unstable-nested-components": "warn",
         "react/react-in-jsx-scope": "off",
-        "react/require-default-props": "warn"
+        "react/require-default-props": "warn",
+        "react-hooks/exhaustive-deps": "warn",
     }
 };

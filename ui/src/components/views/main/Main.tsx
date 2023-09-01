@@ -1,17 +1,21 @@
-import { lazy, useEffect } from 'react';
-import h3CellsSource from 'data/sources/h3CellsSource';
-import { H3_CELLS_LAYER_ID } from 'components/layers/H3CellsLayer';
-import { useDispatch } from 'react-redux';
+import { AT as atRegex } from 'constants/regex';
 import {
   addLayer,
-  removeLayer,
   addSource,
+  removeLayer,
   removeSource,
 } from '@carto/react-redux';
+import { H3_CELLS_LAYER_ID } from 'components/layers/H3CellsLayer';
+import h3CellsSource from 'data/sources/h3CellsSource';
+import { lazy, useEffect } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
 
-import LazyLoadComponent from 'components/common/LazyLoadComponent';
 import { Grid } from '@mui/material';
 import { styled } from '@mui/material/styles';
+import LazyLoadComponent from 'components/common/LazyLoadComponent';
+import { useMapHooks } from 'components/common/map/useMapHooks';
+import { useParams, useSearchParams } from 'react-router-dom';
+import { RootState } from 'store/store';
 
 const MapContainer = lazy(
   () => import(
@@ -38,7 +42,40 @@ const GridMain = styled(Grid)(({ theme }) => ({
   },
 }));
 
+interface AtArgs {
+  latitude: number;
+  longitude: number;
+  zoom?: number;
+}
+
 export default function Main() {
+  const { debouncedSetViewState } = useMapHooks();
+  const viewState = useSelector((state: RootState) => state.carto.viewState);
+  const { latitude, longitude, zoom } = viewState;
+
+  const [searchParams, setSearchParams] = useSearchParams();
+
+  useEffect(() => {
+    const at = searchParams.get('at');
+    if (at) {
+      const results = atRegex.exec(at ?? '');
+      if (results?.groups != null) {
+        const atArgs: AtArgs = {
+          latitude: parseFloat(results.groups.latitude),
+          longitude: parseFloat(results.groups.longitude),
+        };
+        if (results.groups.zoom) {
+          atArgs.zoom = parseFloat(results.groups.zoom);
+        }
+        debouncedSetViewState({
+          ...viewState,
+          ...atArgs,
+        });
+      }
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   const dispatch = useDispatch();
   useEffect(() => {
     dispatch(addSource(h3CellsSource));
@@ -57,6 +94,10 @@ export default function Main() {
   }, [dispatch]);
 
   // [hygen] Add useEffect
+
+  useEffect(() => {
+    setSearchParams({ at: `${latitude.toFixed(5)},${longitude.toFixed(5)},${zoom.toFixed(2)}z` });
+  }, [setSearchParams, latitude, longitude, zoom]);
 
   return (
     <GridMain container item xs>
