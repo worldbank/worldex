@@ -10,12 +10,6 @@ class H3Index(UserDefinedType):
     def get_col_spec(self):
         return "H3INDEX"
 
-    # def bind_expression(self, bindvalue):
-    #     pass
-
-    # def column_expression(self, col):
-    #     pass
-
 
 class HealthCheck(BaseModel):
     name: str
@@ -24,6 +18,7 @@ class HealthCheck(BaseModel):
 
 class H3TileRequest(BaseModel):
     resolution: int
+    should_count: Optional[bool]
 
 
 class Dataset(Base):

@@ -23,7 +23,10 @@ export default function H3CellsLayer() {
       loadOptions: {
         fetch: {
           method: 'POST',
-          body: JSON.stringify({ resolution }),
+          body: JSON.stringify({
+            resolution,
+            should_count: resolution >= 5,
+          }),
           headers: {
             'Content-Type': 'application/json',
           },
@@ -39,10 +42,15 @@ export default function H3CellsLayer() {
                     Cell ID:
                     {info.object.index}
                   </Typography>
-                  <Typography>
-                    Dataset Count:
-                    {info.object.dataset_count}
-                  </Typography>
+                  {
+                    info.object?.dataset_count
+                    && (
+                      <Typography>
+                        Dataset Count:
+                        {info.object.dataset_count}
+                      </Typography>
+                    )
+                  }
                 </>,
               ),
               style: {},
@@ -56,7 +64,7 @@ export default function H3CellsLayer() {
         stroked: true,
         lineWidthMinPixels: 1,
         getLineColor: [255, 210, 0],
-        getFillColor: (d: any) => [255, 210, 0, d.dataset_count > 0 ? 100 : 0],
+        getFillColor: (d: any) => [255, 210, 0, 100],
         filled: true,
         getLineWidth: 2,
         extruded: false,
