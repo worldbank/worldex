@@ -9,7 +9,7 @@ import { renderToStaticMarkup } from 'react-dom/server';
 export const DATASET_H3_LAYER_ID_PREFIX = 'datasetH3Layer';
 
 export default function DatasetH3Layer(resolution: number, minZoom: number, maxZoom?: number) {
-  const datasetH3Layer = useSelector((state: RootState) => state.carto.layers[`${DATASET_H3_LAYER_ID_PREFIX}_${resolution}`]);
+  const datasetH3Layer = useSelector((state: RootState) => state.carto.layers[`${DATASET_H3_LAYER_ID_PREFIX}${resolution}r`]);
   const source = useSelector((state) => selectSourceById(state, datasetH3Layer?.source));
 
   const zoom = useSelector(((state: RootState) => Math.floor(state.carto.viewState.zoom)));

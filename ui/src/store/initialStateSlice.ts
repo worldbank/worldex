@@ -1,7 +1,5 @@
 import { VOYAGER } from '@carto/react-basemaps';
 import { InitialCarto3State } from '@carto/react-redux';
-// @ts-ignore
-import { API_VERSIONS } from '@deck.gl/carto';
 
 export const initialState: InitialCarto3State = {
   viewState: {

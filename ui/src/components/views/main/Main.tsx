@@ -82,7 +82,7 @@ export default function Main() {
     dispatch(addSource(h3CellsSource));
     ZOOM_H3_RESOLUTION_PAIRS.forEach(([, res]) => dispatch(
       addLayer({
-        id: `${DATASET_H3_LAYER_ID_PREFIX}_${res}`,
+        id: `${DATASET_H3_LAYER_ID_PREFIX}${res}r`,
         source: h3CellsSource.id,
       }),
     ));
