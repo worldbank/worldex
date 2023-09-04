@@ -10,7 +10,6 @@ export const DATASET_H3_LAYER_ID_PREFIX = 'datasetH3Layer';
 
 export default function DatasetH3Layer(resolution: number, minZoom: number, maxZoom?: number) {
   const datasetH3Layer = useSelector((state: RootState) => state.carto.layers[`${DATASET_H3_LAYER_ID_PREFIX}_${resolution}`]);
-  console.log(`${DATASET_H3_LAYER_ID_PREFIX}_res`, datasetH3Layer);
   const source = useSelector((state) => selectSourceById(state, datasetH3Layer?.source));
 
   const zoom = useSelector(((state: RootState) => Math.floor(state.carto.viewState.zoom)));
@@ -20,7 +19,7 @@ export default function DatasetH3Layer(resolution: number, minZoom: number, maxZ
       data: source.data,
       minZoom,
       maxZoom: minZoom,
-      visible: (zoom >= minZoom) && (maxZoom ? zoom <= maxZoom : true),
+      visible: (zoom >= minZoom) && (maxZoom ? zoom < maxZoom : true),
       loadOptions: {
         fetch: {
           method: 'POST',

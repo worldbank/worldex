@@ -1,3 +1,4 @@
+import { ZOOM_H3_RESOLUTION_PAIRS } from 'constants/h3';
 import { AT as atRegex } from 'constants/regex';
 import {
   addLayer,
@@ -5,7 +6,6 @@ import {
   removeLayer,
   removeSource,
 } from '@carto/react-redux';
-import { H3_CELLS_LAYER_ID } from 'components/layers/H3CellsLayer';
 import h3CellsSource from 'data/sources/h3CellsSource';
 import { lazy, useEffect } from 'react';
 import { DATASET_H3_LAYER_ID_PREFIX } from 'components/layers/DatasetH3Layer';
@@ -80,58 +80,14 @@ export default function Main() {
   const dispatch = useDispatch();
   useEffect(() => {
     dispatch(addSource(h3CellsSource));
-    dispatch(
+    ZOOM_H3_RESOLUTION_PAIRS.forEach(([, res]) => dispatch(
       addLayer({
-        id: `${DATASET_H3_LAYER_ID_PREFIX}_1`,
+        id: `${DATASET_H3_LAYER_ID_PREFIX}_${res}`,
         source: h3CellsSource.id,
       }),
-    );
-    dispatch(
-      addLayer({
-        id: `${DATASET_H3_LAYER_ID_PREFIX}_3`,
-        source: h3CellsSource.id,
-      }),
-    );
-    dispatch(
-      addLayer({
-        id: `${DATASET_H3_LAYER_ID_PREFIX}_4`,
-        source: h3CellsSource.id,
-      }),
-    );
-    dispatch(
-      addLayer({
-        id: `${DATASET_H3_LAYER_ID_PREFIX}_5`,
-        source: h3CellsSource.id,
-      }),
-    );
-    dispatch(
-      addLayer({
-        id: `${DATASET_H3_LAYER_ID_PREFIX}_6`,
-        source: h3CellsSource.id,
-      }),
-    );
-    dispatch(
-      addLayer({
-        id: `${DATASET_H3_LAYER_ID_PREFIX}_7`,
-        source: h3CellsSource.id,
-      }),
-    );
-    dispatch(
-      addLayer({
-        id: `${DATASET_H3_LAYER_ID_PREFIX}_8`,
-        source: h3CellsSource.id,
-      }),
-    );
-
-    dispatch(
-      addLayer({
-        id: H3_CELLS_LAYER_ID,
-        source: h3CellsSource.id,
-      }),
-    );
+    ));
 
     return () => {
-      dispatch(removeLayer(H3_CELLS_LAYER_ID));
       dispatch(removeLayer(DATASET_H3_LAYER_ID_PREFIX));
       dispatch(removeSource(h3CellsSource.id));
     };
