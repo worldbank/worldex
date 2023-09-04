@@ -5,6 +5,7 @@ import { Typography } from '@carto/react-ui';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { useMemo } from 'react';
 import { debounce } from '@mui/material';
+import { MAXIMUM_ZOOM, MINIMUM_ZOOM } from 'constants/h3';
 
 const TooltipContent = styled('div')(({ theme }) => ({
   color: theme.palette.common.white,
@@ -34,8 +35,12 @@ export function useMapHooks() {
   let isHovering = false;
 
   const debouncedSetViewState = debounce((viewState: ViewState) => {
+    const newViewState = { ...viewState };
+    if (newViewState.zoom != null) {
+      newViewState.zoom = Math.min(Math.max(newViewState.zoom, MINIMUM_ZOOM), MAXIMUM_ZOOM);
+    }
     // @ts-ignore
-    dispatch(setViewState(viewState))
+    dispatch(setViewState(newViewState));
   }, 100)
 
   const handleViewStateChange = ({ viewState }: { viewState: ViewState }) => {

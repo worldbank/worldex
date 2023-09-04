@@ -17,22 +17,4 @@ export const initialState: InitialCarto3State = {
   googleApiKey: '', // only required when using a Google Basemap,
   googleMapId: '', // only required when using a Google Custom Basemap
   accountsUrl: 'http://app.carto.com/',
-  // oauth: {
-  //   domain: 'auth.carto.com',
-  //   clientId: '', // type here your application clientId
-  //   organizationId: '', // organizationId is required for SSO
-  //   namespace: 'http://app.carto.com/',
-  //   scopes: [
-  //     'read:current_user',
-  //     'update:current_user',
-  //     'read:connections',
-  //     'write:connections',
-  //     'read:maps',
-  //     'write:maps',
-  //     'read:account',
-  //     'admin:account',
-  //   ],
-  //   audience: 'carto-cloud-native-api',
-  //   authorizeEndPoint: 'https://carto.com/oauth2/authorize', // only valid if keeping https://localhost:3000/oauthCallback
-  // },
 };
