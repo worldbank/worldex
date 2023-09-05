@@ -61,7 +61,7 @@ async def get_h3_tiles(
         """
         WITH bbox AS (SELECT ST_Transform(ST_TileEnvelope(:z, :x, :y), 4326) bbox),
         h3s AS (SELECT h3_polygon_to_cells(bbox, :resolution) h3s FROM bbox)
-        SELECT h3s.h3s FROM h3s WHERE EXISTS(SELECT 1 FROM h3_data WHERE ST_WITHIN(h3_index::geometry, h3_cell_to_boundary_geometry(h3s.h3s)));
+        SELECT h3s.h3s FROM h3s WHERE EXISTS(SELECT 1 FROM h3_data WHERE h3_cell_to_parent(h3_index, :resolution) = h3s.h3s);
         """
     )
     query = query.bindparams(z=z, x=x, y=y, resolution=payload.resolution)

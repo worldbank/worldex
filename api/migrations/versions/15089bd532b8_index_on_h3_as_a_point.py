@@ -17,14 +17,12 @@ down_revision: Union[str, None] = "ca8c3968d71d"
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
 
-index_name = "ix_h3_data_h3_index_as_point"
-
 
 def upgrade() -> None:
     op.execute(
-        f"CREATE INDEX {index_name} ON h3_data USING GIST (h3_cell_to_geometry(h3_index));"
+        "CREATE INDEX ix_h3_data_h3_index_as_point ON h3_data USING GIST (h3_cell_to_geometry(h3_index));"
     )
 
 
 def downgrade() -> None:
-    op.execute(f"DROP INDEX {index_name};")
+    op.execute("DROP INDEX ix_h3_data_h3_index_as_point;")
