@@ -25,12 +25,18 @@ index_name_prefix = "ix_h3_data_h3_index_parent"
 def upgrade() -> None:
     op.drop_index(op.f("ix_h3_data_h3_index"), table_name="h3_data")
     for res in h3_resolutions:
-        op.execute(
-            f"CREATE INDEX {index_name_prefix}_{res} on h3_data (h3_cell_to_parent(h3_index, {res}));"
+        op.create_index(
+            op.f(f"{index_name_prefix}_{res}"),
+            "h3_data",
+            [
+                sa.text("h3_cell_to_parent(h3_index, :resolution)").bindparams(
+                    resolution=res
+                )
+            ],
         )
 
 
 def downgrade() -> None:
     op.create_index(op.f("ix_h3_data_h3_index"), "h3_data", ["h3_index"], unique=False)
-    indices = ", ".join(f"{index_name_prefix}_{res}" for res in h3_resolutions)
-    op.execute(f"DROP INDEX {indices};")
+    for res in h3_resolutions:
+        op.drop_index(op.f(f"{index_name_prefix}_{res}"), table_name="h3_data")
