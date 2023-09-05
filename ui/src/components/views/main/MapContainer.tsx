@@ -7,6 +7,7 @@ import {
   Grid, useMediaQuery, Theme, GridProps,
 } from '@mui/material';
 import { styled } from '@mui/material/styles';
+import LocationSearch from 'components/common/LocationSearch';
 
 const Map = lazy(
   () => import(/* webpackChunkName: 'map' */ 'components/common/map/Map'),
@@ -64,6 +65,7 @@ export default function MapContainer() {
       {hidden ? null : (
         <StyledZoomControl showCurrentZoom className="zoomControl" />
       )}
+      <LocationSearch className="absolute top-2.5 left-2.5 p-2" />
     </GridMapWrapper>
   );
 }

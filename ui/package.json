@@ -20,7 +20,7 @@
     "@formatjs/intl-numberformat": "^7.4.3",
     "@formatjs/intl-pluralrules": "^4.3.3",
     "@mapbox/tile-cover": "^3.0.2",
-    "@mui/icons-material": "^5.14.3",
+    "@mui/icons-material": "^5.14.7",
     "@mui/material": "^5.14.3",
     "@nebula.gl/edit-modes": "^1.0.4",
     "@nebula.gl/layers": "^1.0.4",
