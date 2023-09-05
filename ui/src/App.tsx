@@ -10,6 +10,7 @@ import LazyLoadRoute from 'components/common/LazyLoadRoute';
 import { theme } from '@carto/react-ui';
 import routes from './routes';
 import useAuth from './hooks/Auth0';
+import './index.css';
 
 const GridApp = styled(Grid)(() => ({
   flex: '1 1 auto',
