@@ -18,6 +18,7 @@ branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
 
 index_name_prefix = "ix_h3_data_h3_index_parent"
+# for resolutions 5 to 7 we're already aggregating/counting datasets, thus not using h3_cell_to_parent
 h3_resolutions = [1, 2, 3, 4]
 
 
