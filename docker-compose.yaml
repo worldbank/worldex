@@ -40,7 +40,7 @@ services:
   db:
     build: ./postgis-h3
     volumes:
-      - pg_data:/var/lib/postresql/data
+      - pg_data:/var/lib/postgresql/data
     ports:
       - 5432:5432
     environment:
@@ -62,3 +62,4 @@ services:
         condition: service_healthy
 volumes:
   pg_data:
+  poetry_venv:
