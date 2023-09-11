@@ -32,6 +32,7 @@ services:
     env_file:
       - secrets/postgres_password.env
     volumes:
+      - api_venv:/app/.venv
       - ./api:/app
       - /tmp/datasets:/datasets
     depends_on:
@@ -66,3 +67,4 @@ services:
   #       condition: service_healthy
 volumes:
   pg_data:
+  api_venv:

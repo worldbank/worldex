@@ -8,9 +8,26 @@ APIs are implemented to allow users to interact with the indexed data.
 
 # Local Development
 
+First off, install [`just`](https://github.com/casey/just#installation). It is similar to `make` in that it's just a convenient wrapper around some cli commands.
+
+## `cd secrets && poetry install`
+to setup the simple password generator.
+
+## `just generate-db-password`
+to generate a `./secrets/postgres_password.env` which contains its namesake as a lone environment variable. The `api` and `db` services will need this as per the docker compose spec.
+
+If you'd like, you can just create `./secrets/postgres_password.env` yourself with its contents as
+```
+POSTGRES_PASSWORD=<your password>
+```
+with `<your password>` being your choice or from a password manager you might already have. This applies just to your local setup anyway, and we're just not specifying (and git committing) a plaintext password for the database out of principle.
+
 ## `docker compose up`
 
 to run the development environment on local. Simply interrupt to stop the cluster or `docker compose down` if you ran it in detached mode.
+
+## API service
+The api (and database) service are not quite ready yet at this point. See the API [readme](api/README.md) to finish setting them up.
 
 ## Pre-commit
 

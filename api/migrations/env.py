@@ -25,7 +25,6 @@ pwd = os.environ.get("POSTGRES_PASSWORD")
 host = os.environ.get("POSTGRES_HOST")
 db_name = os.environ.get("POSTGRES_DB_NAME")
 postgres_async_connection = f"postgresql+asyncpg://{user}:{pwd}@{host}/{db_name}"
-print(postgres_async_connection)
 
 config.set_main_option(
     "sqlalchemy.url", f"postgresql+asyncpg://{user}:{pwd}@{host}/{db_name}"
