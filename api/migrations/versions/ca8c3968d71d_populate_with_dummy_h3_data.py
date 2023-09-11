@@ -29,7 +29,7 @@ def upgrade() -> None:
     import geopandas as gpd
     import h3pandas  # necessary import for a dataframe to have an h3 attribute
 
-    gdf = gpd.read_file("/data/datagov/crithab_all_layers.zip")
+    gdf = gpd.read_file("/datasets/crithab_all_layers.zip")
     hdf = (
         gdf.get_coordinates()
         .rename(columns={"x": "lng", "y": "lat"})

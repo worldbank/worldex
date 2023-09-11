@@ -5,5 +5,8 @@ from typing import Optional
 class Settings(BaseSettings):
     project_name: str
     version: str
-    db_async_connection: str
-    db_echo_query: bool
+    postgres_host: str
+    postgres_db_name: str
+    postgres_user: str
+    postgres_password: str
+    postgres_echo_query: bool = False

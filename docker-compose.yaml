@@ -1,4 +1,9 @@
 version: "3.9"
+
+x-db-variables: &db-variables
+  POSTGRES_DB_NAME: worldex
+  POSTGRES_USER: worldex
+
 services:
   ui:
     build:
@@ -19,24 +24,21 @@ services:
     command: poetry run uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
     ports:
       - 8000:8000
+    environment:
+      PROJECT_NAME: "Worldex API (local)"
+      VERSION: "0.1.0"
+      POSTGRES_HOST: db
+      <<: *db-variables
+    env_file:
+      - secrets/postgres_password.env
     volumes:
       - ./api:/app
+      - /tmp/datasets:/datasets
     depends_on:
       db:
         condition: service_healthy
     healthcheck:
       test: curl --fail localhost:8000/health_check || exit 1
-  api-venv:
-    build:
-      context: ./api
-    volumes:
-      - ./api:/app
-      - /etc/passwd:/etc/passwd:ro
-      - /etc/group:/etc/group:ro
-    depends_on:
-      api:
-        condition: service_healthy
-    command: chown -R $USER:$USER .venv && echo "chowned .venv"
   db:
     build: ./postgis-h3
     volumes:
@@ -44,22 +46,23 @@ services:
     ports:
       - 5432:5432
     environment:
-      - POSTGRES_USER=worldex
-      - POSTGRES_PASSWORD=postgres
+      <<: *db-variables
+    env_file:
+      - secrets/postgres_password.env
     healthcheck:
       test: ["CMD-SHELL", "pg_isready"]
       interval: 10s
       timeout: 5s
       retries: 5
-  pgweb:
-    image: sosedoff/pgweb
-    ports:
-      - 8081:8081
-    environment:
-      - DATABASE_URL=postgres://worldex:postgres@db/worldex?sslmode=disable
-    depends_on:
-      db:
-        condition: service_healthy
+  # pgweb:
+  #   image: sosedoff/pgweb
+  #   ports:
+  #     - 8081:8081
+  #   environment:
+  #     <<: *db-variables
+  #     DATABASE_URL: postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db/${POSTGRES_DB_NAME}?sslmode=disable
+  #   depends_on:
+  #     db:
+  #       condition: service_healthy
 volumes:
   pg_data:
-  poetry_venv:
