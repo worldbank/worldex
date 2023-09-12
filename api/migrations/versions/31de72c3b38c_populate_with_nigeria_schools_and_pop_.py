@@ -30,7 +30,7 @@ def upgrade() -> None:
     Session = sessionmaker(bind=conn)
 
     with Session() as sess:
-        df_schools = pd.read_parquet("/tmp/nigeria-schools.parquet")
+        df_schools = pd.read_parquet("/datasets/nigeria-schools.parquet")
         dataset_schools = Dataset(name=SCHOOLS_DATASET_NAME)
         sess.add(dataset_schools)
         sess.commit()
@@ -44,7 +44,7 @@ def upgrade() -> None:
             dtype={"h3_index": H3Index},
         )
 
-        df_pop_density = pd.read_parquet("/tmp/nigeria-population-density.parquet")
+        df_pop_density = pd.read_parquet("/datasets/nigeria-population-density.parquet")
         dataset_pop_density = Dataset(name=POP_DENSITY_DATASET_NAME)
         sess.add(dataset_pop_density)
         sess.commit()

@@ -28,6 +28,7 @@ RUN curl -sSL https://install.python-poetry.org | python3 -
 WORKDIR $PYSETUP_PATH
 COPY poetry.lock pyproject.toml ./
 
+# install runtime deps
 RUN poetry install --no-dev
 
 FROM python-base as development
@@ -38,7 +39,6 @@ WORKDIR $PYSETUP_PATH
 COPY --from=builder-base $POETRY_HOME $POETRY_HOME
 COPY --from=builder-base $PYSETUP_PATH $PYSETUP_PATH
 
-RUN apt-get update && apt-get install --no-install-recommends -y curl
 RUN poetry install
 
 WORKDIR /app

@@ -8,9 +8,20 @@ APIs are implemented to allow users to interact with the indexed data.
 
 # Local Development
 
+First off, install [`just`](https://github.com/casey/just#installation). It is similar to `make` in that it's just a convenient wrapper around some cli commands to setup the local environment.
+
+## `cd secrets && poetry install`
+to setup the simple password generator.
+
+## `just create-envs`
+to generate a postgres password and the environment files to be used by the `api`, `db`, and `pgweb` services as per the docker compose spec.
+
 ## `docker compose up`
 
 to run the development environment on local. Simply interrupt to stop the cluster or `docker compose down` if you ran it in detached mode.
+
+## API service
+The api (and database) service are not quite ready yet at this point. See the API [readme](api/README.md) to finish setting them up.
 
 ## Pre-commit
 
