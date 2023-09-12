@@ -1,9 +1,5 @@
 version: "3.9"
 
-x-db-variables: &db-variables
-  POSTGRES_DB_NAME: worldex
-  POSTGRES_USER: worldex
-
 services:
   ui:
     build:
@@ -27,10 +23,8 @@ services:
     environment:
       PROJECT_NAME: "Worldex API (local)"
       VERSION: "0.1.0"
-      POSTGRES_HOST: db
-      <<: *db-variables
     env_file:
-      - secrets/postgres_password.env
+      - secrets/db.env
     volumes:
       - api_venv:/app/.venv
       - ./api:/app
@@ -46,25 +40,22 @@ services:
       - pg_data:/var/lib/postgresql/data
     ports:
       - 5432:5432
-    environment:
-      <<: *db-variables
     env_file:
-      - secrets/postgres_password.env
+      - secrets/db.env
     healthcheck:
       test: ["CMD-SHELL", "pg_isready"]
       interval: 10s
       timeout: 5s
       retries: 5
-  # pgweb:
-  #   image: sosedoff/pgweb
-  #   ports:
-  #     - 8081:8081
-  #   environment:
-  #     <<: *db-variables
-  #     DATABASE_URL: postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db/${POSTGRES_DB_NAME}?sslmode=disable
-  #   depends_on:
-  #     db:
-  #       condition: service_healthy
+  pgweb:
+    image: sosedoff/pgweb
+    ports:
+      - 8081:8081
+    env_file:
+      - ./secrets/pgweb.env
+    depends_on:
+      db:
+        condition: service_healthy
 volumes:
   pg_data:
   api_venv:

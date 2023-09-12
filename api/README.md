@@ -17,7 +17,7 @@ which is exactly what `just migrate-db` does.
 
 # API development
 
-The api codebase currently hot reloads, so any changes you make should reflect immediately. However, the dependencies are baked in on the docker image.
+The api codebase currently hot reloads, so any changes you make should reflect immediately. However, the dependencies are baked in on the docker image. And so...
 
 ## Using poetry
 
