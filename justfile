@@ -9,3 +9,5 @@ migrate-db:
 create-envs:
   just generate-password | xargs -I {} env PASSWORD={} bash -c 'cat ./secrets/db.env.tpl | envsubst'  > ./secrets/db.env
   env $(cat ./secrets/db.env | xargs) envsubst < ./secrets/pgweb.env.tpl > ./secrets/pgweb.env
+  env $(cat ./secrets/db.env | xargs) envsubst < ./secrets/api.env.tpl > ./secrets/api.env
+  awk -F= '{print "export " $0}' ./secrets/api.env > ./api/.envrc

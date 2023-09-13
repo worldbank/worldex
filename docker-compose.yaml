@@ -24,7 +24,7 @@ services:
       PROJECT_NAME: "Worldex API (local)"
       VERSION: "0.1.0"
     env_file:
-      - secrets/db.env
+      - secrets/api.env
     volumes:
       - ./api:/app
       - type: tmpfs

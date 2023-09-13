@@ -20,14 +20,7 @@ config = context.config
 if config.config_file_name is not None:
     fileConfig(config.config_file_name)
 
-user = os.environ.get("POSTGRES_USER")
-pwd = os.environ.get("POSTGRES_PASSWORD")
-host = os.environ.get("POSTGRES_HOST")
-db_name = os.environ.get("POSTGRES_DB_NAME")
-
-config.set_main_option(
-    "sqlalchemy.url", f"postgresql+asyncpg://{user}:{pwd}@{host}/{db_name}"
-)
+config.set_main_option("sqlalchemy.url", os.environ.get("DATABASE_URL"))
 
 # add your model's MetaData object here
 # for 'autogenerate' support
