@@ -21,7 +21,9 @@ The api codebase currently hot reloads, so any changes you make should reflect i
 
 ## Using poetry
 
-You will still use the `poetry` command on your host machine to add/remove dependencies, but the docker image (and container) only interacts with the `poetry.lock` and `pyproject.toml`. Which means you'll have to rebuild the image when dependencies are added.
+You will still use the `poetry` command on your host machine to add/remove dependencies, but the docker image (and container) only interacts with the `poetry.lock` and `pyproject.toml`. Which means you'll have to rebuild the image when dependencies are added using
+
+### `docker compose up api --build`
 
 This is admittedly added toil when compared to ui where the `node_modules` can be bind-mounted and thus `yarn add` commands can be issued from the host.
 

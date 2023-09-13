@@ -2,8 +2,8 @@ from pydantic import BaseModel
 from typing import List, Optional
 from sqlalchemy.types import UserDefinedType
 from app.db import Base
-from sqlalchemy import Column, Integer, String, ForeignKey, UniqueConstraint
-from sqlalchemy.orm import relationship
+from sqlalchemy import Column, Integer, String, ForeignKey, UniqueConstraint, Table
+from sqlalchemy.orm import relationship, Mapped, mapped_column
 
 
 class H3Index(UserDefinedType):
@@ -21,6 +21,14 @@ class H3TileRequest(BaseModel):
     should_count: Optional[bool]
 
 
+dataset_keyword_association_table = Table(
+    "dataset_keyword_association_table",
+    Base.metadata,
+    Column("dataset_id", ForeignKey("datasets.id"), primary_key=True),
+    Column("keyword_id", ForeignKey("keywords.id"), primary_key=True),
+)
+
+
 class Dataset(Base):
     """
     Dataset metadata, including name
@@ -28,10 +36,27 @@ class Dataset(Base):
 
     __tablename__ = "datasets"
 
-    id = Column(Integer, primary_key=True, index=True)
-    name = Column(String, nullable=False)
+    id: Mapped[int] = mapped_column(primary_key=True, index=True)
+    name: Mapped[str] = mapped_column(nullable=False)
 
-    h3_data = relationship("H3Data", backref="dataset", cascade="all, delete-orphan")
+    keywords: Mapped[List["Keyword"]] = relationship(
+        secondary=dataset_keyword_association_table, back_populates="datasets"
+    )
+    h3_data: Mapped[List["H3Data"]] = relationship(
+        backref="dataset", cascade="all, delete-orphan"
+    )
+
+
+class Keyword(Base):
+
+    __tablename__ = "keywords"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    keyword = Column(String, nullable=False)
+
+    datasets: Mapped[List["Dataset"]] = relationship(
+        secondary=dataset_keyword_association_table, back_populates="keywords"
+    )
 
 
 class H3Data(Base):
@@ -41,9 +66,11 @@ class H3Data(Base):
 
     __tablename__ = "h3_data"
 
-    id = Column(Integer, primary_key=True)
+    id: Mapped[int] = mapped_column(primary_key=True)
     h3_index = Column(H3Index, index=True, nullable=False)
 
-    dataset_id = Column(Integer, ForeignKey("datasets.id", ondelete="CASCADE"))
+    dataset_id: Mapped[int] = mapped_column(
+        Integer, ForeignKey("datasets.id", ondelete="CASCADE"), nullable=False
+    )
 
     __table_args__ = (UniqueConstraint("dataset_id", "h3_index"),)

@@ -4,7 +4,7 @@ from sqlalchemy.ext.declarative import declarative_base
 from app import settings
 from sqlalchemy.ext.asyncio import create_async_engine
 from sqlalchemy.orm import sessionmaker
-from sqlmodel.ext.asyncio.session import AsyncSession
+from sqlalchemy.ext.asyncio import AsyncSession
 
 # TODO: turn off echo outside of dev environments
 user = settings.postgres_user
