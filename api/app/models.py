@@ -2,7 +2,18 @@ from pydantic import BaseModel
 from typing import List, Optional
 from sqlalchemy.types import UserDefinedType
 from app.db import Base
-from sqlalchemy import Column, Integer, String, ForeignKey, UniqueConstraint, Table
+from sqlalchemy import (
+    Column,
+    DateTime,
+    Integer,
+    String,
+    ForeignKey,
+    UniqueConstraint,
+    Table,
+    Index,
+    text,
+)
+from sqlalchemy.sql import func
 from sqlalchemy.orm import relationship, Mapped, mapped_column
 
 
@@ -38,6 +49,8 @@ class Dataset(Base):
 
     id: Mapped[int] = mapped_column(primary_key=True, index=True)
     name: Mapped[str] = mapped_column(nullable=False)
+    # source_org: Mapped[str] = mapped_column(nullable=False)
+    # last_fetched: Mapped[DateTime] = mapped_column(server_default=func.now())
 
     keywords: Mapped[List["Keyword"]] = relationship(
         secondary=dataset_keyword_association_table, back_populates="datasets"
@@ -73,4 +86,15 @@ class H3Data(Base):
         Integer, ForeignKey("datasets.id", ondelete="CASCADE"), nullable=False
     )
 
-    __table_args__ = (UniqueConstraint("dataset_id", "h3_index"),)
+    __table_args__ = (
+        UniqueConstraint("dataset_id", "h3_index"),
+        Index(
+            "ix_h3_data_h3_index_as_point",
+            text("h3_cell_to_geometry(h3_index)"),
+            postgresql_using="gist",
+        ),
+        Index("ix_h3_data_h3_index_parent_1", text("h3_cell_to_parent(h3_index, 1)")),
+        Index("ix_h3_data_h3_index_parent_2", text("h3_cell_to_parent(h3_index, 2)")),
+        Index("ix_h3_data_h3_index_parent_3", text("h3_cell_to_parent(h3_index, 3)")),
+        Index("ix_h3_data_h3_index_parent_4", text("h3_cell_to_parent(h3_index, 4)")),
+    )

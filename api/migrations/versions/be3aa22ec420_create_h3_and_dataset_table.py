@@ -31,7 +31,7 @@ def upgrade() -> None:
         "h3_data",
         sa.Column("id", sa.Integer(), nullable=False),
         sa.Column("h3_index", H3Index(), nullable=False),
-        sa.Column("dataset_id", sa.Integer(), nullable=True),
+        sa.Column("dataset_id", sa.Integer(), nullable=False),
         sa.ForeignKeyConstraint(["dataset_id"], ["datasets.id"], ondelete="CASCADE"),
         sa.PrimaryKeyConstraint("id"),
         sa.UniqueConstraint("dataset_id", "h3_index"),
