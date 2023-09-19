@@ -7,12 +7,14 @@ from sqlalchemy.sql import exists
 from app.models import Dataset, H3Index
 import sys
 
-database_connection = os.getenv("DATABASE_URL_SYNC")
+DATABASE_CONNECION = os.getenv("DATABASE_URL_SYNC")
+BUCKET = os.getenv("AWS_BUCKET")
+DATASET_DIR = os.getenv("AWS_DATASET_DIRECTORY")
 DATASET_NAME = "Nigeria Population Density"
 
 
 def main():
-    engine = create_engine(database_connection)
+    engine = create_engine(DATABASE_CONNECION)
 
     s3 = s3fs.S3FileSystem(
         key=os.getenv("AWS_ACCESS_KEY_ID"),
@@ -27,7 +29,7 @@ def main():
             return
         df = (
             pq.ParquetDataset(
-                "s3://worldex-temp-storage/datasets/nigeria-population-density.parquet",
+                f"s3://{BUCKET}/{DATASET_DIR}/nigeria-population-density.parquet",
                 filesystem=s3,
             )
             .read_pandas()

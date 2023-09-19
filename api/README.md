@@ -17,7 +17,17 @@ which is exactly what `just migrate-db` does.
 
 ## Populating the database
 
-You can populate the database with a few datasets from the `api` directory like so
+You can populate the database with a few datasets stored in an aws bucket. To do this, you will have to setup the aws environment variables, including the credentials.
+
+From the project root run
+
+### `just prep-aws-env`
+
+### AWS environment variables
+
+From the project root, run
+
+from the `api` directory like so
 
 ```
 just run-script populate_nigeria_pop_density

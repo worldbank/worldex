@@ -8,14 +8,16 @@ import sys
 import geopandas as gpd
 import h3pandas  # necessary import for a dataframe to have an h3 attribute
 
-database_connection = os.getenv("DATABASE_URL_SYNC")
+DATABASE_CONNECTION = os.getenv("DATABASE_URL_SYNC")
+BUCKET = os.getenv("AWS_BUCKET")
+DATASET_DIR = os.getenv("AWS_DATASET_DIRECTORY")
 DATASET_NAME = "Critical Habitat"
 H3_RESOLUTION = 8
 TABLE = "h3_data"
 
 
 def main():
-    engine = create_engine(database_connection)
+    engine = create_engine(DATABASE_CONNECTION)
 
     s3 = s3fs.S3FileSystem(
         key=os.getenv("AWS_ACCESS_KEY_ID"),
@@ -23,9 +25,7 @@ def main():
         endpoint_url=os.getenv("AWS_ENDPOINT_URL"),
     )
 
-    gdf = gpd.read_file(
-        s3.open("s3://worldex-temp-storage/datasets/crithab_all_layers.zip")
-    )
+    gdf = gpd.read_file(s3.open(f"s3://{BUCKET}/{DATASET_DIR}/crithab_all_layers.zip"))
     hdf = (
         gdf.get_coordinates()
         .rename(columns={"x": "lng", "y": "lat"})
