@@ -25,6 +25,11 @@ class H3Index(UserDefinedType):
         return "H3INDEX"
 
 
+class Box2D(UserDefinedType):
+    def get_col_spec(self):
+        return "box2d"
+
+
 class HealthCheck(BaseModel):
     name: str
     version: str
