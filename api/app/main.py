@@ -5,7 +5,7 @@ from app.models import HealthCheck, H3TileRequest
 from fastapi import Depends, FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy import text
-from sqlmodel.ext.asyncio.session import AsyncSession
+from sqlalchemy.ext.asyncio import AsyncSession
 
 app = FastAPI(
     title=settings.project_name,
@@ -57,8 +57,8 @@ async def get_h3_tiles(
         )
         SELECT * FROM count WHERE ST_WITHIN(parent::geometry, (SELECT bbox FROM bbox));
         """
-        if should_count else
-        """
+        if should_count
+        else """
         WITH bbox AS (SELECT ST_Transform(ST_TileEnvelope(:z, :x, :y), 4326) bbox),
         h3s AS (SELECT h3_polygon_to_cells(bbox, :resolution) h3s FROM bbox)
         SELECT h3s.h3s FROM h3s WHERE EXISTS(SELECT 1 FROM h3_data WHERE h3_cell_to_parent(h3_index, :resolution) = h3s.h3s);
@@ -67,7 +67,10 @@ async def get_h3_tiles(
     query = query.bindparams(z=z, x=x, y=y, resolution=payload.resolution)
     results = await session.execute(query)
     return [
-        {"index": row[0], "dataset_count": row[1]} if should_count else {"index": row[0]} for row in results.fetchall()
+        {"index": row[0], "dataset_count": row[1]}
+        if should_count
+        else {"index": row[0]}
+        for row in results.fetchall()
     ]
 
 

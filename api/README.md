@@ -15,13 +15,41 @@ to run a shell instance on the api service. Afterwards, you can issue your comma
 ### alembic upgrade head
 which is exactly what `just migrate-db` does.
 
+## Populating the database
+
+You can populate the database with a few datasets stored in an aws bucket. To do this, you will have to setup the aws environment variables, including the credentials.
+
+From the project root run
+
+### `just prep-aws-env`
+
+### AWS environment variables
+
+From the project root, run
+
+from the `api` directory like so
+
+```
+just run-script populate_nigeria_pop_density
+```
+
+Or alternatively, run the underlying command
+
+```
+poetry run python -m scripts.populate_nigeria_pop_density
+```
+
+See the `api/scripts` directory for the rest you can run.
+
 # API development
 
 The api codebase currently hot reloads, so any changes you make should reflect immediately. However, the dependencies are baked in on the docker image. And so...
 
 ## Using poetry
 
-You will still use the `poetry` command on your host machine to add/remove dependencies, but the docker image (and container) only interacts with the `poetry.lock` and `pyproject.toml`. Which means you'll have to rebuild the image when dependencies are added.
+You will still use the `poetry` command on your host machine to add/remove dependencies, but the docker image (and container) only interacts with the `poetry.lock` and `pyproject.toml`. Which means you'll have to rebuild the image when dependencies are added using
+
+### `docker compose up api --build`
 
 This is admittedly added toil when compared to ui where the `node_modules` can be bind-mounted and thus `yarn add` commands can be issued from the host.
 

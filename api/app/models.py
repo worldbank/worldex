@@ -2,8 +2,19 @@ from pydantic import BaseModel
 from typing import List, Optional
 from sqlalchemy.types import UserDefinedType
 from app.db import Base
-from sqlalchemy import Column, Integer, String, ForeignKey, UniqueConstraint
-from sqlalchemy.orm import relationship
+from sqlalchemy import (
+    Column,
+    DateTime,
+    Integer,
+    String,
+    ForeignKey,
+    UniqueConstraint,
+    Table,
+    Index,
+    text,
+)
+from sqlalchemy.sql import func
+from sqlalchemy.orm import relationship, Mapped, mapped_column
 
 
 class H3Index(UserDefinedType):
@@ -21,6 +32,14 @@ class H3TileRequest(BaseModel):
     should_count: Optional[bool]
 
 
+dataset_keyword_association_table = Table(
+    "dataset_keyword_association_table",
+    Base.metadata,
+    Column("dataset_id", ForeignKey("datasets.id"), primary_key=True),
+    Column("keyword_id", ForeignKey("keywords.id"), primary_key=True),
+)
+
+
 class Dataset(Base):
     """
     Dataset metadata, including name
@@ -28,10 +47,29 @@ class Dataset(Base):
 
     __tablename__ = "datasets"
 
-    id = Column(Integer, primary_key=True, index=True)
-    name = Column(String, nullable=False)
+    id: Mapped[int] = mapped_column(primary_key=True, index=True)
+    name: Mapped[str] = mapped_column(nullable=False)
+    # source_org: Mapped[str] = mapped_column(nullable=False)
+    # last_fetched: Mapped[DateTime] = mapped_column(server_default=func.now())
 
-    h3_data = relationship("H3Data", backref="dataset", cascade="all, delete-orphan")
+    keywords: Mapped[List["Keyword"]] = relationship(
+        secondary=dataset_keyword_association_table, back_populates="datasets"
+    )
+    h3_data: Mapped[List["H3Data"]] = relationship(
+        backref="dataset", cascade="all, delete-orphan"
+    )
+
+
+class Keyword(Base):
+
+    __tablename__ = "keywords"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    keyword = Column(String, nullable=False)
+
+    datasets: Mapped[List["Dataset"]] = relationship(
+        secondary=dataset_keyword_association_table, back_populates="keywords"
+    )
 
 
 class H3Data(Base):
@@ -41,9 +79,22 @@ class H3Data(Base):
 
     __tablename__ = "h3_data"
 
-    id = Column(Integer, primary_key=True)
+    id: Mapped[int] = mapped_column(primary_key=True)
     h3_index = Column(H3Index, index=True, nullable=False)
 
-    dataset_id = Column(Integer, ForeignKey("datasets.id", ondelete="CASCADE"))
+    dataset_id: Mapped[int] = mapped_column(
+        Integer, ForeignKey("datasets.id", ondelete="CASCADE"), nullable=False
+    )
 
-    __table_args__ = (UniqueConstraint("dataset_id", "h3_index"),)
+    __table_args__ = (
+        UniqueConstraint("dataset_id", "h3_index"),
+        Index(
+            "ix_h3_data_h3_index_as_point",
+            text("h3_cell_to_geometry(h3_index)"),
+            postgresql_using="gist",
+        ),
+        Index("ix_h3_data_h3_index_parent_1", text("h3_cell_to_parent(h3_index, 1)")),
+        Index("ix_h3_data_h3_index_parent_2", text("h3_cell_to_parent(h3_index, 2)")),
+        Index("ix_h3_data_h3_index_parent_3", text("h3_cell_to_parent(h3_index, 3)")),
+        Index("ix_h3_data_h3_index_parent_4", text("h3_cell_to_parent(h3_index, 4)")),
+    )

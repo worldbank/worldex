@@ -13,6 +13,11 @@ First off, install [`just`](https://github.com/casey/just#installation). It is s
 ## `cd secrets && poetry install`
 to setup the simple password generator.
 
+## `just prep-aws-env`
+to setup aws environment variables (including credentials) for dataset seeding later. This will create a `./secrets/aws.env` file. However, without secret manager you'll have to fill the aws key id and secret manually.
+
+Ask the repo maintainers if you're part of the same team.
+
 ## `just create-envs`
 to generate a postgres password and the environment files to be used by the `api`, `db`, and `pgweb` services as per the docker compose spec.
 
