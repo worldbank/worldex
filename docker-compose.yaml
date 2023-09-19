@@ -20,16 +20,13 @@ services:
     command: poetry run uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
     ports:
       - 8000:8000
-    environment:
-      PROJECT_NAME: "Worldex API (local)"
-      VERSION: "0.1.0"
     env_file:
       - secrets/api.env
     volumes:
       - ./api:/app
       - type: tmpfs
         target: /app/.venv/
-      - /tmp/datasets:/datasets
+      - /tmp/datasets:/tmp/datasets
     depends_on:
       db:
         condition: service_healthy
