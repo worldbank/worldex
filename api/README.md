@@ -15,6 +15,22 @@ to run a shell instance on the api service. Afterwards, you can issue your comma
 ### alembic upgrade head
 which is exactly what `just migrate-db` does.
 
+## Populating the database
+
+You can populate the database with a few datasets from the `api` directory like so
+
+```
+just run-script populate_nigeria_pop_density
+```
+
+Or alternatively, run the underlying command
+
+```
+poetry run python -m scripts.populate_nigeria_pop_density
+```
+
+See the `api/scripts` directory for the rest you can run.
+
 # API development
 
 The api codebase currently hot reloads, so any changes you make should reflect immediately. However, the dependencies are baked in on the docker image. And so...

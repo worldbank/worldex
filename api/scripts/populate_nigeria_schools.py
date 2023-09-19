@@ -1,20 +1,18 @@
-#!python
 import os
 import s3fs
+import sys
 import pyarrow.parquet as pq
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
-import sys
+from sqlalchemy.sql import exists
+from app.models import Dataset, H3Index
 
 database_connection = os.getenv("DATABASE_URL_SYNC")
-SCHOOLS_DATASET_NAME = "Nigeria Schools"
-POP_DENSITY_DATASET_NAME = "Nigeria Population Density"
+DATASET_NAME = "Nigeria Schools"
 
 
 def main():
     engine = create_engine(database_connection)
-    sys.path.append(".")
-    from app.models import Dataset, H3Index
 
     s3 = s3fs.S3FileSystem(
         key=os.getenv("AWS_ACCESS_KEY_ID"),
@@ -24,7 +22,10 @@ def main():
 
     Session = sessionmaker(bind=engine)
     with Session() as sess:
-        df_schools = (
+        if sess.query(exists().where(Dataset.name == DATASET_NAME)).scalar():
+            print(f"{DATASET_NAME} dataset already exists")
+            return
+        df = (
             pq.ParquetDataset(
                 "s3://worldex-temp-storage/datasets/nigeria-schools.parquet",
                 filesystem=s3,
@@ -32,12 +33,12 @@ def main():
             .read_pandas()
             .to_pandas()
         )
-        dataset_schools = Dataset(name=SCHOOLS_DATASET_NAME)
-        sess.add(dataset_schools)
+        dataset = Dataset(name=DATASET_NAME)
+        sess.add(dataset)
         sess.commit()
 
-        df_schools["dataset_id"] = dataset_schools.id
-        df_schools.to_sql(
+        df["dataset_id"] = dataset.id
+        df.to_sql(
             "h3_data",
             engine,
             if_exists="append",
