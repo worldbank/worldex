@@ -35,9 +35,12 @@ class VectorHandler(BaseHandler):
     def from_file(cls, file: File, resolution: Optional[int] = None):
         if isinstance(file, str):
             file = Path(file)
-        if file.suffix == ".csv":
-            return cls.from_csv(file, resolution)
-        else:
+        try:
+            if file.suffix == ".csv":
+                return cls.from_csv(file, resolution)
+        except AttributeError:
+            pass
+        finally:
             gdf = gpd.read_file(file)
             return cls(gdf, resolution)
 

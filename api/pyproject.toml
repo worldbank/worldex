@@ -21,6 +21,7 @@ h3pandas = "^0.2.4"
 h3ronpy = "^0.17.4"
 sqlalchemy = "^2.0"
 s3fs = "^2023.9.1"
+worldex = {path = "../worldex", develop = true}
 
 
 [build-system]
