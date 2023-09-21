@@ -6,6 +6,8 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.sql import exists
 from app.models import Dataset, H3Index
+from datetime import datetime
+import pytz
 from worldex.handlers.vector_handlers import VectorHandler
 
 DATABASE_CONNECTION = os.getenv("DATABASE_URL_SYNC")
@@ -30,9 +32,13 @@ def main():
         with s3.open(
             f"s3://{BUCKET}/{DATASET_DIR}/nigeria-schools.zip"
         ) as schools_file:
+            try:
+                last_fetched = schools_file._details["LastModified"]
+            except:
+                last_fetched = datetime.now(pytz.utc)
             handler = VectorHandler.from_file(schools_file)
             h3_indices = handler.h3index()
-            dataset = Dataset(name=DATASET_NAME)
+            dataset = Dataset(name=DATASET_NAME, last_fetched=last_fetched)
             sess.add(dataset)
             sess.commit()
 

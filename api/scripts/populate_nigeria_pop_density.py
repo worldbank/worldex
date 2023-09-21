@@ -7,6 +7,8 @@ from sqlalchemy.orm import sessionmaker
 from sqlalchemy.sql import exists
 from app.models import Dataset, H3Index
 import sys
+from datetime import datetime
+import pytz
 from worldex.handlers.raster_handlers import RasterHandler
 
 DATABASE_CONNECION = os.getenv("DATABASE_URL_SYNC")
@@ -32,14 +34,17 @@ def main():
         with s3.open(
             f"s3://{BUCKET}/{DATASET_DIR}/nigeria-population.tif"
         ) as population_file:
+            try:
+                last_fetched = population_file._details["LastModified"]
+            except:
+                last_fetched = datetime.now(pytz.utc)
             handler = RasterHandler.from_file(population_file)
             h3_indices = handler.h3index()
-            dataset = Dataset(name=DATASET_NAME)
+            dataset = Dataset(name=DATASET_NAME, last_fetched=last_fetched)
             sess.add(dataset)
             sess.commit()
 
             hdf = pd.DataFrame({"h3_index": h3_indices, "dataset_id": dataset.id})
-            print(hdf)
             hdf.to_sql(
                 "h3_data",
                 engine,
