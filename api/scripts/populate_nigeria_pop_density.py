@@ -1,11 +1,13 @@
 import os
+import logging
+import pandas as pd
 import s3fs
-import pyarrow.parquet as pq
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.sql import exists
 from app.models import Dataset, H3Index
 import sys
+from worldex.handlers.raster_handlers import RasterHandler
 
 DATABASE_CONNECION = os.getenv("DATABASE_URL_SYNC")
 BUCKET = os.getenv("AWS_BUCKET")
@@ -27,27 +29,25 @@ def main():
         if sess.query(exists().where(Dataset.name == DATASET_NAME)).scalar():
             print(f"{DATASET_NAME} dataset already exists")
             return
-        df = (
-            pq.ParquetDataset(
-                f"s3://{BUCKET}/{DATASET_DIR}/nigeria-population-density.parquet",
-                filesystem=s3,
-            )
-            .read_pandas()
-            .to_pandas()
-        )
-        dataset = Dataset(name=DATASET_NAME)
-        sess.add(dataset)
-        sess.commit()
+        with s3.open(
+            f"s3://{BUCKET}/{DATASET_DIR}/nigeria-population.tif"
+        ) as population_file:
+            handler = RasterHandler.from_file(population_file)
+            h3_indices = handler.h3index()
+            dataset = Dataset(name=DATASET_NAME)
+            sess.add(dataset)
+            sess.commit()
 
-        df["dataset_id"] = dataset.id
-        df.to_sql(
-            "h3_data",
-            engine,
-            if_exists="append",
-            index=False,
-            dtype={"h3_index": H3Index},
-        )
-        print(f"{DATASET_NAME} dataset loaded")
+            hdf = pd.DataFrame({"h3_index": h3_indices, "dataset_id": dataset.id})
+            print(hdf)
+            hdf.to_sql(
+                "h3_data",
+                engine,
+                if_exists="append",
+                index=False,
+                dtype={"h3_index": H3Index},
+            )
+            print(f"{DATASET_NAME} dataset loaded")
 
 
 if __name__ == "__main__":

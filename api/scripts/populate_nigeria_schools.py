@@ -46,7 +46,6 @@ def main():
                 dtype={"h3_index": H3Index},
             )
             print(f"{DATASET_NAME} dataset loaded")
-        return
 
 
 if __name__ == "__main__":
