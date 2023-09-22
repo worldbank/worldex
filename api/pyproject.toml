@@ -23,6 +23,7 @@ sqlalchemy = "^2.0"
 s3fs = "^2023.9.1"
 worldex = {path = "../worldex", develop = true}
 pytz = "^2023.3.post1"
+geoalchemy2 = "^0.14.1"
 
 
 [build-system]

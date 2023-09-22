@@ -17,16 +17,12 @@ from sqlalchemy import (
 from sqlalchemy.sql import func
 from sqlalchemy.orm import relationship, Mapped, mapped_column
 from sqlalchemy.dialects.postgresql import JSONB, ARRAY
+from geoalchemy2.types import Geometry
 
 
 class H3Index(UserDefinedType):
     def get_col_spec(self):
         return "H3INDEX"
-
-
-class Box2D(UserDefinedType):
-    def get_col_spec(self):
-        return "box2d"
 
 
 class HealthCheck(BaseModel):
@@ -65,7 +61,7 @@ class Dataset(Base):
     data_format: Mapped[str] = mapped_column(nullable=False)
     projection: Mapped[str] = mapped_column(default="epsg:4326", nullable=False)
     properties = Column(JSONB, nullable=True)
-    bbox = Column(Box2D, nullable=True)
+    bbox = Column(Geometry(), nullable=False)
     keywords: Mapped[List["Keyword"]] = relationship(
         secondary=dataset_keyword_association_table, back_populates="datasets"
     )
