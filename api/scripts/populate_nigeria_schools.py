@@ -30,7 +30,7 @@ def main():
             print(f"{DATASET_NAME} dataset already exists")
             return
         with s3.open(
-            f"s3://{BUCKET}/{DATASET_DIR}/nigeria-schools.zip"
+            url := f"s3://{BUCKET}/{DATASET_DIR}/nigeria-schools.zip"
         ) as schools_file:
             try:
                 last_fetched = schools_file._details["LastModified"]
@@ -38,7 +38,17 @@ def main():
                 last_fetched = datetime.now(pytz.utc)
             handler = VectorHandler.from_file(schools_file)
             h3_indices = handler.h3index()
-            dataset = Dataset(name=DATASET_NAME, last_fetched=last_fetched)
+            dataset = Dataset(
+                name=DATASET_NAME,
+                last_fetched=last_fetched,
+                source_org="Humanitarian Data Exchange",
+                data_format="shp",
+                files=[
+                    url,
+                    "https://data.humdata.org/dataset/ec228c18-8edc-4f3c-94c9-a6b946af7229/resource/8dcb7188-16f2-447a-b006-1895e450bf11/download/nigeria_-_schools.zip'",
+                ],
+                description="Schools and educational institutions in Nigeria",
+            )
             sess.add(dataset)
             sess.commit()
 

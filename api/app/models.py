@@ -16,7 +16,7 @@ from sqlalchemy import (
 )
 from sqlalchemy.sql import func
 from sqlalchemy.orm import relationship, Mapped, mapped_column
-from sqlalchemy.dialects.postgresql import JSONB
+from sqlalchemy.dialects.postgresql import JSONB, ARRAY
 
 
 class H3Index(UserDefinedType):
@@ -58,11 +58,12 @@ class Dataset(Base):
     name: Mapped[str] = mapped_column(nullable=False)
     source_org: Mapped[str] = mapped_column(nullable=True)
     last_fetched: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True), server_default=func.now()
+        DateTime(timezone=True), server_default=func.now(), nullable=False
     )
+    files: Mapped[list[str]] = mapped_column(ARRAY(String), nullable=True, default=[])
     description: Mapped[str] = mapped_column(nullable=True)
-    data_format: Mapped[str] = mapped_column(nullable=True)
-    projection: Mapped[str] = mapped_column(default="epsg:4326", nullable=True)
+    data_format: Mapped[str] = mapped_column(nullable=False)
+    projection: Mapped[str] = mapped_column(default="epsg:4326", nullable=False)
     properties = Column(JSONB, nullable=True)
     bbox = Column(Box2D, nullable=True)
     keywords: Mapped[List["Keyword"]] = relationship(
