@@ -5,6 +5,7 @@ import { setViewState } from '@carto/react-redux';
 import { useDispatch, useSelector } from "react-redux";
 import { RootState } from "store/store";
 import { WebMercatorViewport } from '@deck.gl/core/typed';
+import { setQuery as setLocationQuery, setResponse as setLocationResponse } from 'store/locationSlice';
 
 const searchButton = ({isLoading, handleSubmit}: {isLoading: boolean, handleSubmit: React.MouseEventHandler<HTMLButtonElement>}) =>
   <div className="flex justify-center items-center w-[2em] mr-[-8px]">
@@ -19,6 +20,8 @@ const searchButton = ({isLoading, handleSubmit}: {isLoading: boolean, handleSubm
 
 const LocationSearch = ({ className }: { className?: string }) => {
   const [query, setQuery] = useState("");
+  // const query = useSelector((state: RootState) => state.location.query);
+
   const [isLoading, setIsLoading] = useState(false);
   const [isError, setIsError] = useState(false);
   const dispatch = useDispatch();
@@ -30,7 +33,7 @@ const LocationSearch = ({ className }: { className?: string }) => {
     const { width, height } = viewState;
     const encodedQuery = new URLSearchParams(query).toString()
     const resp = await fetch(
-      `https://nominatim.openstreetmap.org/search?q=${encodedQuery}&format=json&limit=1`,
+      `https://nominatim.openstreetmap.org/search?q=${encodedQuery}&format=json&limit=1&polygon_geojson=1`,
     );
     const results = await resp.json();
     if (results == null || results.length === 0) {
@@ -41,7 +44,7 @@ const LocationSearch = ({ className }: { className?: string }) => {
       const { latitude, longitude, zoom } = new WebMercatorViewport({ width, height }).fitBounds(
           [[parseFloat(minLon), parseFloat(minLat)], [parseFloat(maxLon), parseFloat(maxLat)]], { padding: 200 }
       );
-      setQuery(result.display_name || query);
+      dispatch(setLocationResponse(result));
       // @ts-ignore
       dispatch(setViewState({...viewState, latitude, longitude, zoom }));
     }

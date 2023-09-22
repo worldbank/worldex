@@ -8,6 +8,7 @@ import {
   Store,
 } from 'redux';
 import appSlice from './appSlice';
+import locationSlice from './locationSlice';
 
 interface AppStore extends Store {
   asyncReducers: ReducersMapObject;
@@ -17,6 +18,7 @@ interface AppStore extends Store {
 // Define the Reducers that will always be present in the application
 const staticReducers = {
   app: appSlice,
+  location: locationSlice,
 };
 
 const store: AppStore = {
