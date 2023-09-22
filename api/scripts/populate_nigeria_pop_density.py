@@ -28,9 +28,9 @@ def main():
 
     Session = sessionmaker(bind=engine)
     with Session() as sess:
-        # if sess.query(exists().where(Dataset.name == DATASET_NAME)).scalar():
-        #     print(f"{DATASET_NAME} dataset already exists")
-        #     return
+        if sess.query(exists().where(Dataset.name == DATASET_NAME)).scalar():
+            print(f"{DATASET_NAME} dataset already exists")
+            return
         with s3.open(
             url := f"s3://{BUCKET}/{DATASET_DIR}/nigeria-population.tif"
         ) as population_file:
