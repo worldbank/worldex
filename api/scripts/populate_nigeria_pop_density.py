@@ -55,15 +55,15 @@ def main():
             sess.add(dataset)
             sess.commit()
 
-            # hdf = pd.DataFrame({"h3_index": h3_indices, "dataset_id": dataset.id})
-            # hdf.to_sql(
-            #     "h3_data",
-            #     engine,
-            #     if_exists="append",
-            #     index=False,
-            #     dtype={"h3_index": H3Index},
-            # )
-            # print(f"{DATASET_NAME} dataset loaded")
+            hdf = pd.DataFrame({"h3_index": h3_indices, "dataset_id": dataset.id})
+            hdf.to_sql(
+                "h3_data",
+                engine,
+                if_exists="append",
+                index=False,
+                dtype={"h3_index": H3Index},
+            )
+            print(f"{DATASET_NAME} dataset loaded")
 
 
 if __name__ == "__main__":
