@@ -28,9 +28,9 @@ def main():
 
     Session = sessionmaker(bind=engine)
     with Session() as sess:
-        if sess.query(exists().where(Dataset.name == DATASET_NAME)).scalar():
-            print(f"{DATASET_NAME} dataset already exists")
-            return
+        # if sess.query(exists().where(Dataset.name == DATASET_NAME)).scalar():
+        #     print(f"{DATASET_NAME} dataset already exists")
+        #     return
         with s3.open(
             url := f"s3://{BUCKET}/{DATASET_DIR}/nigeria-population.tif"
         ) as population_file:
@@ -55,15 +55,15 @@ def main():
             sess.add(dataset)
             sess.commit()
 
-            hdf = pd.DataFrame({"h3_index": h3_indices, "dataset_id": dataset.id})
-            hdf.to_sql(
-                "h3_data",
-                engine,
-                if_exists="append",
-                index=False,
-                dtype={"h3_index": H3Index},
-            )
-            print(f"{DATASET_NAME} dataset loaded")
+            # hdf = pd.DataFrame({"h3_index": h3_indices, "dataset_id": dataset.id})
+            # hdf.to_sql(
+            #     "h3_data",
+            #     engine,
+            #     if_exists="append",
+            #     index=False,
+            #     dtype={"h3_index": H3Index},
+            # )
+            # print(f"{DATASET_NAME} dataset loaded")
 
 
 if __name__ == "__main__":
