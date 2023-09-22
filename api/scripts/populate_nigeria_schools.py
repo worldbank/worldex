@@ -31,7 +31,7 @@ def main():
             print(f"{DATASET_NAME} dataset already exists")
             return
         with s3.open(
-            f"s3://{BUCKET}/{DATASET_DIR}/nigeria-schools.zip"
+            url := f"s3://{BUCKET}/{DATASET_DIR}/nigeria-schools.zip"
         ) as schools_file:
             try:
                 last_fetched = schools_file._details["LastModified"]

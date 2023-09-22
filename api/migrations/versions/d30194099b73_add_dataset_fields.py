@@ -1,8 +1,8 @@
-"""Create additional dataset fields
+"""Add dataset fields
 
-Revision ID: 5e4a6e3fd819
+Revision ID: d30194099b73
 Revises: d93f2a583709
-Create Date: 2023-09-19 15:46:08.001571
+Create Date: 2023-09-21 14:51:32.150568
 
 """
 from typing import Sequence, Union
@@ -13,7 +13,7 @@ from sqlalchemy.dialects import postgresql
 from app.models import Box2D
 
 # revision identifiers, used by Alembic.
-revision: str = "5e4a6e3fd819"
+revision: str = "d30194099b73"
 down_revision: Union[str, None] = "d93f2a583709"
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
@@ -31,9 +31,12 @@ def upgrade() -> None:
             nullable=False,
         ),
     )
+    op.add_column(
+        "datasets", sa.Column("files", postgresql.ARRAY(sa.String()), nullable=True)
+    )
     op.add_column("datasets", sa.Column("description", sa.String(), nullable=True))
-    op.add_column("datasets", sa.Column("data_format", sa.String(), nullable=True))
-    op.add_column("datasets", sa.Column("projection", sa.String(), nullable=True))
+    op.add_column("datasets", sa.Column("data_format", sa.String(), nullable=False))
+    op.add_column("datasets", sa.Column("projection", sa.String(), nullable=False))
     op.add_column(
         "datasets",
         sa.Column("properties", postgresql.JSONB(astext_type=sa.Text()), nullable=True),
@@ -49,6 +52,7 @@ def downgrade() -> None:
     op.drop_column("datasets", "projection")
     op.drop_column("datasets", "data_format")
     op.drop_column("datasets", "description")
+    op.drop_column("datasets", "files")
     op.drop_column("datasets", "last_fetched")
     op.drop_column("datasets", "source_org")
     # ### end Alembic commands ###
