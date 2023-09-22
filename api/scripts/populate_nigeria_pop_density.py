@@ -1,6 +1,6 @@
 import os
-import logging
 import pandas as pd
+import shapely
 import s3fs
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
@@ -39,31 +39,33 @@ def main():
             except:
                 last_fetched = datetime.now(pytz.utc)
             handler = RasterHandler.from_file(population_file)
-            print(handler.gdf.total_bounds)
-            # h3_indices = handler.h3index()
-            # dataset = Dataset(
-            #     name=DATASET_NAME,
-            #     last_fetched=last_fetched,
-            #     source_org="WorldPop",
-            #     data_format="tif",
-            #     files=[
-            #         url,
-            #         "https://data.worldpop.org/GIS/Population_Density/Global_2000_2020_1km/2020/NGA/nga_pd_2020_1km.tif",
-            #     ],
-            #     description="Population density data in Nigeria for the year 2020, with a spatial resolution of 1 kilometer",
-            # )
-            # sess.add(dataset)
-            # sess.commit()
+            bbox = handler.get_bounding_box()
+            bbox = shapely.geometry.box(*tuple(bbox), ccw=True)
+            h3_indices = handler.h3index()
+            dataset = Dataset(
+                name=DATASET_NAME,
+                last_fetched=last_fetched,
+                source_org="WorldPop",
+                data_format="tif",
+                files=[
+                    url,
+                    "https://data.worldpop.org/GIS/Population_Density/Global_2000_2020_1km/2020/NGA/nga_pd_2020_1km.tif",
+                ],
+                description="Population density data in Nigeria for the year 2020, with a spatial resolution of 1 kilometer",
+                bbox=bbox.wkt,
+            )
+            sess.add(dataset)
+            sess.commit()
 
-            # hdf = pd.DataFrame({"h3_index": h3_indices, "dataset_id": dataset.id})
-            # hdf.to_sql(
-            #     "h3_data",
-            #     engine,
-            #     if_exists="append",
-            #     index=False,
-            #     dtype={"h3_index": H3Index},
-            # )
-            # print(f"{DATASET_NAME} dataset loaded")
+            hdf = pd.DataFrame({"h3_index": h3_indices, "dataset_id": dataset.id})
+            hdf.to_sql(
+                "h3_data",
+                engine,
+                if_exists="append",
+                index=False,
+                dtype={"h3_index": H3Index},
+            )
+            print(f"{DATASET_NAME} dataset loaded")
 
 
 if __name__ == "__main__":

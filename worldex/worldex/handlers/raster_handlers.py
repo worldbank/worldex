@@ -38,3 +38,6 @@ class RasterHandler(BaseHandler):
             compact=False,
         )
         return cells_to_string(h3_df.cell.unique()).tolist()
+
+    def get_bounding_box(self):
+        return self.src.bounds
