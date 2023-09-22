@@ -1,4 +1,4 @@
-from typing import List, Optional
+from typing import List, Optional, Tuple
 
 import rasterio as rio
 from h3ronpy.arrow import cells_to_string
@@ -39,5 +39,6 @@ class RasterHandler(BaseHandler):
         )
         return cells_to_string(h3_df.cell.unique()).tolist()
 
-    def get_bounding_box(self):
-        return self.src.bounds
+    @property
+    def bbox(self) -> Tuple[float, float, float, float]:
+        return tuple(self.src.bounds)

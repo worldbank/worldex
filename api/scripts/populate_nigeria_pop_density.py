@@ -28,9 +28,9 @@ def main():
 
     Session = sessionmaker(bind=engine)
     with Session() as sess:
-        # if sess.query(exists().where(Dataset.name == DATASET_NAME)).scalar():
-        #     print(f"{DATASET_NAME} dataset already exists")
-        #     return
+        if sess.query(exists().where(Dataset.name == DATASET_NAME)).scalar():
+            print(f"{DATASET_NAME} dataset already exists")
+            return
         with s3.open(
             url := f"s3://{BUCKET}/{DATASET_DIR}/nigeria-population.tif"
         ) as population_file:
@@ -39,8 +39,7 @@ def main():
             except:
                 last_fetched = datetime.now(pytz.utc)
             handler = RasterHandler.from_file(population_file)
-            bbox = handler.get_bounding_box()
-            bbox = shapely.geometry.box(*tuple(bbox), ccw=True)
+            bbox = shapely.geometry.box(*tuple(handler.bbox), ccw=True)
             h3_indices = handler.h3index()
             dataset = Dataset(
                 name=DATASET_NAME,

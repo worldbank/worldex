@@ -1,6 +1,5 @@
 from pathlib import Path
 from typing import List, Optional, Tuple
-import numpy as np
 
 import geopandas as gpd
 from h3ronpy.arrow import cells_to_string
@@ -79,6 +78,6 @@ class VectorHandler(BaseHandler):
         ).to_pylist()
         return cells
 
-    def get_bounding_box(self) -> np.ndarray:
-        return self.gdf.total_bounds
-        # return tuple(p.item() for p in self.gdf.total_bounds)
+    @property
+    def bbox(self) -> Tuple[float, float, float, float]:
+        return tuple(self.gdf.total_bounds)

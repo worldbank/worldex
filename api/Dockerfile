@@ -29,7 +29,7 @@ WORKDIR $PYSETUP_PATH
 COPY poetry.lock pyproject.toml ./
 
 # install runtime deps
-RUN poetry install --no-dev
+RUN poetry install --only main
 
 FROM python-base as development
 ENV FASTAPI_ENV=development

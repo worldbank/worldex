@@ -38,7 +38,7 @@ def main():
             except:
                 last_fetched = datetime.now(pytz.utc)
             handler = VectorHandler.from_file(schools_file)
-            bbox = shapely.geometry.box(*handler.get_bounding_box(), ccw=True)
+            bbox = shapely.geometry.box(*handler.bbox, ccw=True)
             dataset = Dataset(
                 name=DATASET_NAME,
                 last_fetched=last_fetched,
