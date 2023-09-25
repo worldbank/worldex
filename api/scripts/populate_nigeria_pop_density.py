@@ -32,7 +32,7 @@ def main():
             print(f"{DATASET_NAME} dataset already exists")
             return
         with s3.open(
-            url := f"s3://{BUCKET}/{DATASET_DIR}/nigeria-population.tif"
+            f"s3://{BUCKET}/{DATASET_DIR}/nigeria-population.tif"
         ) as population_file:
             try:
                 last_fetched = population_file._details["LastModified"]
@@ -47,7 +47,6 @@ def main():
                 source_org="WorldPop",
                 data_format="tif",
                 files=[
-                    url,
                     "https://data.worldpop.org/GIS/Population_Density/Global_2000_2020_1km/2020/NGA/nga_pd_2020_1km.tif",
                 ],
                 description="Population density data in Nigeria for the year 2020, with a spatial resolution of 1 kilometer",
