@@ -1,18 +1,17 @@
 import { CircularProgress, IconButton, Paper, TextField } from "@mui/material"
 import SearchIcon from '@mui/icons-material/Search';
 import ClearIcon from '@mui/icons-material/Clear';
-import React, { MouseEventHandler, useState } from "react";
+import React, { useState } from "react";
 import { setViewState } from '@carto/react-redux';
 import { useDispatch, useSelector } from "react-redux";
 import { RootState } from "store/store";
 import { WebMercatorViewport } from '@deck.gl/core/typed';
-import { setQuery as setLocationQuery, setResponse as setLocationResponse } from 'store/locationSlice';
+import { setResponse as setLocationResponse } from 'store/locationSlice';
 
 const SearchButton = ({isLoading}: {isLoading: boolean}) =>
   <div className="flex justify-center items-center w-[2em] mr-[-8px]">
     {
       isLoading ? <CircularProgress size="1em" /> : (
-        // @ts-ignore
         <IconButton aria-label="search" type="submit">
           <SearchIcon />
         </IconButton>
@@ -62,6 +61,7 @@ const LocationSearch = ({ className }: { className?: string }) => {
 
   const clearLocation = () => {
     setQuery("");
+    setIsError(false);
     dispatch(setLocationResponse(null));
   }
 
