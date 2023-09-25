@@ -8,6 +8,7 @@ import {
 } from '@carto/react-redux';
 import h3CellsSource from 'data/sources/h3CellsSource';
 import { lazy, useEffect } from 'react';
+import { SEARCH_LAYER_ID } from 'components/layers/SearchLayer';
 import { DATASET_H3_LAYER_ID_PREFIX } from 'components/layers/DatasetH3Layer';
 import { useDispatch, useSelector } from 'react-redux';
 
@@ -80,6 +81,12 @@ export default function Main() {
   const dispatch = useDispatch();
   useEffect(() => {
     dispatch(addSource(h3CellsSource));
+    dispatch(
+      addLayer({
+        id: SEARCH_LAYER_ID,
+        // source: h3CellsSource.id,
+      }),
+    );
     ZOOM_H3_RESOLUTION_PAIRS.forEach(([, res]) => dispatch(
       addLayer({
         id: `${DATASET_H3_LAYER_ID_PREFIX}${res}r`,
@@ -89,6 +96,7 @@ export default function Main() {
 
     return () => {
       dispatch(removeLayer(DATASET_H3_LAYER_ID_PREFIX));
+      dispatch(removeLayer(SEARCH_LAYER_ID));
       dispatch(removeSource(h3CellsSource.id));
     };
   }, [dispatch]);
