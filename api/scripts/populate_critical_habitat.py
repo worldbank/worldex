@@ -41,6 +41,7 @@ def main():
             except:
                 last_fetched = datetime.now(pytz.utc)
                 
+            gdf = gpd.read_file(crithab_file)
             dataset = Dataset(
                 name=DATASET_NAME,
                 last_fetched=last_fetched,
@@ -53,7 +54,6 @@ def main():
             sess.commit()
 
             # TODO: replace with handler code
-            gdf = gpd.read_file(crithab_file)
             hdf = (
                 gdf.get_coordinates()
                 .rename(columns={"x": "lng", "y": "lat"})

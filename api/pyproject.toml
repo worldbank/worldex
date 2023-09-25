@@ -21,10 +21,14 @@ h3pandas = "^0.2.4"
 h3ronpy = "^0.17.4"
 sqlalchemy = "^2.0"
 s3fs = "^2023.9.1"
-worldex = {path = "../worldex", develop = true}
 pytz = "^2023.3.post1"
 geoalchemy2 = "^0.14.1"
 
+[tool.poetry.group.handlers]
+optional = true
+
+[tool.poetry.group.handlers.dependencies]
+worldex = {path = "../worldex", develop = true}
 
 [build-system]
 requires = ["poetry-core"]
