@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import List, Optional
+from typing import List, Optional, Tuple
 
 import geopandas as gpd
 from h3ronpy.arrow import cells_to_string
@@ -35,9 +35,12 @@ class VectorHandler(BaseHandler):
     def from_file(cls, file: File, resolution: Optional[int] = None):
         if isinstance(file, str):
             file = Path(file)
-        if file.suffix == ".csv":
-            return cls.from_csv(file, resolution)
-        else:
+        try:
+            if file.suffix == ".csv":
+                return cls.from_csv(file, resolution)
+        except AttributeError:
+            pass
+        finally:
             gdf = gpd.read_file(file)
             return cls(gdf, resolution)
 
@@ -74,3 +77,7 @@ class VectorHandler(BaseHandler):
             .unique()
         ).to_pylist()
         return cells
+
+    @property
+    def bbox(self) -> Tuple[float, float, float, float]:
+        return tuple(self.gdf.total_bounds)

@@ -1,3 +1,4 @@
+from datetime import datetime
 from pydantic import BaseModel
 from typing import List, Optional
 from sqlalchemy.types import UserDefinedType
@@ -15,6 +16,8 @@ from sqlalchemy import (
 )
 from sqlalchemy.sql import func
 from sqlalchemy.orm import relationship, Mapped, mapped_column
+from sqlalchemy.dialects.postgresql import JSONB, ARRAY
+from geoalchemy2.types import Geometry
 
 
 class H3Index(UserDefinedType):
@@ -49,9 +52,16 @@ class Dataset(Base):
 
     id: Mapped[int] = mapped_column(primary_key=True, index=True)
     name: Mapped[str] = mapped_column(nullable=False)
-    # source_org: Mapped[str] = mapped_column(nullable=False)
-    # last_fetched: Mapped[DateTime] = mapped_column(server_default=func.now())
-
+    source_org: Mapped[str] = mapped_column(nullable=True)
+    last_fetched: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), nullable=False
+    )
+    files: Mapped[list[str]] = mapped_column(ARRAY(String), nullable=True, default=[])
+    description: Mapped[str] = mapped_column(nullable=True)
+    data_format: Mapped[str] = mapped_column(nullable=False)
+    projection: Mapped[str] = mapped_column(default="epsg:4326", nullable=False)
+    properties = Column(JSONB, nullable=True)
+    bbox = Column(Geometry(), nullable=False)
     keywords: Mapped[List["Keyword"]] = relationship(
         secondary=dataset_keyword_association_table, back_populates="datasets"
     )

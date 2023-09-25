@@ -2,6 +2,10 @@ This FastAPI app runs on Python 3.10.11
 
 All services are currently running on a docker compose cluster which has some implications with the development experience on the api backend (the react frontend, not so much).
 
+#  `poetry install --with handlers`
+
+to create a poetry-managed virtualenv on your host machine. This is recommended so you don't have to `docker exec` a shell inside the fastapi container every time you want to issue, say, `alembic` commands. 
+
 # Database migrations
 
 Right now, the postgis database is being populated with a few datasets via alembic migration. We are planning to decouple this eventually as standalone scripts, but for now you will need the [Nigeria schools and population](https://github.com/avsolatorio/worldex/files/12481827/nigeria-schools-and-population-density.zip) and Critical Habitat (download link to follow or ask any of the repo maintainers) datasets.
@@ -17,17 +21,7 @@ which is exactly what `just migrate-db` does.
 
 ## Populating the database
 
-You can populate the database with a few datasets stored in an aws bucket. To do this, you will have to setup the aws environment variables, including the credentials.
-
-From the project root run
-
-### `just prep-aws-env`
-
-### AWS environment variables
-
-From the project root, run
-
-from the `api` directory like so
+You can populate the database with a few datasets stored in an aws bucket. From the `api` directory run
 
 ```
 just run-script populate_nigeria_pop_density

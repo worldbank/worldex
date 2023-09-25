@@ -1,4 +1,4 @@
-from typing import List, Optional
+from typing import List, Optional, Tuple
 
 import rasterio as rio
 from h3ronpy.arrow import cells_to_string
@@ -38,3 +38,7 @@ class RasterHandler(BaseHandler):
             compact=False,
         )
         return cells_to_string(h3_df.cell.unique()).tolist()
+
+    @property
+    def bbox(self) -> Tuple[float, float, float, float]:
+        return tuple(self.src.bounds)
