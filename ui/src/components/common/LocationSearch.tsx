@@ -11,7 +11,7 @@ import { setQuery as setLocationQuery, setResponse as setLocationResponse } from
 const SearchButton = ({isLoading}: {isLoading: boolean}) =>
   <div className="flex justify-center items-center w-[2em] mr-[-8px]">
     {
-      isLoading ? <CircularProgress size="1.2em" /> : (
+      isLoading ? <CircularProgress size="1em" /> : (
         // @ts-ignore
         <IconButton aria-label="search" type="submit">
           <SearchIcon />
