@@ -1,5 +1,6 @@
 import { CircularProgress, IconButton, Paper, TextField } from "@mui/material"
 import SearchIcon from '@mui/icons-material/Search';
+import ClearIcon from '@mui/icons-material/Clear';
 import React, { MouseEventHandler, useState } from "react";
 import { setViewState } from '@carto/react-redux';
 import { useDispatch, useSelector } from "react-redux";
@@ -7,20 +8,28 @@ import { RootState } from "store/store";
 import { WebMercatorViewport } from '@deck.gl/core/typed';
 import { setQuery as setLocationQuery, setResponse as setLocationResponse } from 'store/locationSlice';
 
-const searchButton = ({isLoading, handleSubmit}: {isLoading: boolean, handleSubmit: React.MouseEventHandler<HTMLButtonElement>}) =>
+const SearchButton = ({isLoading}: {isLoading: boolean}) =>
   <div className="flex justify-center items-center w-[2em] mr-[-8px]">
     {
       isLoading ? <CircularProgress size="1.2em" /> : (
-        <IconButton aria-label="search" onClick={handleSubmit}>
-            <SearchIcon />
+        // @ts-ignore
+        <IconButton aria-label="search" type="submit">
+          <SearchIcon />
         </IconButton>
       )
     }
   </div>
 
+const ClearButton = () =>
+  <div className="flex justify-center items-center w-[2em] mr-[-8px]">
+    <IconButton arial-label="clear" type="reset">
+      <ClearIcon />
+    </IconButton>
+  </div>
+
+
 const LocationSearch = ({ className }: { className?: string }) => {
   const [query, setQuery] = useState("");
-  // const query = useSelector((state: RootState) => state.location.query);
 
   const [isLoading, setIsLoading] = useState(false);
   const [isError, setIsError] = useState(false);
@@ -51,10 +60,15 @@ const LocationSearch = ({ className }: { className?: string }) => {
     setIsLoading(false);
   }
 
+  const clearLocation = () => {
+    setQuery("");
+    dispatch(setLocationResponse(null));
+  }
+
   return (
     <Paper className={className}>
       <div className="flex items-end">
-        <form onSubmit={handleSubmit}>
+        <form onSubmit={handleSubmit} onReset={clearLocation}>
           <TextField
             error={isError}
             helperText={isError && "No results."}
@@ -69,7 +83,12 @@ const LocationSearch = ({ className }: { className?: string }) => {
             }
             InputProps={{
               // @ts-ignore
-              endAdornment: searchButton({ isLoading, handleSubmit }),
+              endAdornment: (
+                <>
+                  <SearchButton isLoading={isLoading} />
+                  <ClearButton />
+                </>
+              ),
               className: "pr-0.5"
             }}
           />
