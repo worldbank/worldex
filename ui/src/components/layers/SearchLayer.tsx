@@ -6,12 +6,12 @@ export const SEARCH_LAYER_ID = 'searchLayer';
 
 export default function SearchLayer() {
   const { searchLayer } = useSelector((state: RootState) => state.carto.layers);
-  const geojson = useSelector((state: RootState) => state.location.response?.geojson);
+  const data = useSelector((state: RootState) => state.location.response?.geojson);
 
-  if (searchLayer && geojson) {
+  if (searchLayer && data) {
     return new GeoJsonLayer({
       id: SEARCH_LAYER_ID,
-      data: geojson,
+      data,
       pickable: true,
       stroked: true,
       filled: false,
