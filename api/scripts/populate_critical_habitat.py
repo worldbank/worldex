@@ -29,25 +29,18 @@ def main():
         endpoint_url=os.getenv("AWS_ENDPOINT_URL"),
     )
 
-    with s3.open(f"s3://{BUCKET}/{DATASET_DIR}/crithab_all_layers.zip") as crithab_file:
-        gdf = gpd.read_file(crithab_file)
-        hdf = (
-            gdf.get_coordinates()
-            .rename(columns={"x": "lng", "y": "lat"})
-            .h3.geo_to_h3(H3_RESOLUTION)
-        )
-        hdf.index.name = "h3_index"
-        hdf.reset_index()
+    Session = sessionmaker(bind=engine)
+    with Session() as sess:
+        if sess.query(exists().where(Dataset.name == DATASET_NAME)).scalar():
+            print(f"{DATASET_NAME} dataset already exists")
+            return
 
-        Session = sessionmaker(bind=engine)
-        with Session() as sess:
-            if sess.query(exists().where(Dataset.name == DATASET_NAME)).scalar():
-                print(f"{DATASET_NAME} dataset already exists")
-                return
+        with s3.open(f"s3://{BUCKET}/{DATASET_DIR}/crithab_all_layers.zip") as crithab_file:
             try:
                 last_fetched = crithab_file._details["LastModified"]
             except:
                 last_fetched = datetime.now(pytz.utc)
+                
             dataset = Dataset(
                 name=DATASET_NAME,
                 last_fetched=last_fetched,
@@ -59,6 +52,15 @@ def main():
             sess.add(dataset)
             sess.commit()
 
+            # TODO: replace with handler code
+            gdf = gpd.read_file(crithab_file)
+            hdf = (
+                gdf.get_coordinates()
+                .rename(columns={"x": "lng", "y": "lat"})
+                .h3.geo_to_h3(H3_RESOLUTION)
+            )
+            hdf.index.name = "h3_index"
+            hdf.reset_index()
             hdf_payload = gpd.GeoDataFrame(index=hdf.index.copy())
             hdf_payload = hdf_payload[~hdf_payload.index.duplicated(keep="first")]
             hdf_payload["dataset_id"] = dataset.id
