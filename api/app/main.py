@@ -46,22 +46,12 @@ async def get_h3_tiles(
     query = text(
         """
         WITH bbox AS (
-            SELECT ST_Transform(ST_TileEnvelope(:z, :x, :y), 4326) AS bbox
-        ),
-        count AS (
-            SELECT h3_cell_to_parent(h3_index, :resolution) parent, COUNT(DISTINCT(dataset_id)) FROM h3_data
-            WHERE ST_WITHIN(
-                h3_index::geometry,
-                (SELECT bbox FROM bbox)
-            ) GROUP BY parent
+            SELECT ST_Transform(ST_TileEnvelope(:z, :x, :y), 4326) bbox
         )
-        SELECT * FROM count WHERE ST_WITHIN(parent::geometry, (SELECT bbox FROM bbox));
-        """
-        if should_count
-        else """
-        WITH bbox AS (SELECT ST_Transform(ST_TileEnvelope(:z, :x, :y), 4326) bbox),
-        h3s AS (SELECT h3_polygon_to_cells(bbox, :resolution) h3s FROM bbox)
-        SELECT h3s.h3s FROM h3s WHERE EXISTS(SELECT 1 FROM h3_data WHERE h3_cell_to_parent(h3_index, :resolution) = h3s.h3s);
+        SELECT h3_index, COUNT(DISTINCT(dataset_id)) dataset_count
+        FROM h3_data
+        WHERE h3_get_resolution(h3_index) = :resolution AND ST_WITHIN(h3_index::geometry, (SELECT bbox FROM bbox))
+        GROUP BY h3_index;
         """
     )
     query = query.bindparams(z=z, x=x, y=y, resolution=payload.resolution)

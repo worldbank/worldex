@@ -40,7 +40,6 @@ def main():
                 last_fetched = datetime.now(pytz.utc)
             handler = RasterHandler.from_file(population_file)
             bbox = shapely.geometry.box(*tuple(handler.bbox), ccw=True)
-            h3_indices = handler.h3index()
             dataset = Dataset(
                 name=DATASET_NAME,
                 last_fetched=last_fetched,
@@ -54,16 +53,23 @@ def main():
             )
             sess.add(dataset)
             sess.commit()
-
-            hdf = pd.DataFrame({"h3_index": h3_indices, "dataset_id": dataset.id})
-            hdf.to_sql(
-                "h3_data",
-                engine,
-                if_exists="append",
-                index=False,
-                dtype={"h3_index": H3Index},
-            )
-            print(f"{DATASET_NAME} dataset loaded")
+            
+            try:
+                for res in range(1, 9):
+                    print(f"Indexing with res {res}")
+                    handler.resolution = res
+                    h3_indices = handler.h3index()
+                    hdf = pd.DataFrame({"h3_index": h3_indices, "dataset_id": dataset.id})
+                    hdf.to_sql(
+                        "h3_data",
+                        engine,
+                        if_exists="append",
+                        index=False,
+                        dtype={"h3_index": H3Index},
+                    )
+                print(f"{DATASET_NAME} dataset loaded")
+            except:
+                sess.rollback()
 
 
 if __name__ == "__main__":

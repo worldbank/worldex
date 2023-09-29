@@ -25,7 +25,8 @@ export default function DatasetH3Layer(resolution: number, minZoom: number, maxZ
           method: 'POST',
           body: JSON.stringify({
             resolution,
-            should_count: resolution >= 5,
+            should_count: true,
+            // should_count: resolution >= 5,
           }),
           headers: {
             'Content-Type': 'application/json',
