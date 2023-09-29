@@ -16,7 +16,6 @@ DATABASE_CONNECTION = os.getenv("DATABASE_URL_SYNC")
 BUCKET = os.getenv("AWS_BUCKET")
 DATASET_DIR = os.getenv("AWS_DATASET_DIRECTORY")
 DATASET_NAME = "Critical Habitat"
-H3_RESOLUTION = 8
 TABLE = "h3_data"
 
 
@@ -54,20 +53,25 @@ def main():
             sess.commit()
 
             # TODO: replace with handler code
-            hdf = (
-                gdf.get_coordinates()
-                .rename(columns={"x": "lng", "y": "lat"})
-                .h3.geo_to_h3(H3_RESOLUTION)
-            )
-            hdf.index.name = "h3_index"
-            hdf.reset_index()
-            hdf_payload = gpd.GeoDataFrame(index=hdf.index.copy())
-            hdf_payload = hdf_payload[~hdf_payload.index.duplicated(keep="first")]
-            hdf_payload["dataset_id"] = dataset.id
-            hdf_payload.to_sql(
-                "h3_data", engine, if_exists="append", dtype={"h3_index": H3Index}
-            )
-            print(f"{DATASET_NAME} dataset loaded")
+            try:
+                for res in range(1, 9):
+                    print(f"Indexing with res {res}")
+                    hdf = (
+                        gdf.get_coordinates()
+                        .rename(columns={"x": "lng", "y": "lat"})
+                        .h3.geo_to_h3(res)
+                    )
+                    hdf.index.name = "h3_index"
+                    hdf.reset_index()
+                    hdf_payload = gpd.GeoDataFrame(index=hdf.index.copy())
+                    hdf_payload = hdf_payload[~hdf_payload.index.duplicated(keep="first")]
+                    hdf_payload["dataset_id"] = dataset.id
+                    hdf_payload.to_sql(
+                        "h3_data", engine, if_exists="append", dtype={"h3_index": H3Index}
+                    )
+                print(f"{DATASET_NAME} dataset loaded")
+            except:
+                sess.rollback()
 
 
 if __name__ == "__main__":
