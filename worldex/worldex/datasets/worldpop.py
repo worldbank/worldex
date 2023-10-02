@@ -25,6 +25,13 @@ def worldpop_get(url):
 
 
 class WorldPopDataset(BaseDataset):
+    """
+    Usage:
+
+    >>> dataset = WorldPopDataset.from_url("https://hub.worldpop.org/geodata/summary?id=34165")
+    >>> dataset.index(dir="output/directory/")
+    """
+
     source_org: str = "WorldPop"
 
     @classmethod
