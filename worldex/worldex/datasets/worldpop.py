@@ -13,6 +13,7 @@ from shapely.geometry import box
 
 from ..handlers.raster_handlers import RasterHandler
 from .dataset import BaseDataset
+from tempfile import TemporaryDirectory
 
 WORLDPOP_API_CACHE = {}
 
@@ -81,12 +82,17 @@ class WorldPopDataset(BaseDataset):
         ]
         return f"https://hub.worldpop.org/rest/data/{category_alias}/{listing_alias}/?id={data_id}"
 
-    def index(self, dir):
-        # TODO: Allow dir to be none. Use temp dir
+    def index(self, dir=None):
+        # Create temp dir if dir is None
+        temp_dir = None
+        if dir is None:
+            temp_dir = TemporaryDirectory()
+            dir = temp_dir.name
+
         if isinstance(dir, str):
             dir = Path(dir)
 
-        # TODO: Allow none tiff files lie zip, 7z files.
+        # TODO: Allow none tiff files like zip, 7z files.
         url = next(filter(lambda x: x.endswith(".tif"), self.files))
         filename = Path(url).name
 
@@ -107,4 +113,7 @@ class WorldPopDataset(BaseDataset):
         with open(dir / "metadata.json", "w") as f:
             f.write(self.model_dump_json())
 
+        # Clean up temp dir
+        if temp_dir:
+            temp_dir.cleanup()
         return df
