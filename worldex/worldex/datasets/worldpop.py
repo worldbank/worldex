@@ -12,6 +12,7 @@ from shapely import wkt
 from shapely.geometry import box
 
 from ..handlers.raster_handlers import RasterHandler
+from ..utils.download import download_file
 from .dataset import BaseDataset
 from tempfile import TemporaryDirectory
 
@@ -96,11 +97,7 @@ class WorldPopDataset(BaseDataset):
         url = next(filter(lambda x: x.endswith(".tif"), self.files))
         filename = Path(url).name
 
-        with requests.get(url, stream=True) as r:
-            r.raise_for_status()
-            with open(dir / filename, "wb") as f:
-                for chunk in r.iter_content(chunk_size=8192):
-                    f.write(chunk)
+        download_file(url, dir / filename)
 
         handler = RasterHandler.from_file(dir / filename)
         h3indices = handler.h3index()
@@ -108,12 +105,11 @@ class WorldPopDataset(BaseDataset):
         self.bbox = wkt.dumps(box(*handler.src.bounds))
         df = pd.DataFrame({"h3_index": h3indices})
 
-        df.to_parquet(dir / "h3.parquet", index=False)
-
-        with open(dir / "metadata.json", "w") as f:
-            f.write(self.model_dump_json())
-
-        # Clean up temp dir
-        if temp_dir:
+        # Clean up temp dir if it exists
+        if temp_dir is None:
+            df.to_parquet(dir / "h3.parquet", index=False)
+            with open(dir / "metadata.json", "w") as f:
+                f.write(self.model_dump_json())
+        else:
             temp_dir.cleanup()
         return df
