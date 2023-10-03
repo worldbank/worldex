@@ -57,27 +57,56 @@ async def get_h3_tiles(
     print(payload.resolution)
     query = text(
         """
+        SELECT h3_index FROM h3_data WHERE dataset_id = 25;
+        """
+    )
+    # query = text(
+    #     """
+    #     WITH bbox AS (
+    #         SELECT ST_Transform(ST_TileEnvelope(:z, :x, :y), 4326) bbox
+    #     ),
+    #     uncompacted AS (
+    #         SELECT h3_uncompact_cells(array_agg(h3_index), :resolution) h3_index
+    #         FROM h3_data WHERE h3_get_resolution(h3_index) < :resolution
+    #     ),
+    #     rest AS (
+    #         SELECT DISTINCT(h3_cell_to_parent(h3_index, :resolution)) h3_index FROM h3_data
+    #         WHERE h3_get_resolution(h3_index) >= :resolution
+    #     )
+    #     SELECT * FROM uncompacted WHERE ST_WITHIN(h3_index::geometry, (SELECT bbox FROM bbox))
+    #     UNION
+    #     SELECT * FROM rest WHERE ST_WITHIN(h3_index::geometry, (SELECT bbox FROM bbox))
+    #     """
+    # )
+    query = text(
+        """
         WITH bbox AS (
             SELECT ST_Transform(ST_TileEnvelope(:z, :x, :y), 4326) bbox
         ),
         uncompacted AS (
-            SELECT h3_uncompact_cells(array_agg(h3_index), :resolution) h3_index
-            FROM h3_data WHERE dataset_id = 77 AND h3_get_resolution(h3_index) < :resolution
+            SELECT h3_uncompact_cells(array_agg(h3_index), :resolution) h3_index, dataset_id
+            FROM h3_data WHERE h3_get_resolution(h3_index) < :resolution
+            GROUP BY dataset_id
         ),
         rest AS (
-            SELECT DISTINCT(h3_cell_to_parent(h3_index, :resolution)) h3_index FROM h3_data
-            WHERE dataset_id = 77 AND h3_get_resolution(h3_index) >= :resolution
+            SELECT h3_cell_to_parent(h3_index, :resolution) h3_index, COUNT(DISTINCT(dataset_id)) count 
+            FROM h3_data
+            WHERE h3_get_resolution(h3_index) >= :resolution
+            GROUP BY h3_cell_to_parent(h3_index, :resolution)
         )
-        SELECT * FROM uncompacted WHERE ST_WITHIN(h3_index::geometry, (SELECT bbox FROM bbox))
+        SELECT h3_index, COUNT(DISTINCT(dataset_id)) count
+        FROM uncompacted
+        WHERE ST_WITHIN(h3_index::geometry, (SELECT bbox FROM bbox))
+        GROUP BY h3_index
         UNION
-        SELECT * FROM rest WHERE ST_WITHIN(h3_index::geometry, (SELECT bbox FROM bbox))
+        SELECT h3_index, count FROM rest WHERE ST_WITHIN(h3_index::geometry, (SELECT bbox FROM bbox))
         """
     )
     query = query.bindparams(z=z, x=x, y=y, resolution=payload.resolution)
     results = await session.execute(query)
     return [
-        # {"index": row[0], "dataset_count": row[1]}
-        {"index": row[0]}
+        {"index": row[0], "dataset_count": row[1]}
+        # {"index": row[0]}
         if should_count
         else {"index": row[0]}
         for row in results.fetchall()
