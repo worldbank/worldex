@@ -102,7 +102,7 @@ class WorldPopDataset(BaseDataset):
         handler = RasterHandler.from_file(dir / filename)
         h3indices = handler.h3index()
 
-        self.bbox = wkt.dumps(box(*handler.src.bounds))
+        self.bbox = wkt.dumps(box(*handler.bbox))
         df = pd.DataFrame({"h3_index": h3indices})
 
         # Clean up temp dir if it exists
