@@ -12,7 +12,7 @@ from shapely import wkt
 from shapely.geometry import box
 
 from ..handlers.raster_handlers import RasterHandler
-from ..utils.download import download_file
+from ..utils.download import download_file, create_staging_dir
 from .dataset import BaseDataset
 from tempfile import TemporaryDirectory
 
@@ -84,32 +84,22 @@ class WorldPopDataset(BaseDataset):
         return f"https://hub.worldpop.org/rest/data/{category_alias}/{listing_alias}/?id={data_id}"
 
     def index(self, dir=None):
-        # Create temp dir if dir is None
-        temp_dir = None
-        if dir is None:
-            temp_dir = TemporaryDirectory()
-            dir = temp_dir.name
+        with create_staging_dir(dir) as (staging_dir, is_tempdir):
+            # TODO: Allow none tiff files like zip, 7z files.
+            url = next(filter(lambda x: x.endswith(".tif"), self.files))
+            filename = Path(url).name
 
-        if isinstance(dir, str):
-            dir = Path(dir)
+            download_file(url, staging_dir / filename)
 
-        # TODO: Allow none tiff files like zip, 7z files.
-        url = next(filter(lambda x: x.endswith(".tif"), self.files))
-        filename = Path(url).name
+            handler = RasterHandler.from_file(staging_dir / filename)
+            h3indices = handler.h3index()
 
-        download_file(url, dir / filename)
+            self.bbox = wkt.dumps(box(*handler.bbox))
+            df = pd.DataFrame({"h3_index": h3indices})
 
-        handler = RasterHandler.from_file(dir / filename)
-        h3indices = handler.h3index()
-
-        self.bbox = wkt.dumps(box(*handler.bbox))
-        df = pd.DataFrame({"h3_index": h3indices})
-
-        # Clean up temp dir if it exists
-        if temp_dir is None:
-            df.to_parquet(dir / "h3.parquet", index=False)
-            with open(dir / "metadata.json", "w") as f:
-                f.write(self.model_dump_json())
-        else:
-            temp_dir.cleanup()
+            # Clean up temp dir if it exists
+            if not is_tempdir:
+                df.to_parquet(staging_dir / "h3.parquet", index=False)
+                with open(staging_dir / "metadata.json", "w") as f:
+                    f.write(self.model_dump_json())
         return df
