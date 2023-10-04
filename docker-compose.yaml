@@ -34,6 +34,7 @@ services:
       test: curl --fail localhost:8000/health_check || exit 1
   db:
     build: ./postgis-h3
+    shm_size: 1gb
     volumes:
       - pg_data:/var/lib/postgresql/data
     ports:
