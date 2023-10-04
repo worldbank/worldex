@@ -23,7 +23,8 @@ BUCKET = os.getenv("AWS_BUCKET")
 DATASET_DIR = os.getenv("AWS_DATASET_DIRECTORY")
 
 
-def create_dataset_from_metadata(metadata: Dict, sess: Session) -> Dataset:
+def create_dataset_from_metadata(metadata_file: s3fs.core.S3File, sess: Session) -> Dataset:
+    metadata = json.load(metadata_file)
     dataset_name = metadata['name']
     dataset_exists = sess.query(exists().where(Dataset.name == dataset_name)).scalar()
     assert not dataset_exists, f"'{dataset_name}' dataset already exists" 
@@ -36,21 +37,15 @@ def create_dataset_from_metadata(metadata: Dict, sess: Session) -> Dataset:
     return Dataset(**metadata)
 
 
-def index_h3(file: s3fs.core.S3File, dataset_id: int, sess: Session):
+def create_h3_indices(file: s3fs.core.S3File, dataset_id: int):
     tile_errors = 0
-    df_pop = pd.read_parquet(f)
-    df_pop = pd.DataFrame(
-        {'h3_index': list(h3.compact(df_pop['h3_index']))}
-    ).astype({'h3_index': str})
-    for _, row in df_pop.iterrows():
-        try:
-            sess.add(H3Data(h3_index=row['h3_index'], dataset_id=dataset_id))
-            sess.commit()
-        except sqlalchemy.exc.InternalError as e:
-            sess.rollback()
-            tile_errors += 1
-            continue
-    print("Tile errors:", tile_errors)
+    indices = pd.read_parquet(file)['h3_index']
+    compacted_indices = list(h3.compact(indices)) 
+    df_pop = pd.DataFrame({'h3_index': compacted_indices}).astype({'h3_index': str})
+    return [
+        H3Data(h3_index=row['h3_index'], dataset_id=dataset_id)
+        for _, row in df_pop.iterrows()
+    ]
 
 
 def main():
@@ -69,18 +64,20 @@ def main():
             print(f"Indexing {dir}")
             try:
                 with s3.open(f"s3://{dir}/metadata.json") as f:
-                    metadata = json.load(f)
                     try:
-                        dataset_pop = create_dataset_from_metadata(metadata, dataset_pop.id, sess)
-                    except AssertionError:
+                        dataset_pop = create_dataset_from_metadata(f, sess)
+                    except AssertionError as e:
+                        print(e)
                         continue
                     sess.add(dataset_pop)
-                    # sess.commit()
+                    sess.flush()
                 with s3.open(f"s3://{dir}/h3.parquet") as f:
-                    index_h3(f)
-            except Exception as e:
-                sess.delete(dataset_pop)
+                    indices = create_h3_indices(f, dataset_pop.id)
+                    sess.bulk_save_objects(indices)
+                    sess.flush()
                 sess.commit()
+            except Exception as e:
+                sess.rollback()
                 raise e
             
 

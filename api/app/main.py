@@ -106,7 +106,6 @@ async def get_h3_tiles(
     results = await session.execute(query)
     return [
         {"index": row[0], "dataset_count": row[1]}
-        # {"index": row[0]}
         if should_count
         else {"index": row[0]}
         for row in results.fetchall()
