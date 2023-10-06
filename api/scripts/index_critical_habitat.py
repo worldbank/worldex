@@ -1,18 +1,20 @@
 import os
+import sys
+from datetime import datetime
+from typing import List
+
+import geopandas as gpd
+import h3
+import h3pandas  # necessary import for a dataframe to have an h3 attribute
+import pytz
 import s3fs
+import shapely
+from app.models import Dataset, H3Data
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.sql import exists
-from app.models import Dataset, H3Data
-from datetime import datetime
-import sys
-import h3
-import pytz
-import geopandas as gpd
-import h3pandas  # necessary import for a dataframe to have an h3 attribute
+
 from worldex.handlers.vector_handlers import VectorHandler
-import shapely
-from typing import List
 
 DATABASE_CONNECTION = os.getenv("DATABASE_URL_SYNC")
 BUCKET = os.getenv("AWS_BUCKET")
