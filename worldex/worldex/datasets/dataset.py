@@ -18,8 +18,8 @@ class BaseDataset(BaseModel):
     last_fetched: datetime
     files: list[str]
     description: str
-    data_format: str
-    projection: str
+    data_format: Optional[str] = None
+    projection: Optional[str] = None
     properties: dict
     bbox: Optional[str] = None
     keywords: list[str]

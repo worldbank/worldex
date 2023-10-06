@@ -14,8 +14,10 @@ def download_file(url, filename):
         # progress_bar = tqdm(total=total_size_in_bytes, unit='iB', unit_scale=True)
         with open(filename, "wb") as f:
             for chunk in r.iter_content(chunk_size=8192):
-                # progress_bar.update(len(data))
-                f.write(chunk)
+                if chunk:
+                    # progress_bar.update(len(data))
+                    f.write(chunk)
+                    f.flush()
 
 
 @contextmanager
@@ -30,7 +32,7 @@ def create_staging_dir(dir=None) -> (Path, bool):
             yield (Path(temp_dir.name), True)
     else:
         staging_dir = Path(dir)
-        # TODO: test if this works with s3 filemounting
-        if staging_dir.is_dir():
+        # TODO: test if this works with s3 file mounting
+        if not staging_dir.is_dir():
             raise Exception(f"dir: {dir} is not a valid directory")
         yield (staging_dir, False)

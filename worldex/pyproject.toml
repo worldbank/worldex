@@ -20,6 +20,7 @@ s3fs = "^2023.9.1"
 pydantic = ">=2.0,<2.4"
 requests = "^2.31.0"
 beautifulsoup4 = "^4.12.2"
+hdx-python-api = "^6.1.2"
 
 
 [tool.poetry.group.lint.dependencies]

@@ -14,7 +14,6 @@ from shapely.geometry import box
 from ..handlers.raster_handlers import RasterHandler
 from ..utils.download import download_file, create_staging_dir
 from .dataset import BaseDataset
-from tempfile import TemporaryDirectory
 
 WORLDPOP_API_CACHE = {}
 
@@ -86,6 +85,7 @@ class WorldPopDataset(BaseDataset):
     def index(self, dir=None):
         with create_staging_dir(dir) as (staging_dir, is_tempdir):
             # TODO: Allow none tiff files like zip, 7z files.
+            # TODO: handle multiple files
             url = next(filter(lambda x: x.endswith(".tif"), self.files))
             filename = Path(url).name
 
