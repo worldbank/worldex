@@ -5,19 +5,49 @@ import hashlib
 import s3fs
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
+from sqlalchemy.orm.session import Session
 from sqlalchemy.sql import exists
-from app.models import Dataset, H3Index
+from app.models import Dataset, H3Data
 import sys
 from datetime import datetime
 import pytz
 import json
 import h3
+import h3pandas
+import sqlalchemy
 from worldex.handlers.raster_handlers import RasterHandler
+from typing import Dict
 
 DATABASE_CONNECION = os.getenv("DATABASE_URL_SYNC")
 BUCKET = os.getenv("AWS_BUCKET")
 DATASET_DIR = os.getenv("AWS_DATASET_DIRECTORY")
-DATASET_NAME = "Nigeria Population Density"
+
+
+def create_dataset_from_metadata(
+    metadata_file: s3fs.core.S3File, sess: Session
+) -> Dataset:
+    metadata = json.load(metadata_file)
+    dataset_name = metadata["name"]
+    dataset_exists = sess.query(exists().where(Dataset.name == dataset_name)).scalar()
+    assert not dataset_exists, f"'{dataset_name}' dataset already exists"
+
+    # TODO: actually create keyword objects
+    keywords: list[str] = metadata.pop("keywords")
+    # TODO: remove handling once parquet files are corrected
+    if "data_foramt" in metadata:
+        metadata["data_format"] = metadata.pop("data_foramt")
+    return Dataset(**metadata)
+
+
+def create_h3_indices(file: s3fs.core.S3File, dataset_id: int):
+    tile_errors = 0
+    indices = pd.read_parquet(file)["h3_index"]
+    compacted_indices = list(h3.compact(indices))
+    df_pop = pd.DataFrame({"h3_index": compacted_indices}).astype({"h3_index": str})
+    return [
+        H3Data(h3_index=row["h3_index"], dataset_id=dataset_id)
+        for _, row in df_pop.iterrows()
+    ]
 
 
 def main():
@@ -32,48 +62,25 @@ def main():
     Session = sessionmaker(bind=engine)
     with Session() as sess:
         dirs = s3.ls("s3:///worldex-temp-storage/indexes/worldpop/")
-        for dir in dirs[:50]:
+        for dir in dirs:
+            print(f"Indexing {dir}")
             try:
                 with s3.open(f"s3://{dir}/metadata.json") as f:
-                    metadata = json.load(f)
-                    dataset_name = metadata["name"]
-                    if sess.query(exists().where(Dataset.name == dataset_name)).scalar():
-                        print(f"'{dataset_name}' dataset already exists")
+                    try:
+                        dataset_pop = create_dataset_from_metadata(f, sess)
+                    except AssertionError as e:
+                        print(e)
                         continue
-                    print(f"Indexing {dir}")
-                    keywords: list[str] = metadata.pop("keywords")
-                    if "data_foramt" in metadata:
-                        metadata["data_format"] = metadata.pop("data_foramt")
-                    dataset_pop = Dataset(**metadata)
                     sess.add(dataset_pop)
-                    sess.commit()
+                    sess.flush()
                 with s3.open(f"s3://{dir}/h3.parquet") as f:
-                    df_pop = pd.read_parquet(f)
-                    df_pop["dataset_id"] = dataset_pop.id
-                    print(df_pop.shape[0], end="...")
-                    df_pop.to_sql(
-                        "h3_data",
-                        engine,
-                        if_exists="append",
-                        index=False,
-                        dtype={"h3_index": H3Index}
-                    )
-                    while True:
-                        df_pop['h3_index'] = df_pop['h3_index'].apply(h3.h3_to_parent)
-                        df_pop = df_pop.drop_duplicates(subset=['h3_index'])
-                        print(df_pop.shape[0], end="...")
-                        df_pop.to_sql(
-                            "h3_data",
-                            engine,
-                            if_exists="append",
-                            index=False,
-                            dtype={"h3_index": H3Index}
-                        )
-                        if h3.h3_get_resolution(df_pop['h3_index'].iloc[0]) == 0:
-                            print("")
-                            break
-            except:
+                    indices = create_h3_indices(f, dataset_pop.id)
+                    sess.bulk_save_objects(indices)
+                    sess.flush()
+                sess.commit()
+            except Exception as e:
                 sess.rollback()
+                raise e
 
 
 if __name__ == "__main__":
