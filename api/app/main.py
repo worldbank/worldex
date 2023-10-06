@@ -44,26 +44,28 @@ async def get_h3_tiles(
 ):
     query = text(
         """
-        WITH bbox AS (
-            SELECT ST_Transform(ST_TileEnvelope(:z, :x, :y), 4326) bbox
-        ),
-        uncompacted AS (
+        WITH uncompacted AS (
             SELECT h3_uncompact_cells(array_agg(h3_index), :resolution) h3_index, dataset_id
             FROM h3_data WHERE h3_get_resolution(h3_index) < :resolution
             GROUP BY dataset_id
         ),
-        rest AS (
+        parents AS (
             SELECT h3_cell_to_parent(h3_index, :resolution) h3_index, COUNT(DISTINCT(dataset_id)) count
             FROM h3_data
             WHERE h3_get_resolution(h3_index) >= :resolution
             GROUP BY h3_cell_to_parent(h3_index, :resolution)
+        ),
+        combined AS (
+            SELECT h3_index, COUNT(DISTINCT(dataset_id)) count
+            FROM uncompacted
+            GROUP BY h3_index
+            UNION
+            SELECT h3_index, count FROM parents
         )
-        SELECT h3_index, COUNT(DISTINCT(dataset_id)) count
-        FROM uncompacted
-        WHERE ST_WITHIN(h3_index::geometry, (SELECT bbox FROM bbox))
+        SELECT h3_index, SUM(count)
+        FROM combined
+        WHERE ST_WITHIN(h3_index::geometry, ST_Transform(ST_TileEnvelope(:z, :x, :y), 4326))
         GROUP BY h3_index
-        UNION
-        SELECT h3_index, count FROM rest WHERE ST_WITHIN(h3_index::geometry, (SELECT bbox FROM bbox))
         """
     )
     query = query.bindparams(z=z, x=x, y=y, resolution=payload.resolution)

@@ -1,22 +1,19 @@
+import json
 import os
+import sys
+from typing import Dict, List
+
+import h3
+import h3pandas
 import pandas as pd
-import shapely
-import hashlib
 import s3fs
+from app.models import Dataset, H3Data
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.orm.session import Session
 from sqlalchemy.sql import exists
-from app.models import Dataset, H3Data
-import sys
-from datetime import datetime
-import pytz
-import json
-import h3
-import h3pandas
-import sqlalchemy
+
 from worldex.handlers.raster_handlers import RasterHandler
-from typing import Dict
 
 DATABASE_CONNECION = os.getenv("DATABASE_URL_SYNC")
 BUCKET = os.getenv("AWS_BUCKET")
@@ -39,8 +36,7 @@ def create_dataset_from_metadata(
     return Dataset(**metadata)
 
 
-def create_h3_indices(file: s3fs.core.S3File, dataset_id: int):
-    tile_errors = 0
+def create_h3_indices(file: s3fs.core.S3File, dataset_id: int) -> List[H3Data]:
     indices = pd.read_parquet(file)["h3_index"]
     compacted_indices = list(h3.compact(indices))
     df_pop = pd.DataFrame({"h3_index": compacted_indices}).astype({"h3_index": str})
