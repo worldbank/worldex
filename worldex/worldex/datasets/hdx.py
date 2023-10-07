@@ -81,11 +81,13 @@ class HDXDataset(BaseDataset):
                 raise Exception("Could not find a valid type")
 
             filename = resource["name"]
-            # hdx has a weird filenaming when downloading the file
-            # this addresses by handling the renaming
-            # TODO: only download if nessecdary?
-            _, temp_filename = resource.download(staging_dir)
-            os.rename(temp_filename, staging_dir / filename)
+
+            # Skip downloading if file exists in dir
+            if not os.path.exist(staging_dir / filename):
+                _, temp_filename = resource.download(staging_dir)
+                # hdx has a weird filenaming when downloading the file
+                # this addresses by handling the renaming
+                os.rename(temp_filename, staging_dir / filename)
 
             # TODO: Figure out how to handle zipped files
             if "GeoTIFF" == resource["format"]:

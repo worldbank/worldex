@@ -2,6 +2,7 @@
 Automates indexing of world pop datasets
 """
 from datetime import datetime
+import os
 from pathlib import Path
 from urllib.parse import parse_qs, urlparse
 
@@ -88,8 +89,10 @@ class WorldPopDataset(BaseDataset):
             # TODO: handle multiple files
             url = next(filter(lambda x: x.endswith(".tif"), self.files))
             filename = Path(url).name
-
-            download_file(url, staging_dir / filename)
+            # Skip downloading if file exists in dir
+            if not os.path.exist(staging_dir / filename):
+                # TODO: httpx download is way slower than using worldpop ftp
+                download_file(url, staging_dir / filename)
 
             handler = RasterHandler.from_file(staging_dir / filename)
             h3indices = handler.h3index()
