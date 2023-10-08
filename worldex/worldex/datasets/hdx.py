@@ -83,7 +83,7 @@ class HDXDataset(BaseDataset):
             filename = resource["name"]
 
             # Skip downloading if file exists in dir
-            if not os.path.exist(staging_dir / filename):
+            if not os.path.exists(staging_dir / filename):
                 _, temp_filename = resource.download(staging_dir)
                 # hdx has a weird filenaming when downloading the file
                 # this addresses by handling the renaming

@@ -90,8 +90,8 @@ class WorldPopDataset(BaseDataset):
             url = next(filter(lambda x: x.endswith(".tif"), self.files))
             filename = Path(url).name
             # Skip downloading if file exists in dir
-            if not os.path.exist(staging_dir / filename):
-                # TODO: httpx download is way slower than using worldpop ftp
+            if not os.path.exists(staging_dir / filename):
+                # TODO: https download is way slower than using worldpop ftp
                 download_file(url, staging_dir / filename)
 
             handler = RasterHandler.from_file(staging_dir / filename)
