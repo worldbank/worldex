@@ -4,10 +4,10 @@ services:
   ui:
     build:
       context: ./ui/
-      dockerfile: dev.Dockerfile
-    command: yarn start
+      dockerfile: Dockerfile
+    command: yarn serve
     ports:
-      - 5173:5173
+      - 4173:4173
     volumes:
       - ./ui:/app
     env_file:
