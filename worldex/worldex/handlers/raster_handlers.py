@@ -29,12 +29,13 @@ class RasterHandler(BaseHandler):
 
     def h3index(self) -> List[int]:
         # TODO: Improve default values of this
+        # TODO: compare perfomance difference between this and
+        # vectorizing the raster 1st using rasterio.features.shapes
         h3_df = raster_to_dataframe(
             self.src.read(1),
             self.src.transform,
             self.get_resolution(),
             nodata_value=self.src.nodata,
-            axis_order="xy",
             compact=False,
         )
         return cells_to_string(h3_df.cell.unique()).tolist()

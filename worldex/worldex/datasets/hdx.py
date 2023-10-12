@@ -22,7 +22,8 @@ VALID_TYPES = ["CSV", "Geopackage", "SHP"]
 
 PRIORITY = [
     "Geopackage",
-    "GeoJSON" "SHP",
+    "GeoJSON",
+    "SHP",
     "GeoTIFF",
     "CSV",
 ]
@@ -47,6 +48,10 @@ class HDXDataset(BaseDataset):
     @classmethod
     def from_id(cls, id: str):
         dataset = Dataset.read_from_hdx(id)
+        return cls.from_hdx_dataset(dataset)
+
+    @classmethod
+    def from_hdx_dataset(cls, dataset: Dataset):
         if not dataset["has_geodata"]:
             raise Exception("No geodata found for this data")
         files = [r["download_url"] for r in dataset.resources]
