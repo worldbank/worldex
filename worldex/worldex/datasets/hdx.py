@@ -88,17 +88,19 @@ class HDXDataset(BaseDataset):
             filename = resource["name"]
 
             # Skip downloading if file exists in dir
-            if not os.path.exists(staging_dir / filename):
+            file_path = staging_dir / filename
+            if not os.path.exists(file_path):
                 _, temp_filename = resource.download(staging_dir)
-                # hdx has a weird filenaming when downloading the file
-                # this addresses by handling the renaming
-                os.rename(temp_filename, staging_dir / filename)
+                if temp_filename != file_path:
+                    # hdx has a weird filenaming when downloading files as it append file extensions.
+                    # it becomes file.shp.zip.shp this addresses by handling the renaming
+                    os.rename(temp_filename, staging_dir / filename)
 
             # TODO: Figure out how to handle zipped files
             if "GeoTIFF" == resource["format"]:
-                handler = RasterHandler.from_file(staging_dir / filename)
+                handler = RasterHandler.from_file(file_path)
             else:
-                handler = VectorHandler.from_file(staging_dir / filename)
+                handler = VectorHandler.from_file(file_path)
             h3indices = handler.h3index()
             self.bbox = wkt.dumps(box(*handler.bbox))
             df = pd.DataFrame({"h3_index": h3indices})
