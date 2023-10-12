@@ -7,7 +7,7 @@ import {
 } from '@mui/material';
 import { styled } from '@mui/material/styles';
 import { NavLink } from 'react-router-dom';
-import background404 from 'assets/img/404.svg';
+import { ReactComponent as background404 } from 'assets/img/404.svg';
 import { ROUTE_PATHS } from 'routes';
 
 const ContainerNotFound = styled(Container)(() => ({
