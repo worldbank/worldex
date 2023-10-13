@@ -57,7 +57,7 @@ def main():
 
     Session = sessionmaker(bind=engine)
     with Session() as sess:
-        dirs = s3.ls("s3:///worldex-temp-storage/indexes/worldpop/")
+        dirs = s3.ls("s3:///worldex-temp-storage/indexes/worldpop_old/")
         for dir in dirs:
             files = s3.ls(dir)
             is_parquet = (
