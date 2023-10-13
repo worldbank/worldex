@@ -4,8 +4,6 @@
   just generate-password | xargs -I {} echo "POSTGRES_PASSWORD={}" > ./secrets/postgres_password.env
 api-shell:
   docker compose exec -it api /bin/bash
-migrate-db:
-  docker compose exec -it api alembic upgrade head
 prep-aws-env:
   envsubst < ./secrets/aws.env.tpl > ./secrets/aws.env
 create-envs:
