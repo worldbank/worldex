@@ -10,6 +10,7 @@ services:
       - 4173:4173
     volumes:
       - ./ui:/app
+      - /app/node_modules/
     env_file:
       - ./ui/.env
     depends_on:
@@ -26,7 +27,6 @@ services:
       - ./api:/app
       - type: tmpfs
         target: /app/.venv/
-      - /tmp/datasets:/tmp/datasets
     depends_on:
       db:
         condition: service_healthy

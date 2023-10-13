@@ -14,7 +14,7 @@ RUN yarn build
 FROM node:20.5.0-alpine AS prod
 WORKDIR /app/
 
-COPY --from=build /app/dist/ /app/dist/
+COPY --from=build /app/build/ /app/build/
 
 COPY package.json .
 COPY vite.config.ts .
