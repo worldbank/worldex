@@ -25,8 +25,7 @@ services:
       - secrets/api.env
     volumes:
       - ./api:/app
-      - type: tmpfs
-        target: /app/.venv/
+      - /app/.venv/
     depends_on:
       db:
         condition: service_healthy
