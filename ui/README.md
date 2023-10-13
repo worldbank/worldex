@@ -1,4 +1,21 @@
-# CARTO for React
+# Development
+
+For local development, you should have `yarn` installed. It's possible that you may not have `node` installed yet, in which case it's recommended to do so with [nvm](https://github.com/nvm-sh/nvm).
+
+### `nvm install node`
+after `nvm` is installed. As of writing, you can use `v20.8.0`.
+
+### `npm install --global yarn`
+to install `yarn` which we'll use to manage dependencies.
+
+### `yarn` or `yarn install`
+to install the dependencies.
+
+> If you're on a mac, you cannot bind mount `node_modules` from your host machine to the docker container due to differing architectures. This is already setup on the docker compose file.
+> This means that adding dependencies means you'll have to rebuild the ui image for those to be reflected on the running container.
+
+<details>
+<summary><strong>CARTO for React</strong></summary>
 
 Welcome to CARTO for React! The best way to develop Location Intelligence Apps using CARTO Cloud Native platform + deck.gl. It will provide you a well designed structure following the best practices for modern frontend development and an integrated toolchain for testing, building and deploying your application.
 
@@ -47,3 +64,4 @@ You don’t have to ever use `eject`. The curated feature set is suitable for sm
 You can learn more in the [Vite documentation](https://vitejs.dev/guide/#getting-started).
 
 To learn React, check out the [React documentation](https://reactjs.org/).
+</details>

@@ -57,8 +57,14 @@ def main():
 
     Session = sessionmaker(bind=engine)
     with Session() as sess:
-        dirs = s3.ls("s3:///worldex-temp-storage/indexes/worldpop/")
+        dirs = s3.ls("s3:///worldex-temp-storage/indexes/worldpop_old/")
         for dir in dirs:
+            files = s3.ls(dir)
+            is_parquet = (
+                f"{dir}/h3.parquet" in files and f"{dir}/metadata.json" in files
+            )
+            if not is_parquet:
+                continue
             print(f"Indexing {dir}")
             try:
                 with s3.open(f"s3://{dir}/metadata.json") as f:

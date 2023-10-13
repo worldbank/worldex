@@ -63,7 +63,7 @@ export default function DatasetH3Layer(resolution: number, minZoom: number, maxZ
         stroked: true,
         lineWidthMinPixels: 1,
         getLineColor: [255, 210, 0],
-        getFillColor: (d: any) => [255, 210, 0, 100],
+        getFillColor: (d: any) => [255, 210, 0, Math.max(40, 220 * Math.min(d.dataset_count / 30, 1))],
         filled: true,
         getLineWidth: 2,
         extruded: false,

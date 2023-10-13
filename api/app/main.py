@@ -12,14 +12,14 @@ app = FastAPI(
     version=settings.version,
 )
 
-
-origins = [
-    "http://localhost:5173",
-]
-
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=origins,
+    # TODO: configure instead of hardcoding
+    allow_origins=[
+        "http://localhost:4173",
+        "http://localhost:4173",
+        "http://w1lxscirender01.worldbank.org:4173",
+    ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

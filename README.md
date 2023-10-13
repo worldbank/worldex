@@ -18,8 +18,17 @@ to setup aws environment variables (including credentials) for dataset seeding l
 
 Ask the repo maintainers if you're part of the same team.
 
-## `just create-envs`
+<span style="color:red">If you're on a Mac,</span> you may have to run the following first to enable `envsubst`
+
+```
+brew install gettext
+brew link --force gettext 
+```
+
+## `just refresh-db-password`
 to generate a postgres password and the environment files to be used by the `api`, `db`, and `pgweb` services as per the docker compose spec.
+
+If you've previously generated a postgres password with this command and just want to regenerate the environment files, run `create-envs`
 
 ## `docker compose up`
 

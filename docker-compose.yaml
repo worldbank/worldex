@@ -4,12 +4,13 @@ services:
   ui:
     build:
       context: ./ui/
-      dockerfile: dev.Dockerfile
-    command: yarn start
+      dockerfile: Dockerfile
+    command: yarn serve
     ports:
-      - 5173:5173
+      - 4173:4173
     volumes:
       - ./ui:/app
+      - /app/node_modules/
     env_file:
       - ./ui/.env
     depends_on:
@@ -24,9 +25,7 @@ services:
       - secrets/api.env
     volumes:
       - ./api:/app
-      - type: tmpfs
-        target: /app/.venv/
-      - /tmp/datasets:/tmp/datasets
+      - /app/.venv/
     depends_on:
       db:
         condition: service_healthy

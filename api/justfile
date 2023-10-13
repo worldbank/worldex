@@ -1,2 +1,4 @@
 run-script FILE:
   poetry run python -m scripts.{{FILE}}
+migrate-db:
+  docker compose exec -it api alembic upgrade head

@@ -1,22 +1,31 @@
-This FastAPI app runs on Python 3.10.11
+This FastAPI app runs on Python 3.10.x
 
-All services are currently running on a docker compose cluster which has some implications with the development experience on the api backend (the react frontend, not so much).
+All services are currently running on a docker compose cluster which has some implications with the development experience on the api backend.
 
-#  `poetry install --with handlers`
+###  `poetry install --with handlers`
 
-to create a poetry-managed virtualenv on your host machine. This is recommended so you don't have to `docker exec` a shell inside the fastapi container every time you want to issue, say, `alembic` commands. 
+to create a poetry-managed virtualenv on your host machine. This is recommended so you don't have to `docker exec` a shell inside the fastapi container every time you want to issue, say, `alembic` commands.
 
-# Database migrations
+### Install [direnv](https://direnv.net/docs/installation.html)
+
+first to load the necessary environment variables prior to running the commands below. Don't forget to [hook](https://direnv.net/docs/hook.html) it to your shell.
+
+#### `direnv allow`
+inside the `api` directory aftewrwards to load the variables from `.envrc`
+
+## Database migrations
 
 Right now, the postgis database is being populated with a few datasets via alembic migration. We are planning to decouple this eventually as standalone scripts, but for now you will need the [Nigeria schools and population](https://github.com/avsolatorio/worldex/files/12481827/nigeria-schools-and-population-density.zip) and Critical Habitat (download link to follow or ask any of the repo maintainers) datasets.
 
 You will need to download them into the `/tmp/datasets/` directory of your host machine. Additionally, you will have to unzip the Nigeria datasets. You can leave the Critical Habitat zipfile as is.
 
-## `just migrate-db`
-to apply the database migrations. If you need to troubleshoot or would like a more fine-grained control, you can run
-### docker compose exec -it api /bin/bash
+### `just migrate-db`
+from `/api` to apply the database migrations. If you need to troubleshoot or would like a more fine-grained control, you can run
+
+#### `docker compose exec -it api /bin/bash`
 to run a shell instance on the api service. Afterwards, you can issue your commands such as
-### alembic upgrade head
+
+#### `alembic upgrade head`
 which is exactly what `just migrate-db` does.
 
 ## Populating the database
@@ -24,13 +33,13 @@ which is exactly what `just migrate-db` does.
 You can populate the database with a few datasets stored in an aws bucket. From the `api` directory run
 
 ```
-just run-script populate_nigeria_pop_density
+just run-script index_nigeria_pop_density
 ```
 
-Or alternatively, run the underlying command
+Or alternatively, run the actual command
 
 ```
-poetry run python -m scripts.populate_nigeria_pop_density
+poetry run python -m scripts.index_nigeria_pop_density
 ```
 
 See the `api/scripts` directory for the rest you can run.

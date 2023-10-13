@@ -21,7 +21,7 @@ ENV PATH="$POETRY_HOME/bin:$VENV_PATH/bin:$PATH"
 # build deps, create virtualenv
 FROM python-base as builder-base
 RUN apt-get update \
-    && apt-get install --no-install-recommends -y curl build-essential
+    && apt-get install --no-install-recommends -y curl build-essential binutils libgdal-dev gdal-bin
 
 RUN curl -sSL https://install.python-poetry.org | python3 -
 

@@ -26,10 +26,6 @@ const routes = [
         </DefaultView>
       </ProtectedRoute>
     ),
-    children: [
-      // { path: '/', element: <Navigate to='/<your default view>' /> },
-      // [hygen] Add routes
-    ],
   },
   {
     path: '*',
