@@ -25,8 +25,10 @@ brew install gettext
 brew link --force gettext 
 ```
 
-## `just create-envs`
+## `just refresh-db-password`
 to generate a postgres password and the environment files to be used by the `api`, `db`, and `pgweb` services as per the docker compose spec.
+
+If you've previously generated a postgres password with this command and just want to regenerate the environment files, run `create-envs`
 
 ## `docker compose up`
 
