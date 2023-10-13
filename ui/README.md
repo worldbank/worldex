@@ -12,6 +12,7 @@ to install `yarn` which we'll use to manage dependencies.
 to install the dependencies.
 
 > If you're on a mac, you cannot bind mount `node_modules` from your host machine to the docker container due to differing architectures. This is already setup on the docker compose file.
+> This means that adding dependencies means you'll have to rebuild the ui image for those to be reflected on the running container.
 
 <details>
 <summary><strong>CARTO for React</strong></summary>
