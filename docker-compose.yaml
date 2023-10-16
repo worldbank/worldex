@@ -4,13 +4,16 @@ services:
   ui:
     build:
       context: ./ui/
-      dockerfile: Dockerfile
-    command: yarn serve
+      dockerfile: nginx.Dockerfile
+    # command: yarn serve
     ports:
-      - 4173:4173
+      # - 4173:4173
+      - 80:80
+    # volumes:
     volumes:
-      - ./ui:/app
-      - /app/node_modules/
+      - ./ui/nginx.conf:/etc/nginx/conf.d/default.conf
+      # - ./ui:/app
+      # - /app/node_modules/
     env_file:
       - ./ui/.env
     depends_on:
