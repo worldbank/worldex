@@ -41,33 +41,40 @@ async def get_h3_tiles(
     y: int,
     session: AsyncSession = Depends(get_async_session),
 ):
+    # query = text(
+    #     """
+    #     WITH uncompacted AS (
+    #         SELECT h3_uncompact_cells(array_agg(h3_index), :resolution) h3_index, dataset_id
+    #         FROM h3_data WHERE h3_get_resolution(h3_index) < :resolution
+    #         GROUP BY dataset_id
+    #     ),
+    #     parents AS (
+    #         SELECT h3_cell_to_parent(h3_index, :resolution) h3_index, COUNT(DISTINCT(dataset_id)) count
+    #         FROM h3_data
+    #         WHERE h3_get_resolution(h3_index) >= :resolution
+    #         GROUP BY h3_cell_to_parent(h3_index, :resolution)
+    #     ),
+    #     combined AS (
+    #         SELECT h3_index, COUNT(DISTINCT(dataset_id)) count
+    #         FROM uncompacted
+    #         GROUP BY h3_index
+    #         UNION
+    #         SELECT h3_index, count FROM parents
+    #     )
+    #     SELECT h3_index, SUM(count)
+    #     FROM combined
+    #     WHERE ST_WITHIN(h3_index::geometry, ST_Transform(ST_TileEnvelope(:z, :x, :y), 4326))
+    #     GROUP BY h3_index
+    #     """
+    # )
+    # query = query.bindparams(z=z, x=x, y=y, resolution=payload.resolution)
     query = text(
-        """
-        WITH uncompacted AS (
-            SELECT h3_uncompact_cells(array_agg(h3_index), :resolution) h3_index, dataset_id
-            FROM h3_data WHERE h3_get_resolution(h3_index) < :resolution
-            GROUP BY dataset_id
-        ),
-        parents AS (
-            SELECT h3_cell_to_parent(h3_index, :resolution) h3_index, COUNT(DISTINCT(dataset_id)) count
-            FROM h3_data
-            WHERE h3_get_resolution(h3_index) >= :resolution
-            GROUP BY h3_cell_to_parent(h3_index, :resolution)
-        ),
-        combined AS (
-            SELECT h3_index, COUNT(DISTINCT(dataset_id)) count
-            FROM uncompacted
-            GROUP BY h3_index
-            UNION
-            SELECT h3_index, count FROM parents
-        )
-        SELECT h3_index, SUM(count)
-        FROM combined
+        f"""
+        SELECT h3_index, dataset_count FROM h3_data_res{payload.resolution}
         WHERE ST_WITHIN(h3_index::geometry, ST_Transform(ST_TileEnvelope(:z, :x, :y), 4326))
-        GROUP BY h3_index
         """
     )
-    query = query.bindparams(z=z, x=x, y=y, resolution=payload.resolution)
+    query = query.bindparams(z=z, x=x, y=y)
     results = await session.execute(query)
     return [{"index": row[0], "dataset_count": row[1]} for row in results.fetchall()]
 
