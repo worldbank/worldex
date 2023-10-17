@@ -1,1 +1,9 @@
 Generic single-database configuration with an async dbapi.
+
+## Aggregate Materialized Views
+
+We use aggregate materialized views named `h3_data_resN`containing the dataset count per h3 tile where `N` is the h3 resolution ranging from 1 to 8.
+```
+REFRESH MATERIALIZED VIEW h3_data_resN;
+```
+needs to be ran upon indexing new datasets or periodically to make sure the web map displays an accurate count of datasets.
