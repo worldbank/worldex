@@ -22,7 +22,7 @@ Ask the repo maintainers if you're part of the same team.
 
 ```
 brew install gettext
-brew link --force gettext 
+brew link --force gettext
 ```
 
 ## `just refresh-db-password`
@@ -33,6 +33,22 @@ If you've previously generated a postgres password with this command and just wa
 ## `docker compose up`
 
 to run the development environment on local. Simply interrupt to stop the cluster or `docker compose down` if you ran it in detached mode.
+
+Note however that this doesn't start a dev server for the vite app however. You'll have to run `yarn` to install the dependencies and
+
+### `yarn start`
+
+to run the dev server. Our current reason for excluding this from the compose cluster is that while we can bind-mount the source code for hot reloads, we cannot do the same for `node_modules` in case the dependencies were installed on a different architecture (e.g. mac host, linux container).
+
+Outside of development context that requires hot reloads, you can run the following.
+
+### `docker compose --profile preview up -d`
+
+will run `vite preview` on a built version of the app while
+
+### `docker compose --profile web up -d`
+
+will run an nginx reverse proxy serving the built version of the vite app
 
 ## API service
 The api (and database) service are not quite ready yet at this point. See the API [readme](api/README.md) to finish setting them up.
