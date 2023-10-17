@@ -24,6 +24,7 @@ geoalchemy2 = "^0.14.1"
 h3ronpy = "^0.19.0"
 geopandas = "^0.14.0"
 greenlet = "^3.0.0"
+pydantic = "1.10.12"
 
 [tool.poetry.group.handlers]
 optional = true
