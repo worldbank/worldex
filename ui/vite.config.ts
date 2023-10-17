@@ -5,6 +5,7 @@ import viteTsconfigPaths from 'vite-tsconfig-paths';
 import svgrPlugin from 'vite-plugin-svgr';
 import checker from 'vite-plugin-checker';
 import pluginRewriteAll from 'vite-plugin-rewrite-all';
+import path from 'path';
 
 // https://vitejs.dev/config/
 export default defineConfig({
@@ -34,6 +35,16 @@ export default defineConfig({
     svgrPlugin(),
     pluginRewriteAll()
   ],
+  build: {
+    outDir: 'build',
+    assetsDir: 'assets',
+    emptyOutDir: true,
+  },
+  resolve: {
+    alias: {
+      '@': path.resolve(__dirname, './src'),
+    },
+  },
   server: {
     watch: {
       usePolling: true,
@@ -41,8 +52,13 @@ export default defineConfig({
     host: true,
     strictPort: true,
     port: 5173,
-  },
-  build: {
-    outDir: 'build',
-  },
+    proxy: {
+      '/api': {
+        target: 'http://localhost:8000/',
+        changeOrigin: false,
+        rewrite: (path) => path.replace(/^\/api/, ''),
+        secure: false,
+      }
+    }
+  }
 });

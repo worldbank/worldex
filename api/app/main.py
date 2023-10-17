@@ -17,7 +17,6 @@ app.add_middleware(
     # TODO: configure instead of hardcoding
     allow_origins=[
         "http://localhost:4173",
-        "http://localhost:4173",
         "http://w1lxscirender01.worldbank.org:4173",
     ],
     allow_credentials=True,

@@ -1,10 +1,23 @@
 version: "3.9"
 
 services:
-  ui:
+  web:
     build:
       context: ./ui/
-      dockerfile: Dockerfile
+      dockerfile: nginx.Dockerfile
+    ports:
+      - 80:80
+    volumes:
+      - ./ui/nginx.conf:/etc/nginx/conf.d/default.conf
+    env_file:
+      - ./ui/.env
+    depends_on:
+      - api
+    profiles: ["web"]
+  preview:
+    build:
+      context: ./ui/
+      dockerfile: preview.Dockerfile
     command: yarn serve
     ports:
       - 4173:4173
@@ -15,6 +28,7 @@ services:
       - ./ui/.env
     depends_on:
       - api
+    profiles: ["preview"]
   api:
     build:
       context: ./api
