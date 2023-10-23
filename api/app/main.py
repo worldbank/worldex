@@ -49,9 +49,10 @@ async def get_h3_tiles(
     )
     query = query.bindparams(z=z, x=x, y=y)
     resolution = payload.resolution
-    parents_array = ", ".join(
-        [f"h3_cell_to_parent(filldex, {res})" for res in range(1, resolution)]
-    )
+    parents_array = ["filldex"] + [
+        f"h3_cell_to_parent(filldex, {res})" for res in range(1, resolution)
+    ]
+    parents_comma_delimited = ", ".join(parents_array)
     query = text(
         f"""
         WITH bbox AS (
@@ -75,8 +76,20 @@ async def get_h3_tiles(
             )
         ),
         children_counted AS (SELECT filldex, ARRAY_AGG(id) dataset_ids FROM joined GROUP BY filldex),
-        SELECT children_counted.filldex, ARRAY_LENGTH(children_counted.datasets_id, 1)
+        parented AS (
+            SELECT filldex, UNNEST(ARRAY[{parents_comma_delimited}]) parent FROM fill GROUP BY filldex
+        ),
+        parent_counted AS (
+            SELECT filldex, ARRAY_AGG(DISTINCT dataset_id) dataset_ids FROM parented JOIN h3_data ON h3_data.h3_index = parent GROUP BY filldex
+        )
+        SELECT
+        CASE WHEN parent_counted.filldex IS NULL THEN children_counted.filldex ELSE parent_counted.filldex END AS index,
+        ARRAY_LENGTH(ARRAY_CAT(
+            CASE WHEN children_counted.dataset_ids IS NULL THEN ARRAY[]::int[] ELSE children_counted.dataset_ids END,
+            CASE WHEN parent_counted.dataset_ids IS NULL THEN ARRAY[]::int[] ELSE parent_counted.dataset_ids END
+        ), 1)
         FROM children_counted
+        FULL JOIN parent_counted ON children_counted.filldex = parent_counted.filldex
         """
     )
     query = query.bindparams(z=z, x=x, y=y, resolution=resolution)
