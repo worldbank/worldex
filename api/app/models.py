@@ -183,4 +183,10 @@ class H3Data(Base):
             dataset_id,
             postgresql_where=text("h3_get_resolution(h3_index) > 6"),
         ),
+        Index(
+            "ix_h3_data_res7_parent_dataset_id",
+            text("h3_cell_to_parent(h3_index, 7)"),
+            dataset_id,
+            postgresql_where=text("h3_get_resolution(h3_index) > 7"),
+        ),
     )
