@@ -41,33 +41,6 @@ async def get_h3_tiles(
     y: int,
     session: AsyncSession = Depends(get_async_session),
 ):
-    # query = text(
-    #     """
-    #     WITH uncompacted AS (
-    #         SELECT h3_uncompact_cells(array_agg(h3_index), :resolution) h3_index, dataset_id
-    #         FROM h3_data WHERE h3_get_resolution(h3_index) < :resolution
-    #         GROUP BY dataset_id
-    #     ),
-    #     parents AS (
-    #         SELECT h3_cell_to_parent(h3_index, :resolution) h3_index, COUNT(DISTINCT(dataset_id)) count
-    #         FROM h3_data
-    #         WHERE h3_get_resolution(h3_index) >= :resolution
-    #         GROUP BY h3_cell_to_parent(h3_index, :resolution)
-    #     ),
-    #     combined AS (
-    #         SELECT h3_index, COUNT(DISTINCT(dataset_id)) count
-    #         FROM uncompacted
-    #         GROUP BY h3_index
-    #         UNION
-    #         SELECT h3_index, count FROM parents
-    #     )
-    #     SELECT h3_index, SUM(count)
-    #     FROM combined
-    #     WHERE ST_WITHIN(h3_index::geometry, ST_Transform(ST_TileEnvelope(:z, :x, :y), 4326))
-    #     GROUP BY h3_index
-    #     """
-    # )
-    # query = query.bindparams(z=z, x=x, y=y, resolution=payload.resolution)
     query = text(
         f"""
         SELECT h3_index, dataset_count FROM h3_data_res{payload.resolution}
@@ -75,6 +48,38 @@ async def get_h3_tiles(
         """
     )
     query = query.bindparams(z=z, x=x, y=y)
+    resolution = payload.resolution
+    parents_array = ", ".join(
+        [f"h3_cell_to_parent(filldex, {res})" for res in range(1, resolution)]
+    )
+    query = text(
+        f"""
+        WITH bbox AS (
+            SELECT ST_Transform(ST_TileEnvelope(:z, :x, :y), 4326) bbox
+        ),
+        fill AS (
+            SELECT h3_polygon_to_cells((SELECT bbox FROM bbox), :resolution) filldex
+        ),
+        joined AS (
+            SELECT filldex, datasets.id
+            FROM fill
+            JOIN datasets
+            ON ST_Intersects(h3_cell_to_geometry(filldex), st_setsrid(datasets.bbox, 4326))
+            WHERE EXISTS(
+                SELECT 1 FROM h3_data WHERE
+                dataset_id = datasets.id
+                AND (
+                    h3_get_resolution(h3_data.h3_index) > :resolution
+                    AND h3_cell_to_parent(h3_index, :resolution) = filldex
+                )
+            )
+        ),
+        children_counted AS (SELECT filldex, ARRAY_AGG(id) dataset_ids FROM joined GROUP BY filldex),
+        SELECT children_counted.filldex, ARRAY_LENGTH(children_counted.datasets_id, 1)
+        FROM children_counted
+        """
+    )
+    query = query.bindparams(z=z, x=x, y=y, resolution=resolution)
     results = await session.execute(query)
     return [{"index": row[0], "dataset_count": row[1]} for row in results.fetchall()]
 
