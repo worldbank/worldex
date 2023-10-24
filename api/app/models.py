@@ -32,7 +32,6 @@ class HealthCheck(BaseModel):
 
 class H3TileRequest(BaseModel):
     resolution: int
-    should_count: Optional[bool]
 
 
 dataset_keyword_association_table = Table(
