@@ -85,8 +85,8 @@ async def get_h3_tiles(
         SELECT
         CASE WHEN parent_counted.filldex IS NULL THEN children_counted.filldex ELSE parent_counted.filldex END AS index,
         ARRAY_LENGTH(ARRAY_CAT(
-            CASE WHEN children_counted.dataset_ids IS NULL THEN ARRAY[]::int[] ELSE children_counted.dataset_ids END,
-            CASE WHEN parent_counted.dataset_ids IS NULL THEN ARRAY[]::int[] ELSE parent_counted.dataset_ids END
+            COALESCE(parent_counted.dataset_ids, ARRAY[]::int[]),
+            COALESCE(children_counted.dataset_ids, ARRAY[]::int[])
         ), 1)
         FROM children_counted
         FULL JOIN parent_counted ON children_counted.filldex = parent_counted.filldex

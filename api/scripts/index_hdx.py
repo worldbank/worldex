@@ -21,6 +21,7 @@ DATASET_DIR = os.getenv("AWS_DATASET_DIRECTORY")
 
 SKIP_LIST = [
     "cyclone-tracks-1969-2009",
+    "global-droughts-events-1980-2001",
 ]
 
 
