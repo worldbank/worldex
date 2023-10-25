@@ -1,13 +1,11 @@
 /* eslint-disable */
 export const ZOOM_H3_RESOLUTION_PAIRS = [
-    [2, 1],
-    [3, 2],
-    [4, 3],
-    [6, 4],
-    [8, 5],
-    [10, 6],
-    [11, 7],
-    [14, 8],
+    [2, 3],
+    [3, 4],
+    [4, 5],
+    [6, 6],
+    [8, 7],
+    [10, 8],
 ]
 
 export const MINIMUM_ZOOM = ZOOM_H3_RESOLUTION_PAIRS[0][0];

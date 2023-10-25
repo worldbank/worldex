@@ -32,7 +32,6 @@ class HealthCheck(BaseModel):
 
 class H3TileRequest(BaseModel):
     resolution: int
-    should_count: Optional[bool]
 
 
 dataset_keyword_association_table = Table(
@@ -69,6 +68,14 @@ class Dataset(Base):
         backref="dataset", cascade="all, delete-orphan"
     )
 
+    __table_args__ = (
+        Index(
+            "ix_datasets_bbox_srid",
+            text("st_setsrid(bbox, 4326)"),
+            postgresql_using="gist",
+        ),
+    )
+
 
 class Keyword(Base):
 
@@ -103,15 +110,82 @@ class H3Data(Base):
             text("h3_cell_to_geometry(h3_index)"),
             postgresql_using="gist",
         ),
+        Index("ix_h3_data_h3_index_res", text("h3_get_resolution(h3_index)")),
         Index(
-            "ix_h3_data_h3_index_res",
-            text("h3_get_resolution(h3_index)")
+            "ix_h3_data_h3_index_parent_res1",
+            text("h3_cell_to_parent(h3_index, 1)"),
+            postgresql_where=text("h3_get_resolution(h3_index) > 1"),
         ),
-        Index("ix_h3_data_h3_index_parent_res1", text("h3_cell_to_parent(h3_index, 1)"), postgresql_where=text("h3_get_resolution(h3_index) > 1")),
-        Index("ix_h3_data_h3_index_parent_res2", text("h3_cell_to_parent(h3_index, 2)"), postgresql_where=text("h3_get_resolution(h3_index) > 2")),
-        Index("ix_h3_data_h3_index_parent_res3", text("h3_cell_to_parent(h3_index, 3)"), postgresql_where=text("h3_get_resolution(h3_index) > 3")),
-        Index("ix_h3_data_h3_index_parent_res4", text("h3_cell_to_parent(h3_index, 4)"), postgresql_where=text("h3_get_resolution(h3_index) > 4")),
-        Index("ix_h3_data_h3_index_parent_res5", text("h3_cell_to_parent(h3_index, 5)"), postgresql_where=text("h3_get_resolution(h3_index) > 5")),
-        Index("ix_h3_data_h3_index_parent_res6", text("h3_cell_to_parent(h3_index, 6)"), postgresql_where=text("h3_get_resolution(h3_index) > 6")),
-        Index("ix_h3_data_h3_index_parent_res7", text("h3_cell_to_parent(h3_index, 7)"), postgresql_where=text("h3_get_resolution(h3_index) > 7")),
+        Index(
+            "ix_h3_data_h3_index_parent_res2",
+            text("h3_cell_to_parent(h3_index, 2)"),
+            postgresql_where=text("h3_get_resolution(h3_index) > 2"),
+        ),
+        Index(
+            "ix_h3_data_h3_index_parent_res3",
+            text("h3_cell_to_parent(h3_index, 3)"),
+            postgresql_where=text("h3_get_resolution(h3_index) > 3"),
+        ),
+        Index(
+            "ix_h3_data_h3_index_parent_res4",
+            text("h3_cell_to_parent(h3_index, 4)"),
+            postgresql_where=text("h3_get_resolution(h3_index) > 4"),
+        ),
+        Index(
+            "ix_h3_data_h3_index_parent_res5",
+            text("h3_cell_to_parent(h3_index, 5)"),
+            postgresql_where=text("h3_get_resolution(h3_index) > 5"),
+        ),
+        Index(
+            "ix_h3_data_h3_index_parent_res6",
+            text("h3_cell_to_parent(h3_index, 6)"),
+            postgresql_where=text("h3_get_resolution(h3_index) > 6"),
+        ),
+        Index(
+            "ix_h3_data_h3_index_parent_res7",
+            text("h3_cell_to_parent(h3_index, 7)"),
+            postgresql_where=text("h3_get_resolution(h3_index) > 7"),
+        ),
+        Index(
+            "ix_h3_data_res1_parent_dataset_id",
+            text("h3_cell_to_parent(h3_index, 1)"),
+            dataset_id,
+            postgresql_where=text("h3_get_resolution(h3_index) > 1"),
+        ),
+        Index(
+            "ix_h3_data_res2_parent_dataset_id",
+            text("h3_cell_to_parent(h3_index, 2)"),
+            dataset_id,
+            postgresql_where=text("h3_get_resolution(h3_index) > 2"),
+        ),
+        Index(
+            "ix_h3_data_res3_parent_dataset_id",
+            text("h3_cell_to_parent(h3_index, 3)"),
+            dataset_id,
+            postgresql_where=text("h3_get_resolution(h3_index) > 3"),
+        ),
+        Index(
+            "ix_h3_data_res4_parent_dataset_id",
+            text("h3_cell_to_parent(h3_index, 4)"),
+            dataset_id,
+            postgresql_where=text("h3_get_resolution(h3_index) > 4"),
+        ),
+        Index(
+            "ix_h3_data_res5_parent_dataset_id",
+            text("h3_cell_to_parent(h3_index, 5)"),
+            dataset_id,
+            postgresql_where=text("h3_get_resolution(h3_index) > 5"),
+        ),
+        Index(
+            "ix_h3_data_res6_parent_dataset_id",
+            text("h3_cell_to_parent(h3_index, 6)"),
+            dataset_id,
+            postgresql_where=text("h3_get_resolution(h3_index) > 6"),
+        ),
+        Index(
+            "ix_h3_data_res7_parent_dataset_id",
+            text("h3_cell_to_parent(h3_index, 7)"),
+            dataset_id,
+            postgresql_where=text("h3_get_resolution(h3_index) > 7"),
+        ),
     )

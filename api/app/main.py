@@ -41,33 +41,48 @@ async def get_h3_tiles(
     y: int,
     session: AsyncSession = Depends(get_async_session),
 ):
+    resolution = payload.resolution
+    parents_array = ["fill_index"] + [
+        f"h3_cell_to_parent(fill_index, {res})" for res in range(1, resolution)
+    ]
+    parents_comma_delimited = ", ".join(parents_array)
     query = text(
-        """
-        WITH uncompacted AS (
-            SELECT h3_uncompact_cells(array_agg(h3_index), :resolution) h3_index, dataset_id
-            FROM h3_data WHERE h3_get_resolution(h3_index) < :resolution
-            GROUP BY dataset_id
+        f"""
+        WITH bbox AS (
+            SELECT ST_Transform(ST_TileEnvelope(:z, :x, :y), 4326) bbox
         ),
-        parents AS (
-            SELECT h3_cell_to_parent(h3_index, :resolution) h3_index, COUNT(DISTINCT(dataset_id)) count
-            FROM h3_data
-            WHERE h3_get_resolution(h3_index) >= :resolution
-            GROUP BY h3_cell_to_parent(h3_index, :resolution)
+        fill AS (
+            SELECT h3_polygon_to_cells((SELECT bbox FROM bbox), :resolution) fill_index
         ),
-        combined AS (
-            SELECT h3_index, COUNT(DISTINCT(dataset_id)) count
-            FROM uncompacted
-            GROUP BY h3_index
-            UNION
-            SELECT h3_index, count FROM parents
+        with_parents AS (
+            SELECT fill_index, UNNEST(ARRAY[{parents_comma_delimited}]) parent FROM fill GROUP BY fill_index
+        ),
+        parent_datasets AS (
+            SELECT fill_index, ARRAY_AGG(DISTINCT dataset_id) dataset_ids FROM with_parents JOIN h3_data ON h3_index = parent GROUP BY fill_index
+        ),
+        children_datasets AS (
+            SELECT fill_index, ARRAY_AGG(datasets.id) dataset_ids
+            FROM fill
+            JOIN datasets ON ST_Intersects(h3_cell_to_geometry(fill_index), ST_SetSRID(datasets.bbox, 4326))
+            WHERE EXISTS(
+                SELECT 1 FROM h3_data WHERE
+                dataset_id = datasets.id
+                AND (
+                    h3_get_resolution(h3_index) > :resolution AND h3_cell_to_parent(h3_index, :resolution) = fill_index
+                )
+            )
+            GROUP BY fill_index
         )
-        SELECT h3_index, SUM(count)
-        FROM combined
-        WHERE ST_WITHIN(h3_index::geometry, ST_Transform(ST_TileEnvelope(:z, :x, :y), 4326))
-        GROUP BY h3_index
+        SELECT COALESCE(parent_datasets.fill_index, children_datasets.fill_index) AS index, ARRAY_LENGTH(ARRAY_CAT(
+            COALESCE(parent_datasets.dataset_ids, ARRAY[]::int[]),
+            COALESCE(children_datasets.dataset_ids, ARRAY[]::int[])
+        ), 1) dataset_count
+        FROM parent_datasets
+        FULL JOIN children_datasets
+        ON parent_datasets.fill_index = children_datasets.fill_index
         """
     )
-    query = query.bindparams(z=z, x=x, y=y, resolution=payload.resolution)
+    query = query.bindparams(z=z, x=x, y=y, resolution=resolution)
     results = await session.execute(query)
     return [{"index": row[0], "dataset_count": row[1]} for row in results.fetchall()]
 
