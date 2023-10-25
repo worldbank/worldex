@@ -41,16 +41,9 @@ async def get_h3_tiles(
     y: int,
     session: AsyncSession = Depends(get_async_session),
 ):
-    query = text(
-        f"""
-        SELECT h3_index, dataset_count FROM h3_data_res{payload.resolution}
-        WHERE ST_WITHIN(h3_index::geometry, ST_Transform(ST_TileEnvelope(:z, :x, :y), 4326))
-        """
-    )
-    query = query.bindparams(z=z, x=x, y=y)
     resolution = payload.resolution
-    parents_array = ["filldex"] + [
-        f"h3_cell_to_parent(filldex, {res})" for res in range(1, resolution)
+    parents_array = ["fill_index"] + [
+        f"h3_cell_to_parent(fill_index, {res})" for res in range(1, resolution)
     ]
     parents_comma_delimited = ", ".join(parents_array)
     query = text(
@@ -59,37 +52,34 @@ async def get_h3_tiles(
             SELECT ST_Transform(ST_TileEnvelope(:z, :x, :y), 4326) bbox
         ),
         fill AS (
-            SELECT h3_polygon_to_cells((SELECT bbox FROM bbox), :resolution) filldex
+            SELECT h3_polygon_to_cells((SELECT bbox FROM bbox), :resolution) fill_index
         ),
-        joined AS (
-            SELECT filldex, datasets.id
+        with_parents AS (
+            SELECT fill_index, UNNEST(ARRAY[{parents_comma_delimited}]) parent FROM fill GROUP BY fill_index
+        ),
+        parent_datasets AS (
+            SELECT fill_index, ARRAY_AGG(DISTINCT dataset_id) dataset_ids FROM with_parents JOIN h3_data ON h3_index = parent GROUP BY fill_index
+        ),
+        children_datasets AS (
+            SELECT fill_index, ARRAY_AGG(datasets.id) dataset_ids
             FROM fill
-            JOIN datasets
-            ON ST_Intersects(h3_cell_to_geometry(filldex), st_setsrid(datasets.bbox, 4326))
+            JOIN datasets ON ST_Intersects(h3_cell_to_geometry(fill_index), ST_SetSRID(datasets.bbox, 4326))
             WHERE EXISTS(
                 SELECT 1 FROM h3_data WHERE
                 dataset_id = datasets.id
                 AND (
-                    h3_get_resolution(h3_data.h3_index) > :resolution
-                    AND h3_cell_to_parent(h3_index, :resolution) = filldex
+                    h3_get_resolution(h3_index) > :resolution AND h3_cell_to_parent(h3_index, :resolution) = fill_index
                 )
             )
-        ),
-        children_counted AS (SELECT filldex, ARRAY_AGG(id) dataset_ids FROM joined GROUP BY filldex),
-        parented AS (
-            SELECT filldex, UNNEST(ARRAY[{parents_comma_delimited}]) parent FROM fill GROUP BY filldex
-        ),
-        parent_counted AS (
-            SELECT filldex, ARRAY_AGG(DISTINCT dataset_id) dataset_ids FROM parented JOIN h3_data ON h3_data.h3_index = parent GROUP BY filldex
+            GROUP BY fill_index
         )
-        SELECT
-        CASE WHEN parent_counted.filldex IS NULL THEN children_counted.filldex ELSE parent_counted.filldex END AS index,
-        ARRAY_LENGTH(ARRAY_CAT(
-            COALESCE(parent_counted.dataset_ids, ARRAY[]::int[]),
-            COALESCE(children_counted.dataset_ids, ARRAY[]::int[])
-        ), 1)
-        FROM children_counted
-        FULL JOIN parent_counted ON children_counted.filldex = parent_counted.filldex
+        SELECT COALESCE(parent_datasets.fill_index, children_datasets.fill_index) AS index, ARRAY_LENGTH(ARRAY_CAT(
+            COALESCE(parent_datasets.dataset_ids, ARRAY[]::int[]),
+            COALESCE(children_datasets.dataset_ids, ARRAY[]::int[])
+        ), 1) dataset_count
+        FROM parent_datasets
+        FULL JOIN children_datasets
+        ON parent_datasets.fill_index = children_datasets.fill_index
         """
     )
     query = query.bindparams(z=z, x=x, y=y, resolution=resolution)
