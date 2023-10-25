@@ -9,7 +9,9 @@ prep-aws-env:
 create-envs:
   env $(cat ./secrets/db.env | xargs) envsubst < ./secrets/pgweb.env.tpl > ./secrets/pgweb.env
   env $(cat ./secrets/db.env | xargs) envsubst < ./secrets/api.env.tpl > ./secrets/api.env
-  awk -F= '{print "export " $0}' ./secrets/api.env > ./api/.envrc
+  env $(cat ./secrets/db.env | xargs) envsubst < ./secrets/api.envrc.tpl > ./api/.envrc.part
+  awk -F= '{print "export " $0}' ./api/.envrc.part > ./api/.envrc
+  rm ./api/.envrc.part
   awk -F= '{print "export " $0}' ./secrets/aws.env >> ./api/.envrc
 refresh-db-password:
   just generate-password | xargs -I {} env PASSWORD={} bash -c 'cat ./secrets/db.env.tpl | envsubst'  > ./secrets/db.env
