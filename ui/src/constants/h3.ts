@@ -6,8 +6,6 @@ export const ZOOM_H3_RESOLUTION_PAIRS = [
     [6, 6],
     [8, 7],
     [10, 8],
-    // [11, 8],
-    // [14, 8],
 ]
 
 export const MINIMUM_ZOOM = ZOOM_H3_RESOLUTION_PAIRS[0][0];
