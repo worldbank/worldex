@@ -46,14 +46,17 @@ async def get_h3_tiles(
         f"h3_cell_to_parent(fill_index, {res})" for res in range(1, resolution)
     ]
     parents_comma_delimited = ", ".join(parents_array)
+
+    fill_cte = "SELECT ix AS fill_index, geom FROM h3.hex WHERE ST_Within(ix::geometry, (SELECT bbox FROM bbox)) AND resolution = :resolution"
+        if resolution <= 6 else "SELECT h3_polygon_to_cells((SELECT bbox FROM bbox), :resolution) fill_index"
+    within_arg = "ix::geometry" if resolution <= 6 else "h3_cell_to_geometry(fill_index)"
+
     query = text(
         f"""
         WITH bbox AS (
             SELECT ST_Transform(ST_TileEnvelope(:z, :x, :y), 4326) bbox
         ),
-        fill AS (
-            SELECT h3_polygon_to_cells((SELECT bbox FROM bbox), :resolution) fill_index
-        ),
+        fill AS ({fill_cte}),
         with_parents AS (
             SELECT fill_index, UNNEST(ARRAY[{parents_comma_delimited}]) parent FROM fill GROUP BY fill_index
         ),
@@ -63,8 +66,8 @@ async def get_h3_tiles(
         children_datasets AS (
             SELECT fill_index, ARRAY_AGG(datasets.id) dataset_ids
             FROM fill
-            JOIN datasets ON ST_Intersects(h3_cell_to_geometry(fill_index), ST_SetSRID(datasets.bbox, 4326))
-            WHERE EXISTS(
+            JOIN datasets ON ST_Within({within_arg}, ST_SetSRID(datasets.bbox, 4326))
+            AND EXISTS(
                 SELECT 1 FROM h3_data WHERE
                 dataset_id = datasets.id
                 AND (
