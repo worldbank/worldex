@@ -1,0 +1,52 @@
+-- CREATE INDEX ix_h3_data_p_h3_index_res ON h3_data_partitioned USING btree (h3_get_resolution(h3_index))
+-- CREATE TABLE h3_data_partitioned (
+--   id SERIAL,
+--   dataset_id int NOT NULL`,
+--   h3_index H3Index NOT NULL,
+--   base_cell int NOT NULL,
+--   PRIMARY KEY (id, base_cell),
+--   CONSTRAINT h3_data_dataset_id_fkey FOREIGN KEY (dataset_id) REFERENCES datasets(id) ON DELETE CASCADE
+-- ) PARTITION BY RANGE(base_cell);
+
+-- CREATE INDEX idx_h3_data_with_base_cell ON h3_data_with_base_cell (base_cell);
+-- CREATE TABLE h3_data_part0 PARTITION OF h3_data_partitioned FOR VALUES FROM (0) TO (20) ;
+-- INSERT INTO h3_data_part0 (dataset_id, h3_index, base_cell) SELECT dataset_id, h3_index, base_cell FROM h3_data_with_base_cell WHERE base_cell BETWEEN 0 AND 19;
+
+-- CREATE TABLE h3_data_part1 PARTITION OF h3_data_partitioned FOR VALUES FROM (20) TO (40);
+-- INSERT INTO h3_data_part1 (dataset_id, h3_index, base_cell) SELECT dataset_id, h3_index, base_cell FROM h3_data_with_base_cell WHERE base_cell BETWEEN 20 AND 39;
+
+-- CREATE TABLE h3_data_part2 PARTITION OF h3_data_partitioned FOR VALUES FROM (40) TO (60);
+-- INSERT INTO h3_data_part2 (dataset_id, h3_index, base_cell) SELECT dataset_id, h3_index, base_cell FROM h3_data_with_base_cell WHERE base_cell BETWEEN 40 AND 59;
+
+-- CREATE TABLE h3_data_part3 PARTITION OF h3_data_partitioned FOR VALUES FROM (60) TO (80);
+-- INSERT INTO h3_data_part3 (dataset_id, h3_index, base_cell) SELECT dataset_id, h3_index, base_cell FROM h3_data_with_base_cell WHERE base_cell BETWEEN 60 AND 79;
+
+-- CREATE TABLE h3_data_part4 PARTITION OF h3_data_partitioned FOR VALUES FROM (80) TO (100);
+-- INSERT INTO h3_data_part4 (dataset_id, h3_index, base_cell) SELECT dataset_id, h3_index, base_cell FROM h3_data_with_base_cell WHERE base_cell BETWEEN 80 AND 99;
+
+-- CREATE TABLE h3_data_part5 PARTITION OF h3_data_partitioned FOR VALUES FROM (100) TO (122);
+-- INSERT INTO h3_data_part5 (dataset_id, h3_index, base_cell) SELECT dataset_id, h3_index, base_cell FROM h3_data_with_base_cell WHERE base_cell BETWEEN 100 AND 121;
+-- CREATE INDEX ix_h3_data_res1_parent ON public.h3_data USING btree (h3_cell_to_parent(h3_index, 1)) WHERE (h3_get_resolution(h3_index) > 1);
+-- CREATE INDEX ix_h3_data_res2_parent ON public.h3_data USING btree (h3_cell_to_parent(h3_index, 2)) WHERE (h3_get_resolution(h3_index) > 2);
+-- CREATE INDEX ix_h3_data_res3_parent ON public.h3_data USING btree (h3_cell_to_parent(h3_index, 3)) WHERE (h3_get_resolution(h3_index) > 3);
+-- CREATE INDEX ix_h3_data_res4_parent ON public.h3_data USING btree (h3_cell_to_parent(h3_index, 4)) WHERE (h3_get_resolution(h3_index) > 4);
+-- CREATE INDEX ix_h3_data_res5_parent ON public.h3_data USING btree (h3_cell_to_parent(h3_index, 5)) WHERE (h3_get_resolution(h3_index) > 5);
+-- CREATE INDEX ix_h3_data_res6_parent ON public.h3_data USING btree (h3_cell_to_parent(h3_index, 6)) WHERE (h3_get_resolution(h3_index) > 6);
+-- CREATE INDEX ix_h3_data_res7_parent ON public.h3_data USING btree (h3_cell_to_parent(h3_index, 7)) WHERE (h3_get_resolution(h3_index) > 7);
+
+-- CREATE INDEX ix_h3_data_p_h3_index ON public.h3_data_partitioned USING btree (h3_index)
+
+-- CREATE TABLE h3_res0_cells
+-- (
+--     h3_index H3INDEX NOT NULL PRIMARY KEY
+-- );
+-- CREATE INDEX gix_h3_res0_boundary ON h3_res0_cells USING GIST (h3_cell_to_boundary_geography(h3_index));
+-- INSERT INTO h3_res0_cells (h3_index) SELECT h3_get_res_0_cells();
+
+-- CREATE INDEX ix_h3_data_p_res1_parent_dataset_id ON public.h3_data_partitioned USING btree (h3_cell_to_parent(h3_index, 1), dataset_id) WHERE (h3_get_resolution(h3_index) > 1);
+-- CREATE INDEX ix_h3_data_p_res2_parent_dataset_id ON public.h3_data_partitioned USING btree (h3_cell_to_parent(h3_index, 2), dataset_id) WHERE (h3_get_resolution(h3_index) > 2);
+-- CREATE INDEX ix_h3_data_p_res3_parent_dataset_id ON public.h3_data_partitioned USING btree (h3_cell_to_parent(h3_index, 3), dataset_id) WHERE (h3_get_resolution(h3_index) > 3);
+-- CREATE INDEX ix_h3_data_p_res4_parent_dataset_id ON public.h3_data_partitioned USING btree (h3_cell_to_parent(h3_index, 4), dataset_id) WHERE (h3_get_resolution(h3_index) > 4);
+-- CREATE INDEX ix_h3_data_p_res5_parent_dataset_id ON public.h3_data_partitioned USING btree (h3_cell_to_parent(h3_index, 5), dataset_id) WHERE (h3_get_resolution(h3_index) > 5);
+-- CREATE INDEX ix_h3_data_p_res6_parent_dataset_id ON public.h3_data_partitioned USING btree (h3_cell_to_parent(h3_index, 6), dataset_id) WHERE (h3_get_resolution(h3_index) > 6);
+-- CREATE INDEX ix_h3_data_p_res7_parent_dataset_id ON public.h3_data_partitioned USING btree (h3_cell_to_parent(h3_index, 7), dataset_id) WHERE (h3_get_resolution(h3_index) > 7);
