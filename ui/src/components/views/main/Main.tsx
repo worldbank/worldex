@@ -12,12 +12,18 @@ import { SEARCH_LAYER_ID } from 'components/layers/SearchLayer';
 import { DATASET_H3_LAYER_ID_PREFIX } from 'components/layers/DatasetH3Layer';
 import { useDispatch, useSelector } from 'react-redux';
 
-import { Grid } from '@mui/material';
+import {
+  Box,
+  Grid,
+  Modal,
+  Typography,
+} from '@mui/material';
 import { styled } from '@mui/material/styles';
 import LazyLoadComponent from 'components/common/LazyLoadComponent';
 import { useMapHooks } from 'components/common/map/useMapHooks';
-import { useParams, useSearchParams } from 'react-router-dom';
+import { useSearchParams } from 'react-router-dom';
 import { RootState } from 'store/store';
+import WelcomeModal from 'components/common/WelcomeModal';
 
 const MapContainer = lazy(
   () => import(
@@ -108,12 +114,15 @@ export default function Main() {
   }, [setSearchParams, latitude, longitude, zoom]);
 
   return (
-    <GridMain container item xs>
-      <LazyLoadComponent>
-        <Sidebar />
-        <MapContainer />
-        <ErrorSnackbar />
-      </LazyLoadComponent>
-    </GridMain>
+    <>
+      <WelcomeModal />
+      <GridMain container item xs>
+        <LazyLoadComponent>
+          <Sidebar />
+          <MapContainer />
+          <ErrorSnackbar />
+        </LazyLoadComponent>
+      </GridMain>
+    </>
   );
 }
