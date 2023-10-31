@@ -63,8 +63,8 @@ async def get_h3_tiles(
         children_datasets AS (
             SELECT fill_index, ARRAY_AGG(datasets.id) dataset_ids
             FROM fill
-            JOIN datasets ON ST_Intersects(h3_cell_to_geometry(fill_index), ST_SetSRID(datasets.bbox, 4326))
-            WHERE EXISTS(
+            JOIN datasets ON ST_Within(fill_index::geometry, ST_SetSRID(datasets.bbox, 4326))
+            AND EXISTS(
                 SELECT 1 FROM h3_data WHERE
                 dataset_id = datasets.id
                 AND (
