@@ -30,6 +30,13 @@ to generate a postgres password and the environment files to be used by the `api
 
 If you've previously generated a postgres password with this command and just want to regenerate the environment files, run `create-envs`
 
+## PostGIS on ARM-based devices
+If you are on an ARM-based device (e.g. M1/M2 MacBooks), comment out the following line under the `db` service on `docker-compose.yaml`, comment out the following line
+```
+dockerfile: arm64.Dockerfile
+```
+This will build a more appropriate image for your host machine. Otherwise, the PostGIS service will still run but performance/queries will be much slower on your local environment.
+
 ## `docker compose up`
 
 to run the development environment on local. Simply interrupt to stop the cluster or `docker compose down` if you ran it in detached mode.
