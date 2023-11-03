@@ -1,3 +1,4 @@
+import h3
 import uvicorn
 from app import settings
 from app.db import get_async_session
@@ -31,6 +32,41 @@ async def health_check():
         "name": settings.project_name,
         "version": settings.version,
     }
+
+
+@app.post("/h3_tile/{index}")
+async def get_h3_tile_data(
+    index: str,
+    session: AsyncSession = Depends(get_async_session),
+):
+    resolution = h3.h3_get_resolution(index)
+    query = text(
+        f"""
+        WITH with_parents AS (
+            SELECT :target target_index, h3_cell_to_parent(CAST(:target AS H3INDEX), generate_series(0, :resolution)) parent
+        ),
+        parent_datasets AS (
+            SELECT dataset_id FROM h3_data WHERE h3_index = ANY(ARRAY(SELECT parent from with_parents))
+        ),
+        children_datasets AS (
+            SELECT dataset_id FROM h3_data
+            WHERE h3_get_resolution(h3_index) > :resolution
+            AND h3_cell_to_parent(h3_index, :resolution) = CAST(:target AS H3INDEX)
+        ),
+        dataset_ids AS (
+            SELECT dataset_id FROM parent_datasets
+            UNION
+            SELECT dataset_id FROM children_datasets
+        )
+        SELECT name, source_org, description FROM datasets WHERE id = ANY(ARRAY(SELECT * FROM dataset_ids));
+        """
+    )
+    query = query.bindparams(target=index, resolution=resolution)
+    results = await session.execute(query)
+    return [
+        {"name": row[0], "source_org": row[1], "description": row[2]}
+        for row in results.fetchall()
+    ]
 
 
 @app.post("/h3_tiles/{z}/{x}/{y}")
