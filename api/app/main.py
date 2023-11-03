@@ -91,10 +91,10 @@ async def get_h3_tiles(
             SELECT h3_polygon_to_cells((SELECT bbox FROM bbox), :resolution) fill_index
         ),
         with_parents AS (
-            SELECT fill_index, UNNEST(ARRAY[{parents_comma_delimited}]) parent FROM fill GROUP BY fill_index
+            SELECT fill_index, ARRAY[{parents_comma_delimited}] parents FROM fill GROUP BY fill_index
         ),
         parent_datasets AS (
-            SELECT fill_index, ARRAY_AGG(DISTINCT dataset_id) dataset_ids FROM with_parents JOIN h3_data ON h3_index = parent GROUP BY fill_index
+            SELECT fill_index, ARRAY_AGG(dataset_id) dataset_ids FROM with_parents JOIN h3_data ON h3_index = ANY(parents) GROUP BY fill_index
         ),
         children_datasets AS (
             SELECT fill_index, ARRAY_AGG(datasets.id) dataset_ids
