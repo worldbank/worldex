@@ -1,22 +1,21 @@
 """
-Automates indexing of world pop datasets
+Automates indexing of hdx datasets
 """
 import os
+import zipfile
+from collections import Counter
 from datetime import datetime
+from pathlib import Path
 
-from hdx.data.dataset import Dataset
 import pandas as pd
+from hdx.data.dataset import Dataset
 from shapely import wkt
 from shapely.geometry import box
 
-
-from .dataset import BaseDataset
-from ..utils.download import create_staging_dir
 from ..handlers.raster_handlers import RasterHandler
 from ..handlers.vector_handlers import VectorHandler
-
-# TODO: hanlde confiugration
-# Configuration.create(hdx_site="prod", user_agent="worldex", hdx_read_only=True)
+from ..utils.filemanager import create_staging_dir, unzip_file
+from .dataset import BaseDataset
 
 VALID_TYPES = ["CSV", "Geopackage", "SHP"]
 
@@ -63,7 +62,7 @@ class HDXDataset(BaseDataset):
             description=dataset["notes"],
             projection="",
             properties={
-                "url": f"https://data.humdata.org/dataset/{id}",
+                "url": f"https://data.humdata.org/dataset/{dataset['name']}",
                 "original_source": dataset["dataset_source"],
             },
             keywords=[],
@@ -72,33 +71,67 @@ class HDXDataset(BaseDataset):
         obj._dataset = dataset
         return obj
 
+    def index_from_gdf(self, gdf, dir=None):
+        with create_staging_dir(dir) as (staging_dir, is_tempdir):
+            handler = VectorHandler(gdf)
+            h3indices = handler.h3index()
+            self.bbox = wkt.dumps(box(*handler.bbox))
+            df = pd.DataFrame({"h3_index": h3indices})
+            df.to_parquet(staging_dir / "h3.parquet", index=False)
+            with open(staging_dir / "metadata.json", "w") as f:
+                f.write(self.model_dump_json())
+        return df
+
     def index(self, dir=None):
         with create_staging_dir(dir) as (staging_dir, is_tempdir):
-            # TODO: repopulate _dataset if missing
             resources = self._dataset.resources
-            resource = next(
+            sorted_resources = sorted(
                 filter(
-                    lambda x: x["format"] in PRIORITY,
-                    sorted(resources, key=lambda x: PRIORITY.index(x["format"])),
-                )
+                    lambda x: x["format"] in PRIORITY
+                    and not x.get("broken_link", False),
+                    resources,
+                ),
+                key=lambda x: PRIORITY.index(x["format"]),
             )
-            if resource is None:
+            if len(sorted_resources) == 0:
                 raise Exception("Could not find a valid type")
-
-            filename = resource["name"]
+            resource = sorted_resources[0]
+            filename = Path(resource["download_url"]).name
 
             # Skip downloading if file exists in dir
-            if not os.path.exists(staging_dir / filename):
+            file_path = staging_dir / filename
+            if not os.path.exists(file_path):
                 _, temp_filename = resource.download(staging_dir)
-                # hdx has a weird filenaming when downloading the file
-                # this addresses by handling the renaming
-                os.rename(temp_filename, staging_dir / filename)
-
+                if temp_filename != file_path:
+                    # hdx has a weird filenaming when downloading files as it append file extensions.
+                    # it becomes file.shp.zip.shp this addresses by handling the renaming
+                    os.rename(temp_filename, staging_dir / filename)
             # TODO: Figure out how to handle zipped files
             if "GeoTIFF" == resource["format"]:
-                handler = RasterHandler.from_file(staging_dir / filename)
+                if file_path.name.endswith(".zip"):
+                    unzipped_files = unzip_file(file_path, staging_dir)
+                    file = list(
+                        filter(lambda f: f.name.endswith(".tif"), unzipped_files)
+                    )
+                    if len(file) > 0:
+                        handler = RasterHandler.from_file(file[0])
+                    else:
+                        raise Exception("Could not find a valid type")
+                else:
+                    handler = RasterHandler.from_file(file_path)
             else:
-                handler = VectorHandler.from_file(staging_dir / filename)
+                # Logic for nested dir inside zip
+                files = zipfile.ZipFile(file_path).namelist()
+                is_zipped_dir = all("/" in f for f in files)
+                if file_path.name.endswith(".zip") and len(files) > is_zipped_dir:
+                    counter = Counter(Path(f).parent.name for f in files)
+                    folder = counter.most_common()[0][0]
+                    if counter[folder] > 1:
+                        handler = VectorHandler.from_file(f"{str(file_path)}!{folder}")
+                    else:
+                        handler = VectorHandler.from_file(file_path)
+                else:
+                    handler = VectorHandler.from_file(file_path)
             h3indices = handler.h3index()
             self.bbox = wkt.dumps(box(*handler.bbox))
             df = pd.DataFrame({"h3_index": h3indices})

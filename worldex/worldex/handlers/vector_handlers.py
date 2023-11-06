@@ -4,7 +4,7 @@ from typing import List, Optional, Tuple
 import geopandas as gpd
 from h3ronpy.arrow import cells_to_string
 from h3ronpy.arrow.vector import wkb_to_cells
-from shapely import Geometry
+from shapely import Geometry, wkb
 
 from ..types import File
 from .base import BaseHandler
@@ -19,6 +19,9 @@ BUFFER_SIZE = 0.0000000001
 
 
 def process_geometry(geom: Geometry) -> Geometry:
+    # drop z axis
+    if geom.has_z:
+        geom = wkb.loads(wkb.dumps(geom, output_dimension=2))
     if geom.geom_type in ["MultiLineString", "LineString"]:
         return geom.buffer(BUFFER_SIZE)
     else:
@@ -28,7 +31,11 @@ def process_geometry(geom: Geometry) -> Geometry:
 class VectorHandler(BaseHandler):
     def __init__(self, gdf: gpd.GeoDataFrame, resolution: Optional[int] = None) -> None:
         # h3 indexes are standardized to use epsg:4326 projection
-        self.gdf = gdf.to_crs(epsg=4326)
+        if gdf.crs is None:
+            # TODO: add warnging if no crs exists
+            self.gdf = gdf.set_crs(epsg=4326)
+        else:
+            self.gdf = gdf.to_crs(epsg=4326)
         self.resolution = resolution
 
     @classmethod
@@ -68,9 +75,10 @@ class VectorHandler(BaseHandler):
     def h3index(self) -> List[int]:
         # TODO: Measure perfomance differences of using self.gdf.geometry.unary_union.to_wkb() for large files
         # TODO: Measure perfomance degradation of using process_geometry/ geom.buffer for large files
+        geom = self.gdf.geometry[~self.gdf.geometry.isnull()]
         cells = cells_to_string(
             wkb_to_cells(
-                self.gdf.geometry.apply(process_geometry).to_wkb(),
+                geom.apply(process_geometry).to_wkb(),
                 resolution=self.get_resolution(),
             )
             .flatten()

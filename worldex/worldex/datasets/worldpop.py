@@ -1,8 +1,8 @@
 """
 Automates indexing of world pop datasets
 """
-from datetime import datetime
 import os
+from datetime import datetime
 from pathlib import Path
 from urllib.parse import parse_qs, urlparse
 
@@ -13,7 +13,7 @@ from shapely import wkt
 from shapely.geometry import box
 
 from ..handlers.raster_handlers import RasterHandler
-from ..utils.download import download_file, create_staging_dir
+from ..utils.filemanager import create_staging_dir, download_file
 from .dataset import BaseDataset
 
 WORLDPOP_API_CACHE = {}
@@ -21,7 +21,7 @@ WORLDPOP_API_CACHE = {}
 
 def worldpop_get(url):
     """Simple caching for world pop api. Only cache certain urls"""
-    if not url in WORLDPOP_API_CACHE:
+    if url not in WORLDPOP_API_CACHE:
         WORLDPOP_API_CACHE[url] = requests.get(url)
     return WORLDPOP_API_CACHE[url]
 
