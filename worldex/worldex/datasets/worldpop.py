@@ -13,7 +13,7 @@ from shapely import wkt
 from shapely.geometry import box
 
 from ..handlers.raster_handlers import RasterHandler
-from ..utils.download import download_file, create_staging_dir
+from ..utils.filemanager import download_file, create_staging_dir
 from .dataset import BaseDataset
 
 WORLDPOP_API_CACHE = {}
