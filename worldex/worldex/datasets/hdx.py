@@ -2,21 +2,20 @@
 Automates indexing of hdx datasets
 """
 import os
-from pathlib import Path
-from datetime import datetime
 import zipfile
 from collections import Counter
+from datetime import datetime
+from pathlib import Path
 
-from hdx.data.dataset import Dataset
 import pandas as pd
+from hdx.data.dataset import Dataset
 from shapely import wkt
 from shapely.geometry import box
 
-
-from .dataset import BaseDataset
-from ..utils.filemanager import create_staging_dir, unzip_file
 from ..handlers.raster_handlers import RasterHandler
 from ..handlers.vector_handlers import VectorHandler
+from ..utils.filemanager import create_staging_dir, unzip_file
+from .dataset import BaseDataset
 
 VALID_TYPES = ["CSV", "Geopackage", "SHP"]
 
