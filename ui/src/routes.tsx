@@ -2,6 +2,7 @@ import { lazy } from 'react';
 import ProtectedRoute from 'components/common/ProtectedRoute';
 import DefaultView from 'components/common/DefaultView';
 import { Navigate, useParams } from 'react-router-dom';
+import Selected from 'components/common/Selected';
 
 const Main = lazy(
   () => import(/* webpackPrefetch: true */ 'components/views/main/Main'),
@@ -26,6 +27,12 @@ const routes = [
         </DefaultView>
       </ProtectedRoute>
     ),
+    children: [
+      {
+        path: '/',
+        element: <Selected />,
+      },
+    ],
   },
   {
     path: '*',
