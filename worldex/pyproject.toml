@@ -53,6 +53,7 @@ matplotlib = "^3.7.2"
 sqlalchemy = "^2.0.20"
 psycopg2-binary = "^2.9.7"
 contextily = "^1.4.0"
+nbqa = "^1.7.0"
 
 
 [tool.poetry.group.test.dependencies]
