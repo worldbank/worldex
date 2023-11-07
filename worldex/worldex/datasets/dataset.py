@@ -9,6 +9,7 @@ from shapely import wkt
 from shapely.geometry import box
 
 from ..handlers.vector_handlers import VectorHandler
+from ..handlers.raster_handlers import RasterHandler
 from ..utils.filemanager import create_staging_dir
 
 
@@ -29,10 +30,23 @@ class BaseDataset(BaseModel):
     properties: dict
     bbox: Optional[str] = None
     keywords: list[str]
+    date_start: Optional[datetime] = None
+    date_end: Optional[datetime] = None
 
     def index_from_gdf(self, gdf, dir=None):
         with create_staging_dir(dir) as (staging_dir, is_tempdir):
             handler = VectorHandler(gdf)
+            h3indices = handler.h3index()
+            self.bbox = wkt.dumps(box(*handler.bbox))
+            df = pd.DataFrame({"h3_index": h3indices})
+            df.to_parquet(staging_dir / "h3.parquet", index=False)
+            with open(staging_dir / "metadata.json", "w") as f:
+                f.write(self.model_dump_json())
+        return df
+
+    def index_from_riosrc(self, src, dir=None):
+        with create_staging_dir(dir) as (staging_dir, is_tempdir):
+            handler = RasterHandler(src)
             h3indices = handler.h3index()
             self.bbox = wkt.dumps(box(*handler.bbox))
             df = pd.DataFrame({"h3_index": h3indices})
