@@ -35,6 +35,7 @@
     "@types/react-redux": "^7.1.25",
     "@vitejs/plugin-react": "^4.0.4",
     "autoprefixer": "^10.4.15",
+    "classnames": "^2.3.2",
     "deck.gl": "^8.9.23",
     "deepmerge": "^4.3.1",
     "echarts": "^5.4.3",
