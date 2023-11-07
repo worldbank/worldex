@@ -1,0 +1,25 @@
+version: "3.9"
+
+services:
+  redis:
+    image: redis
+    command: /bin/sh -c "redis-server --requirepass $$REDIS_PASSWORD"
+    env_file:
+      - ./secrets/redis.env
+  pgsync:
+    build:
+      context: https://github.com/toluaina/pgsync.git#2.5.0
+      dockerfile: Dockerfile
+    command: ./runserver.sh
+    sysctls:
+      - net.ipv4.tcp_keepalive_time=200
+      - net.ipv4.tcp_keepalive_intvl=200
+      - net.ipv4.tcp_keepalive_probes=5
+    labels:
+      org.label-schema.name: "pgsync"
+      org.label-schema.description: "Postgres to Elasticsearch sync"
+      com.label-schema.service-type: "daemon"
+    depends_on:
+      - redis
+    env_file:
+      - ./secrets/pgsync.env

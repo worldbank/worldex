@@ -13,7 +13,7 @@ services:
       - ./ui/.env
     depends_on:
       - api
-    profiles: ["web"]
+    profiles: [ "web" ]
   preview:
     build:
       context: ./ui/
@@ -28,7 +28,7 @@ services:
       - ./ui/.env
     depends_on:
       - api
-    profiles: ["preview"]
+    profiles: [ "preview" ]
   api:
     build:
       context: ./api
@@ -58,7 +58,7 @@ services:
     env_file:
       - secrets/db.env
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready"]
+      test: [ "CMD-SHELL", "pg_isready" ]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -71,5 +71,59 @@ services:
     depends_on:
       db:
         condition: service_healthy
+  es01:
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.10.3
+    restart: always
+    container_name: worldex-es01
+    environment:
+      - node.name=es01
+      - cluster.name=worldex-es-docker-cluster
+      - discovery.seed_hosts=es02,es03
+      - cluster.initial_master_nodes=es01,es02,es03
+      - bootstrap.memory_lock=true
+      - "ES_JAVA_OPTS=-Xms2g -Xmx2g"
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+    volumes:
+      - _volumes/elasticsearch/data/01:/usr/share/elasticsearch/data
+    ports:
+      - 127.0.0.1:9200:9200
+  es02:
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.10.3
+    restart: always
+    container_name: worldex-es02
+    environment:
+      - node.name=es02
+      - cluster.name=worldex-es-docker-cluster
+      - discovery.seed_hosts=es01,es03
+      - cluster.initial_master_nodes=es01,es02,es03
+      - bootstrap.memory_lock=true
+      - "ES_JAVA_OPTS=-Xms2g -Xmx2g"
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+    volumes:
+      - _volumes/elasticsearch/data/02:/usr/share/elasticsearch/data
+  es03:
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.10.3
+    restart: always
+    container_name: worldex-es03
+    environment:
+      - node.name=es03
+      - cluster.name=worldex-es-docker-cluster
+      - discovery.seed_hosts=es01,es02
+      - cluster.initial_master_nodes=es01,es02,es03
+      - bootstrap.memory_lock=true
+      - "ES_JAVA_OPTS=-Xms2g -Xmx2g"
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+    volumes:
+      - _volumes/elasticsearch/data/03:/usr/share/elasticsearch/data
+
 volumes:
   pg_data:
