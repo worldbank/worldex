@@ -56,6 +56,7 @@ export default function DatasetH3Layer(resolution: number, minZoom: number, maxZ
                 <>
                   <Typography>
                     Cell ID:
+                    {' '}
                     {info.object.index}
                   </Typography>
                   {
@@ -63,6 +64,7 @@ export default function DatasetH3Layer(resolution: number, minZoom: number, maxZ
                     && (
                       <Typography>
                         Dataset Count:
+                        {' '}
                         {info.object.dataset_count}
                       </Typography>
                     )
