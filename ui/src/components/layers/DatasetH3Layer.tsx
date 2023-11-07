@@ -36,6 +36,11 @@ export default function DatasetH3Layer(resolution: number, minZoom: number, maxZ
       },
       onClick: async (info: any, event: any) => {
         const targetIndex = info.object.index;
+        if (selectedH3Index === targetIndex) {
+          dispatch(setSelectedH3Index(null));
+          dispatch(setDatasets(null));
+          return;
+        }
         dispatch(setSelectedH3Index(targetIndex));
         const resp = await fetch(`/api/h3_tile/${targetIndex}`, {
           method: 'post',

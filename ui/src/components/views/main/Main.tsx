@@ -110,7 +110,7 @@ export default function Main() {
   return (
     <GridMain container item xs>
       <LazyLoadComponent>
-        <Sidebar />
+        {/* <Sidebar /> */}
         <MapContainer />
         <ErrorSnackbar />
       </LazyLoadComponent>
