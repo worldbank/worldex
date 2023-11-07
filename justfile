@@ -4,6 +4,9 @@
   just generate-password | xargs -I {} echo "POSTGRES_PASSWORD={}" > ./secrets/postgres_password.env
 @generate-redis-password:
   just generate-password | xargs -I {} echo "REDIS_PASSWORD={}" > ./secrets/redis_password.env
+@generate-service-passwords:
+  just generate-db-password
+  just generate-redis-password
 api-shell:
   docker compose exec -it api /bin/bash
 prep-aws-env:
@@ -15,12 +18,8 @@ create-envs:
   awk -F= '{print "export " $0}' ./api/.envrc.part > ./api/.envrc
   rm ./api/.envrc.part
   awk -F= '{print "export " $0}' ./secrets/aws.env >> ./api/.envrc
-create-pgsync-envs:
-  just create-envs
   env $(cat ./secrets/db.env ./secrets/redis.env | xargs) envsubst < ./secrets/pgsync.env.tpl > ./secrets/pgsync.env
 refresh-db-password:
   just generate-password | xargs -I {} env PASSWORD={} bash -c 'cat ./secrets/db.env.tpl | envsubst'  > ./secrets/db.env
-  just create-envs
-refresh-redis-password:
   just generate-password | xargs -I {} env PASSWORD={} bash -c 'cat ./secrets/redis.env.tpl | envsubst'  > ./secrets/redis.env
-  just create-pgsync-envs
+  just create-envs
