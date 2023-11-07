@@ -1,15 +1,34 @@
-import ExpandMore from "@mui/icons-material/ExpandMore";
-import { Box, Button, ButtonGroup, Card, CardContent, CardHeader, Collapse, Divider, IconButton, List, ListItem, Stack, Typography } from "@mui/material";
+import ExpandLess from "@mui/icons-material/ExpandLess";
+import { Box, Button, ButtonGroup, Card, CardContent, Collapse, Divider, IconButton, List, ListItem, Stack, Typography } from "@mui/material";
+import classNames from "classnames";
 import { UNITS, cellArea, getResolution } from "h3-js";
 import { useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { RootState } from "store/store";
-import classNames from "classnames";
 import { setDatasets, setH3Index as setSelectedH3Index } from 'store/selectedSlice';
+import { RootState } from "store/store";
+
+const Datasets = ({ datasets }: { datasets: any[] }) => (
+  <List className="m-0 py-0 max-h-96 overflow-y-auto">
+    {
+      datasets.map((dataset: any, idx: number) => (
+        <div key={dataset.id}>
+          <ListItem className="py-2.5">
+            <Stack spacing={1}>
+              <Typography className="text-sm font-bold">{idx+1}. { dataset.name }</Typography>
+              <Typography className="text-xs italic">{ dataset.source_org }</Typography>
+              <Typography className="text-xs">{ dataset.description }</Typography>
+            </Stack>
+          </ListItem>
+          <Divider />
+        </div>
+      ))
+    }
+  </List>
+)
 
 const Selected = () => {
   const { h3Index, datasets } = useSelector((state: RootState) => state.selected);
-  const [expanded, setExpanded] = useState(false);
+  const [expanded, setExpanded] = useState(true);
   const dispatch = useDispatch();
 
   const handleExpandClick = () => {
@@ -29,7 +48,7 @@ const Selected = () => {
           <Typography className="text-lg font-bold">Tile {h3Index}</Typography>
           <ButtonGroup className="flex items-center" size="small">
             <Button onClick={handleDeselectClick} variant="text" className="uppercase">Deselect tile</Button>
-            <IconButton className={classNames({"rotate-180": expanded})} onClick={handleExpandClick}><ExpandMore /></IconButton>
+            <IconButton className={classNames({"rotate-180": expanded})} onClick={handleExpandClick}><ExpandLess /></IconButton>
           </ButtonGroup>
         </Stack>
         <Collapse in={expanded}>
@@ -39,42 +58,10 @@ const Selected = () => {
             <Typography className="text-sm">Dataset count: {datasets?.length} datasets</Typography>
           </Box>
           <Divider />
-          { datasets && 
-            <List className="m-0 py-0 max-h-96 overflow-y-auto">
-              {
-                datasets.map((dataset: any, idx: number) => (
-                  <div key={dataset.id}>
-                    <ListItem className="py-2.5">
-                      <Stack spacing={1}>
-                        <Typography className="text-sm font-bold">{idx+1}. { dataset.name }</Typography>
-                        <Typography className="text-xs italic">{ dataset.source_org }</Typography>
-                        <Typography className="text-xs">{ dataset.description }</Typography>
-                      </Stack>
-                    </ListItem>
-                    <Divider />
-                  </div>
-                ))
-              }
-            </List>
-          }
+          { datasets && <Datasets datasets={datasets} />}
         </Collapse>
       </CardContent>
     </Card>
-      // { { datasets && (
-      //   <Box className="overflow-y-scroll">
-      //     <DataGrid
-      //     rows={datasets}
-      //     columns={columns}
-      //     initialState={{
-      //       pagination: {
-      //         paginationModel: {page: 0, pageSize: 10},
-      //       },
-      //     }}
-      //     pageSizeOptions={[10, 20]}
-      //     />
-      //   </Box>
-      //   ) } }
-    // </Card>
   )
 } 
 
