@@ -1,25 +1,36 @@
 import ExpandMore from "@mui/icons-material/ExpandMore";
-import { Box, Card, CardContent, CardHeader, Collapse, Divider, IconButton, List, ListItem, Stack, Typography } from "@mui/material";
+import { Box, Button, ButtonGroup, Card, CardContent, CardHeader, Collapse, Divider, IconButton, List, ListItem, Stack, Typography } from "@mui/material";
 import { UNITS, cellArea, getResolution } from "h3-js";
 import { useState } from "react";
-import { useSelector } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import { RootState } from "store/store";
 import classNames from "classnames";
+import { setDatasets, setH3Index as setSelectedH3Index } from 'store/selectedSlice';
 
 const Selected = () => {
   const { h3Index, datasets } = useSelector((state: RootState) => state.selected);
   const [expanded, setExpanded] = useState(false);
+  const dispatch = useDispatch();
 
   const handleExpandClick = () => {
     setExpanded(!expanded);
   };
+
+  const handleDeselectClick = () => {
+    dispatch(setSelectedH3Index(null));
+    dispatch(setDatasets(null));
+    setExpanded(true);
+  }
   
   return h3Index && (
     <Card className="absolute bottom-2.5 right-2.5 w-96">
       <CardContent sx={{ '&:last-child': { pb: 1.5 }}} className="p-0 pt-3">
         <Stack className="px-4" direction="row" alignItems="center" justifyContent="space-between">
           <Typography className="text-lg font-bold">Tile {h3Index}</Typography>
-          <IconButton className={classNames({"rotate-180": expanded})} onClick={handleExpandClick}><ExpandMore /></IconButton>
+          <ButtonGroup className="flex items-center" size="small">
+            <Button onClick={handleDeselectClick} variant="text" className="uppercase">Deselect tile</Button>
+            <IconButton className={classNames({"rotate-180": expanded})} onClick={handleExpandClick}><ExpandMore /></IconButton>
+          </ButtonGroup>
         </Stack>
         <Collapse in={expanded}>
           <Box className="px-4 pb-2">
