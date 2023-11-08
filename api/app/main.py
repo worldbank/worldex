@@ -1,3 +1,4 @@
+import h3
 import uvicorn
 from app import settings
 from app.db import get_async_session
@@ -33,6 +34,41 @@ async def health_check():
     }
 
 
+@app.post("/h3_tile/{index}")
+async def get_h3_tile_data(
+    index: str,
+    session: AsyncSession = Depends(get_async_session),
+):
+    resolution = h3.h3_get_resolution(index)
+    query = text(
+        f"""
+        WITH with_parents AS (
+            SELECT :target target_index, h3_cell_to_parent(CAST(:target AS H3INDEX), generate_series(0, :resolution)) parent
+        ),
+        parent_datasets AS (
+            SELECT dataset_id FROM h3_data WHERE h3_index = ANY(ARRAY(SELECT parent from with_parents))
+        ),
+        children_datasets AS (
+            SELECT dataset_id FROM h3_data
+            WHERE h3_get_resolution(h3_index) > :resolution
+            AND h3_cell_to_parent(h3_index, :resolution) = CAST(:target AS H3INDEX)
+        ),
+        dataset_ids AS (
+            SELECT dataset_id FROM parent_datasets
+            UNION
+            SELECT dataset_id FROM children_datasets
+        )
+        SELECT id, name, source_org, description FROM datasets WHERE id = ANY(ARRAY(SELECT * FROM dataset_ids));
+        """
+    )
+    query = query.bindparams(target=index, resolution=resolution)
+    results = await session.execute(query)
+    return [
+        {"id": row[0], "name": row[1], "source_org": row[2], "description": row[3]}
+        for row in results.fetchall()
+    ]
+
+
 @app.post("/h3_tiles/{z}/{x}/{y}")
 async def get_h3_tiles(
     payload: H3TileRequest,
@@ -55,10 +91,10 @@ async def get_h3_tiles(
             SELECT h3_polygon_to_cells((SELECT bbox FROM bbox), :resolution) fill_index
         ),
         with_parents AS (
-            SELECT fill_index, UNNEST(ARRAY[{parents_comma_delimited}]) parent FROM fill GROUP BY fill_index
+            SELECT fill_index, ARRAY[{parents_comma_delimited}] parents FROM fill GROUP BY fill_index
         ),
         parent_datasets AS (
-            SELECT fill_index, ARRAY_AGG(DISTINCT dataset_id) dataset_ids FROM with_parents JOIN h3_data ON h3_index = parent GROUP BY fill_index
+            SELECT fill_index, ARRAY_AGG(dataset_id) dataset_ids FROM with_parents JOIN h3_data ON h3_index = ANY(parents) GROUP BY fill_index
         ),
         children_datasets AS (
             SELECT fill_index, ARRAY_AGG(datasets.id) dataset_ids

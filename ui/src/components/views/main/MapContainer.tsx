@@ -4,10 +4,11 @@ import ZoomControl from 'components/common/ZoomControl';
 import { getLayers } from 'components/layers';
 import { useSelector } from 'react-redux';
 import {
-  Grid, useMediaQuery, Theme, GridProps,
+  Grid, useMediaQuery, Theme, GridProps, Paper, Card,
 } from '@mui/material';
 import { styled } from '@mui/material/styles';
 import LocationSearch from 'components/common/LocationSearch';
+import Selected from 'components/common/Selected';
 
 const Map = lazy(
   () => import(/* webpackChunkName: 'map' */ 'components/common/map/Map'),
@@ -66,6 +67,7 @@ export default function MapContainer() {
         <StyledZoomControl showCurrentZoom className="zoomControl" />
       )}
       <LocationSearch className="absolute top-2.5 left-2.5 p-2" />
+      <Selected />
     </GridMapWrapper>
   );
 }
