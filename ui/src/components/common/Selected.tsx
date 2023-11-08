@@ -19,7 +19,7 @@ const Datasets = ({ datasets }: { datasets: any[] }) => (
               <Typography className="text-xs">{ dataset.description }</Typography>
             </Stack>
           </ListItem>
-          <Divider />
+          {idx + 1 < datasets.length && <Divider />}
         </div>
       ))
     }
