@@ -67,7 +67,7 @@ export default function MapContainer() {
         <StyledZoomControl showCurrentZoom className="zoomControl" />
       )}
       <LocationSearch className="absolute top-2.5 left-2.5 p-2" />
-      <Selected />
+      {/* <Selected /> */}
     </GridMapWrapper>
   );
 }

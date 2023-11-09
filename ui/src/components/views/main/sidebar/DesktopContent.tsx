@@ -12,13 +12,13 @@ const DrawerDesktop = styled(Drawer)(({ theme }) => ({
 
 export default function DesktopContent() {
   return (
-    <Drawer variant='persistent' anchor='bottom' open>
-      <Outlet />
-    </Drawer>
-    // <DrawerDesktop variant='permanent' anchor='left' open>
-    //   <Grid container item xs>
-    //     <Outlet />
-    //   </Grid>
-    // </DrawerDesktop>
+    // <Drawer variant='persistent' anchor='bottom' open>
+    //   <Outlet />
+    // </Drawer>
+    <DrawerDesktop variant='permanent' anchor='left' open>
+      {/* <Grid container item xs> */}
+        <Outlet />
+      {/* </Grid> */}
+    </DrawerDesktop>
   );
 }
