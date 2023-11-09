@@ -58,13 +58,13 @@ async def get_h3_tile_data(
             UNION
             SELECT dataset_id FROM children_datasets
         )
-        SELECT id, name, source_org, description FROM datasets WHERE id = ANY(ARRAY(SELECT * FROM dataset_ids));
+        SELECT id, name, source_org, description, files FROM datasets WHERE id = ANY(ARRAY(SELECT * FROM dataset_ids));
         """
     )
     query = query.bindparams(target=index, resolution=resolution)
     results = await session.execute(query)
     return [
-        {"id": row[0], "name": row[1], "source_org": row[2], "description": row[3]}
+        {"id": row[0], "name": row[1], "source_org": row[2], "description": row[3], "files": row[4]}
         for row in results.fetchall()
     ]
 
