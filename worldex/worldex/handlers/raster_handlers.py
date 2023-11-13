@@ -1,5 +1,7 @@
 from typing import List, Optional, Tuple
 
+import numpy as np
+import pandas as pd
 import rasterio as rio
 from h3ronpy.arrow import cells_to_string
 from h3ronpy.pandas.raster import raster_to_dataframe
@@ -27,18 +29,38 @@ class RasterHandler(BaseHandler):
             return self.default_resolution
         return self.resolution
 
-    def h3index(self) -> List[int]:
+    def h3index(self, window: Optional[Tuple[int, int]] = None) -> List[int]:
         # TODO: Improve default values of this
         # TODO: compare perfomance difference between this and
         # vectorizing the raster 1st using rasterio.features.shapes
-        h3_df = raster_to_dataframe(
-            self.src.read(1),
-            self.src.transform,
-            self.get_resolution(),
-            nodata_value=self.src.nodata,
-            compact=False,
-        )
-        return cells_to_string(h3_df.cell.unique()).tolist()
+        if window is None:
+            h3_df = raster_to_dataframe(
+                self.src.read(1),
+                self.src.transform,
+                self.get_resolution(),
+                nodata_value=self.src.nodata,
+                compact=False,
+            )
+            return cells_to_string(h3_df.cell.unique()).tolist()
+        else:
+            [left, bottom, right, top] = self.src.bounds
+            x_range, x_step = np.linspace(left, right, window[0], retstep=True)
+            y_range, y_step = np.linspace(bottom, top, window[1], retstep=True)
+            h3ids = []
+            for x in x_range:
+                for y in y_range:
+                    # logger.info("Indexing window: left: %s, bottom:%s, right:%s, top:%s", x, y, x + x_step, y + y_step)
+                    rio_window = self.src.window(x, y, x + x_step, y + y_step)
+                    win_transform = self.src.window_transform(rio_window)
+                    h3_df = raster_to_dataframe(
+                        self.src.read(1, window=rio_window),
+                        win_transform,
+                        self.get_resolution(),
+                        nodata_value=self.src.nodata,
+                        compact=False,
+                    )
+                    h3ids.append(cells_to_string(h3_df.cell).tolist())
+            return np.unique(np.concatenate(h3ids, axis=None))
 
     @property
     def bbox(self) -> Tuple[float, float, float, float]:

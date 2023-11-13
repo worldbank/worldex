@@ -3,7 +3,7 @@
 ## Installation
 
 ```
-poetry install --all-extras
+poetry install --with dev --all-extras
 ```
 
 or

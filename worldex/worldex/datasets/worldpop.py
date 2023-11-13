@@ -2,7 +2,7 @@
 Automates indexing of world pop datasets
 """
 import os
-from datetime import datetime
+from datetime import datetime, date
 from pathlib import Path
 from urllib.parse import parse_qs, urlparse
 
@@ -26,6 +26,11 @@ def worldpop_get(url):
     return WORLDPOP_API_CACHE[url]
 
 
+def get_date_range_from_pop_year(popyear: str) -> tuple[date, date]:
+    year = int(popyear)
+    return (date(year, 1, 1), date(year, 12, 31))
+
+
 class WorldPopDataset(BaseDataset):
     """
     Usage:
@@ -41,10 +46,10 @@ class WorldPopDataset(BaseDataset):
         # TODO: catch malformed url
         if "summary" in url:
             url = cls.summary_parser(url)
-        data = requests.get(url).json()["data"]
+        data = worldpop_get(url).json()["data"]
         if isinstance(data, list):
             raise Exception("Processing a list of data is not yet supported")
-
+        (date_start, date_end) = get_date_range_from_pop_year(data["popyear"])
         return cls(
             name=data["title"],
             last_fetched=datetime.now().isoformat(),
@@ -57,6 +62,9 @@ class WorldPopDataset(BaseDataset):
                 "category": data["category"],
             },
             keywords=[],
+            date_start=date_start,
+            date_end=date_end,
+            accessibility="public/open",
         )
 
     @classmethod
@@ -83,26 +91,22 @@ class WorldPopDataset(BaseDataset):
         ]
         return f"https://hub.worldpop.org/rest/data/{category_alias}/{listing_alias}/?id={data_id}"
 
-    def index(self, dir=None):
-        with create_staging_dir(dir) as (staging_dir, is_tempdir):
-            # TODO: Allow none tiff files like zip, 7z files.
-            # TODO: handle multiple files
-            url = next(filter(lambda x: x.endswith(".tif"), self.files))
-            filename = Path(url).name
-            # Skip downloading if file exists in dir
-            if not os.path.exists(staging_dir / filename):
-                # TODO: https download is way slower than using worldpop ftp
-                download_file(url, staging_dir / filename)
+    def index(self, window=(10, 10)):
+        # TODO: Allow none tiff files like zip, 7z files.
+        # TODO: handle multiple files
+        url = next(filter(lambda x: x.endswith(".tif"), self.files))
+        filename = Path(url).name
+        # Skip downloading if file exists in dir
+        if not os.path.exists(self.dir / filename):
+            # TODO: https download is way slower than using worldpop ftp
+            download_file(url, self.dir / filename)
 
-            handler = RasterHandler.from_file(staging_dir / filename)
-            h3indices = handler.h3index()
+        handler = RasterHandler.from_file(self.dir / filename)
+        h3indices = handler.h3index(window=window)
 
-            self.bbox = wkt.dumps(box(*handler.bbox))
-            df = pd.DataFrame({"h3_index": h3indices})
-
-            # Clean up temp dir if it exists
-            if not is_tempdir:
-                df.to_parquet(staging_dir / "h3.parquet", index=False)
-                with open(staging_dir / "metadata.json", "w") as f:
-                    f.write(self.model_dump_json())
+        self.bbox = wkt.dumps(box(*handler.bbox))
+        df = pd.DataFrame({"h3_index": h3indices})
+        df.to_parquet(self.dir / "h3.parquet", index=False)
+        with open(self.dir / "metadata.json", "w") as f:
+            f.write(self.model_dump_json())
         return df
