@@ -7,8 +7,9 @@ import { useDispatch, useSelector } from "react-redux";
 import { setDatasets, setH3Index as setSelectedH3Index } from 'store/selectedSlice';
 import { RootState } from "store/store";
 import groupBy from "utils/groupBy";
+import { Dataset } from "./types";
 
-const DatasetItem = ({idx, dataset}: {idx: number, dataset: any}) => {
+const DatasetItem = ({idx, dataset}: {idx: number, dataset: Dataset}) => {
   const [anchor, setAnchor] = useState(null);
   const handleClick = (event: any) => {
     setAnchor(event.currentTarget);
@@ -23,7 +24,6 @@ const DatasetItem = ({idx, dataset}: {idx: number, dataset: any}) => {
   return (
     <Stack direction="row" className="p-3 items-center justify-between">
       <Box className="m-0">
-        {/* @ts-ignore */}
         <Typography className="text-sm">{idx+1}. { dataset.name }</Typography>
       </Box>
       <IconButton onClick={handleClick}><ChevronRight /></IconButton>
@@ -44,7 +44,7 @@ const DatasetItem = ({idx, dataset}: {idx: number, dataset: any}) => {
             {
               dataset.files && dataset.files.map((file: string) => (
                 <ListItem className="p-0">
-                  <Link className="text-xs text-clip" href={file}>{file.length > 100 ? `${file.slice(0, 50)}...${file.slice(-30)}` : file}</Link>
+                  <Link className="text-xs text-clip" href={file}>{file.length > 100 ? `${file.slice(0, 50)}…${file.slice(-30)}` : file}</Link>
                 </ListItem>
               ))
             }
@@ -55,10 +55,9 @@ const DatasetItem = ({idx, dataset}: {idx: number, dataset: any}) => {
   )
 }
 
-const Datasets = ({ datasetsByOrgs }: { datasetsByOrgs: {[key: string]: any[]} }) => (
+const Datasets = ({ datasetsByOrgs }: { datasetsByOrgs: { [source_org: string]: Dataset[]; }}) => (
   <div>
     { 
-      // TODO: type dataset
       Object.entries(datasetsByOrgs).map(([org, datasets]) => {
         return <Accordion disableGutters elevation={0} key={org} className="!relative">
           <AccordionSummary>
@@ -67,7 +66,7 @@ const Datasets = ({ datasetsByOrgs }: { datasetsByOrgs: {[key: string]: any[]} }
           <Divider />
           <AccordionDetails className="p-0">
             {
-              datasets.map((dataset: any, idx: number) => {
+              datasets.map((dataset: Dataset, idx: number) => {
                 return (
                   <List className="m-0 py-0 max-h-[100%] overflow-y-auto">
                     <ListItem className="p-0">
@@ -88,7 +87,7 @@ const Datasets = ({ datasetsByOrgs }: { datasetsByOrgs: {[key: string]: any[]} }
 );
 
 const Selected = () => {
-  const { h3Index, datasets } = useSelector((state: RootState) => state.selected);
+  const { h3Index, datasets }: { h3Index: string, datasets: Dataset[] } = useSelector((state: RootState) => state.selected);
   const dispatch = useDispatch();
 
   const datasetsByOrgs = datasets ? groupBy(datasets, "source_org") : null;
