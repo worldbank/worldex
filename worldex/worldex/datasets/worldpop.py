@@ -83,26 +83,19 @@ class WorldPopDataset(BaseDataset):
         ]
         return f"https://hub.worldpop.org/rest/data/{category_alias}/{listing_alias}/?id={data_id}"
 
-    def index(self, dir=None):
-        with create_staging_dir(dir) as (staging_dir, is_tempdir):
-            # TODO: Allow none tiff files like zip, 7z files.
-            # TODO: handle multiple files
-            url = next(filter(lambda x: x.endswith(".tif"), self.files))
-            filename = Path(url).name
-            # Skip downloading if file exists in dir
-            if not os.path.exists(staging_dir / filename):
-                # TODO: https download is way slower than using worldpop ftp
-                download_file(url, staging_dir / filename)
+    def index(self, window=(10, 10)):
+        # TODO: Allow none tiff files like zip, 7z files.
+        # TODO: handle multiple files
+        url = next(filter(lambda x: x.endswith(".tif"), self.files))
+        filename = Path(url).name
+        # Skip downloading if file exists in dir
+        if not os.path.exists(self.dir / filename):
+            # TODO: https download is way slower than using worldpop ftp
+            download_file(url, self.dir / filename)
 
-            handler = RasterHandler.from_file(staging_dir / filename)
-            h3indices = handler.h3index()
+        handler = RasterHandler.from_file(self.dir / filename)
+        h3indices = handler.h3index(window=window)
 
-            self.bbox = wkt.dumps(box(*handler.bbox))
-            df = pd.DataFrame({"h3_index": h3indices})
-
-            # Clean up temp dir if it exists
-            if not is_tempdir:
-                df.to_parquet(staging_dir / "h3.parquet", index=False)
-                with open(staging_dir / "metadata.json", "w") as f:
-                    f.write(self.model_dump_json())
+        self.bbox = wkt.dumps(box(*handler.bbox))
+        df = pd.DataFrame({"h3_index": h3indices})
         return df
