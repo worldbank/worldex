@@ -1,6 +1,6 @@
 """Provider for basic datasets
 """
-from datetime import datetime
+from datetime import datetime, date
 from typing import Optional
 from typing_extensions import Literal
 from pathlib import Path
@@ -32,8 +32,8 @@ class BaseDataset(BaseModel):
     properties: dict
     bbox: Optional[str] = None
     keywords: list[str]
-    date_start: Optional[datetime] = None
-    date_end: Optional[datetime] = None
+    date_start: Optional[date] = None
+    date_end: Optional[date] = None
     accessibility: Optional[Literal["public/open", "public/login", "private"]] = None
 
     def set_dir(self, dir):

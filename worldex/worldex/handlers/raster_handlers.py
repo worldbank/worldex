@@ -59,7 +59,7 @@ class RasterHandler(BaseHandler):
                         nodata_value=self.src.nodata,
                         compact=False,
                     )
-                h3ids.append(cells_to_string(h3_df.cell).tolist())
+                    h3ids.append(cells_to_string(h3_df.cell).tolist())
             return np.unique(np.concatenate(h3ids, axis=None))
 
     @property

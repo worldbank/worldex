@@ -2,7 +2,7 @@
 Automates indexing of world pop datasets
 """
 import os
-from datetime import datetime
+from datetime import datetime, date
 from pathlib import Path
 from urllib.parse import parse_qs, urlparse
 
@@ -26,6 +26,11 @@ def worldpop_get(url):
     return WORLDPOP_API_CACHE[url]
 
 
+def get_date_range_from_pop_year(popyear: str) -> tuple[date, date]:
+    year = int(popyear)
+    return (date(year, 1, 1), date(year, 12, 31))
+
+
 class WorldPopDataset(BaseDataset):
     """
     Usage:
@@ -41,10 +46,10 @@ class WorldPopDataset(BaseDataset):
         # TODO: catch malformed url
         if "summary" in url:
             url = cls.summary_parser(url)
-        data = requests.get(url).json()["data"]
+        data = worldpop_get(url).json()["data"]
         if isinstance(data, list):
             raise Exception("Processing a list of data is not yet supported")
-
+        (date_start, date_end) = get_date_range_from_pop_year(data["popyear"])
         return cls(
             name=data["title"],
             last_fetched=datetime.now().isoformat(),
@@ -57,6 +62,9 @@ class WorldPopDataset(BaseDataset):
                 "category": data["category"],
             },
             keywords=[],
+            date_start=date_start,
+            date_end=date_end,
+            accessibility="public/open",
         )
 
     @classmethod
@@ -98,4 +106,7 @@ class WorldPopDataset(BaseDataset):
 
         self.bbox = wkt.dumps(box(*handler.bbox))
         df = pd.DataFrame({"h3_index": h3indices})
+        df.to_parquet(self.dir / "h3.parquet", index=False)
+        with open(self.dir / "metadata.json", "w") as f:
+            f.write(self.model_dump_json())
         return df
