@@ -11,20 +11,18 @@ import { Dataset } from "./types";
 
 const DatasetItem = ({idx, dataset}: {idx: number, dataset: Dataset}) => {
   const [anchor, setAnchor] = useState(null);
-  const handleClick = (event: any) => {
+  const handleClick = (event: React.MouseEvent<HTMLElement>) => {
     setAnchor(event.currentTarget);
   };
-
   const handleClose = () => {
     setAnchor(null);
   };
-
   const open = Boolean(anchor);
 
   return (
     <Stack direction="row" className="p-3 items-center justify-between">
       <Box className="m-0">
-        <Typography className="text-sm">{idx+1}. { dataset.name }</Typography>
+        <Typography className="text-sm">{idx+1}. {dataset.name}</Typography>
       </Box>
       <IconButton onClick={handleClick}><ChevronRight /></IconButton>
       <Popover
@@ -39,7 +37,7 @@ const DatasetItem = ({idx, dataset}: {idx: number, dataset: Dataset}) => {
         }}
       >
         <div className="p-4 max-w-lg">
-          <span className="text-sm">{dataset.description}</span>
+          <Typography className="text-sm">{dataset.description}</Typography>
           <List className="text-xs">
             {
               dataset.files && dataset.files.map((file: string) => (
@@ -58,30 +56,28 @@ const DatasetItem = ({idx, dataset}: {idx: number, dataset: Dataset}) => {
 const Datasets = ({ datasetsByOrgs }: { datasetsByOrgs: { [source_org: string]: Dataset[]; }}) => (
   <div>
     { 
-      Object.entries(datasetsByOrgs).map(([org, datasets]) => {
-        return <Accordion disableGutters elevation={0} key={org} className="!relative">
+      Object.entries(datasetsByOrgs).map(([org, datasets]) => (
+        <Accordion disableGutters elevation={0} key={org} className="!relative">
           <AccordionSummary>
             <Typography className="font-bold">{org}</Typography>
           </AccordionSummary>
           <Divider />
           <AccordionDetails className="p-0">
             {
-              datasets.map((dataset: Dataset, idx: number) => {
-                return (
-                  <List className="m-0 py-0 max-h-[100%] overflow-y-auto">
-                    <ListItem className="p-0">
-                      <Stack className="w-[100%]" spacing={1}>
-                        <DatasetItem idx={idx} dataset={dataset} />
-                        {idx + 1 < datasets.length && <Divider />}
-                      </Stack>
-                    </ListItem>
-                  </List>
-                )
-              })
+              datasets.map((dataset: Dataset, idx: number) => (
+                <List className="m-0 py-0 max-h-full overflow-y-auto">
+                  <ListItem className="p-0">
+                    <Stack className="w-full" spacing={1}>
+                      <DatasetItem idx={idx} dataset={dataset} />
+                      {idx + 1 < datasets.length && <Divider />}
+                    </Stack>
+                  </ListItem>
+                </List>
+              ))
             }
           </AccordionDetails>
         </Accordion>
-      })
+      ))
     }
   </div>
 );
@@ -98,7 +94,7 @@ const Selected = () => {
   }
   
   return h3Index && (
-    <div className="h-[100%]">
+    <div className="h-full">
       <div className="p-4">
         <Stack direction="row" alignItems="center" justifyContent="space-between">
           <Typography className="text-lg font-bold">Tile {h3Index}</Typography>
