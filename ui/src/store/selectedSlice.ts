@@ -1,4 +1,5 @@
 import { createSlice } from '@reduxjs/toolkit';
+import { Dataset } from 'components/common/types';
 
 const slice = createSlice({
   name: 'selected',
@@ -22,7 +23,7 @@ export const setH3Index = (payload: string | null) => ({
   type: 'selected/setH3Index',
   payload,
 });
-export const setDatasets = (payload: any[]) => ({
+export const setDatasets = (payload: Dataset[]) => ({
   type: 'selected/setDatasets',
   payload,
 });
