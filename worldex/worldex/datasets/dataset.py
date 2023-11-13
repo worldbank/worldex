@@ -38,7 +38,7 @@ class BaseDataset(BaseModel):
 
     def set_dir(self, dir):
         self._dir = Path(dir)
-        if not self._dir.exist() or not self._dir.is_dir():
+        if not self._dir.exists() or not self._dir.is_dir():
             raise Exception(f"{dir} doest not exist or is not a directory")
         return self
 
