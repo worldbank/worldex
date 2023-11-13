@@ -28,7 +28,7 @@ const DatasetItem = ({idx, dataset}: {idx: number, dataset: Dataset}) => {
       </Box>
       <IconButton onClick={handleClick}><ChevronRight /></IconButton>
       <Popover
-        // id={id}
+        key={idx}
         className="p-2"
         open={open}
         anchorEl={anchor}
@@ -38,13 +38,13 @@ const DatasetItem = ({idx, dataset}: {idx: number, dataset: Dataset}) => {
           horizontal: 'right',
         }}
       >
-        <div className="p-4">
-          <Typography className="max-w-lg text-xs">{dataset.description}</Typography>
-          <List>
+        <div className="p-4 max-w-lg">
+          <span className="text-sm">{dataset.description}</span>
+          <List className="text-xs">
             {
               dataset.files && dataset.files.map((file: string) => (
                 <ListItem className="p-0">
-                  <Link className="text-xs text-clip" href={file}>{file.length > 100 ? `${file.slice(0, 50)}…${file.slice(-30)}` : file}</Link>
+                  <Link href={file}>{file}</Link>
                 </ListItem>
               ))
             }
