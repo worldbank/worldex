@@ -2,6 +2,8 @@
 """
 from datetime import datetime
 from typing import Optional
+from typing_extensions import Literal
+from pathlib import Path
 
 import pandas as pd
 from pydantic import BaseModel
@@ -32,25 +34,34 @@ class BaseDataset(BaseModel):
     keywords: list[str]
     date_start: Optional[datetime] = None
     date_end: Optional[datetime] = None
+    accessibility: Optional[Literal["public/open", "public/login", "private"]] = None
 
-    def index_from_gdf(self, gdf, dir=None):
-        with create_staging_dir(dir) as (staging_dir, is_tempdir):
-            handler = VectorHandler(gdf)
-            h3indices = handler.h3index()
-            self.bbox = wkt.dumps(box(*handler.bbox))
-            df = pd.DataFrame({"h3_index": h3indices})
-            df.to_parquet(staging_dir / "h3.parquet", index=False)
-            with open(staging_dir / "metadata.json", "w") as f:
-                f.write(self.model_dump_json())
+    def set_dir(self, dir):
+        self._dir = Path(dir)
+        if not self._dir.exist() or not self._dir.is_dir():
+            raise Exception(f"{dir} doest not exist or is not a directory")
+        return self
+
+    @property
+    def dir(self):
+        return self._dir
+
+    def index_from_gdf(self, gdf):
+        handler = VectorHandler(gdf)
+        h3indices = handler.h3index()
+        self.bbox = wkt.dumps(box(*handler.bbox))
+        df = pd.DataFrame({"h3_index": h3indices})
+        df.to_parquet(self.dir / "h3.parquet", index=False)
+        with open(self.dir / "metadata.json", "w") as f:
+            f.write(self.model_dump_json())
         return df
 
-    def index_from_riosrc(self, src, dir=None):
-        with create_staging_dir(dir) as (staging_dir, is_tempdir):
-            handler = RasterHandler(src)
-            h3indices = handler.h3index()
-            self.bbox = wkt.dumps(box(*handler.bbox))
-            df = pd.DataFrame({"h3_index": h3indices})
-            df.to_parquet(staging_dir / "h3.parquet", index=False)
-            with open(staging_dir / "metadata.json", "w") as f:
-                f.write(self.model_dump_json())
+    def index_from_riosrc(self, src, window=None):
+        handler = RasterHandler(src)
+        h3indices = handler.h3index(window=None)
+        self.bbox = wkt.dumps(box(*handler.bbox))
+        df = pd.DataFrame({"h3_index": h3indices})
+        df.to_parquet(self.dir / "h3.parquet", index=False)
+        with open(self.dir / "metadata.json", "w") as f:
+            f.write(self.model_dump_json())
         return df
