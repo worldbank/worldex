@@ -63,6 +63,7 @@ pytest = "^7.4.0"
 [tool.poetry.group.docs.dependencies]
 mkdocs = "^1.5.3"
 mkdocs-jupyter = "^0.24.6"
+mkdocs-material = "^9.4.8"
 
 [tool.ruff]
 ignore = ["E501"]

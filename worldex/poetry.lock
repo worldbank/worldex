@@ -5971,4 +5971,4 @@ worldpop = ["beautifulsoup4"]
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.10"
-content-hash = "491d2f372dd671e676bf88dc6523bfca50bff49ac667ccff7c42f792a040730c"
+content-hash = "78f186790f9e60078c379266dd5c30d5a8112672da0aec0b4560c5cfb8804813"
