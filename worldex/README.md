@@ -18,5 +18,5 @@ pip install 'path/to/repo/worldex/dist/worldex-0.0.1-py3-none-any.whl[wordlpop,h
 ## Docs
 
 ```bash
-poetry run mkdocs
+poetry run mkdocs serve
 ```
