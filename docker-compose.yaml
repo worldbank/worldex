@@ -50,10 +50,11 @@ services:
     build:
       context: ./postgis-h3
       # comment out the following for better performance on an ARM-based device (e.g. M1/M2 MacBooks)
-      # dockerfile: arm64.Dockerfile
+      dockerfile: arm64.Dockerfile
     shm_size: 2gb
     volumes:
       - pg_data:/var/lib/postgresql/data
+      - ./postgis-h3/postgresql.conf:/var/lib/postgresql/data/postgresql.conf
     ports:
       - 5432:5432
     env_file:
