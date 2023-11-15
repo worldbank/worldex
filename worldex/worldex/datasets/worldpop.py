@@ -58,13 +58,13 @@ class WorldPopDataset(BaseDataset):
             description=data["desc"],
             projection="EPSG:4326",
             properties={
-                "url_summary": data["url_summary"],
                 "category": data["category"],
             },
             keywords=[],
             date_start=date_start,
             date_end=date_end,
             accessibility="public/open",
+            url=data["url_summary"],
         )
 
     @classmethod

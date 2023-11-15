@@ -7,12 +7,12 @@ from pathlib import Path
 
 import pandas as pd
 from pydantic import BaseModel
+from pydantic.networks import AnyUrl
 from shapely import wkt
 from shapely.geometry import box
 
 from ..handlers.vector_handlers import VectorHandler
 from ..handlers.raster_handlers import RasterHandler
-from ..utils.filemanager import create_staging_dir
 
 
 class BaseDataset(BaseModel):
@@ -29,12 +29,13 @@ class BaseDataset(BaseModel):
     description: str
     data_format: Optional[str] = None
     projection: Optional[str] = None
-    properties: dict
+    properties: Optional[dict] = None
     bbox: Optional[str] = None
     keywords: list[str]
     date_start: Optional[date] = None
     date_end: Optional[date] = None
     accessibility: Optional[Literal["public/open", "public/login", "private"]] = None
+    url: Optional[AnyUrl] = None
 
     def set_dir(self, dir):
         self._dir = Path(dir)

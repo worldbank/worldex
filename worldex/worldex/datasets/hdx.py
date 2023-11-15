@@ -61,8 +61,8 @@ class HDXDataset(BaseDataset):
             data_format="",
             description=dataset["notes"],
             projection="",
+            url=f"https://data.humdata.org/dataset/{dataset['name']}",
             properties={
-                "url": f"https://data.humdata.org/dataset/{dataset['name']}",
                 "original_source": dataset["dataset_source"],
             },
             keywords=[],
