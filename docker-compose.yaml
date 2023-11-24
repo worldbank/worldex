@@ -32,8 +32,8 @@ services:
   api:
     build:
       context: ./api
-    # command: poetry run uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
-    command: poetry run gunicorn app.main:app --workers 4 --worker-class uvicorn.workers.UvicornWorker --reload --bind 0.0.0.0:8000
+    command: poetry run uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
+    # command: poetry run gunicorn app.main:app --workers 8 --worker-class uvicorn.workers.UvicornWorker --reload --bind 0.0.0.0:8000
     ports:
       - 8000:8000
     env_file:
@@ -51,10 +51,9 @@ services:
       context: ./postgis-h3
       # comment out the following for better performance on an ARM-based device (e.g. M1/M2 MacBooks)
       dockerfile: arm64.Dockerfile
-    shm_size: 2gb
     volumes:
       - pg_data:/var/lib/postgresql/data
-      - ./postgis-h3/postgresql.conf:/var/lib/postgresql/data/postgresql.conf
+      - ./postgis-h3/postgresql.8gb.conf:/var/lib/postgresql/data/postgresql.conf
     ports:
       - 5432:5432
     env_file:
