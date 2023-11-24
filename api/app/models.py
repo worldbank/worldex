@@ -150,8 +150,9 @@ class H3Data(Base):
             postgresql_where=text("h3_get_resolution(h3_index) > 7"),
         ),
         Index(
-            "ix_h3_data_index_represents_child",
+            "ix_h3_data_index_represents_child_incl_dataset_id",
             "h3_index",
             "represents_child",
+            postgresql_include=["dataset_id"]
         )
     )
