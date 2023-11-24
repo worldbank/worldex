@@ -113,6 +113,7 @@ class H3Data(Base):
             postgresql_using="gist",
         ),
         Index("ix_h3_data_h3_index_res", text("h3_get_resolution(h3_index)")),
+        # TODO: cleanup following indices which may no longer be useful
         Index(
             "ix_h3_data_h3_index_parent_res1",
             text("h3_cell_to_parent(h3_index, 1)"),

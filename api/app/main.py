@@ -45,35 +45,14 @@ async def get_h3_tile_data(
         WITH with_parents AS (
             SELECT :target target_index, h3_cell_to_parent(CAST(:target AS H3INDEX), generate_series(0, :resolution)) parent
         ),
-        parent_datasets AS (
-            SELECT dataset_id FROM h3_data WHERE h3_index = ANY(ARRAY(SELECT parent from with_parents))
-        ),
-        children_datasets AS (
-            SELECT dataset_id FROM h3_data
-            WHERE h3_get_resolution(h3_index) > :resolution
-            AND h3_cell_to_parent(h3_index, :resolution) = CAST(:target AS H3INDEX)
-        ),
-        dataset_ids AS (
-            SELECT dataset_id FROM parent_datasets
-            UNION
-            SELECT dataset_id FROM children_datasets
-        )
-        SELECT id, name, source_org, description, files FROM datasets WHERE id = ANY(ARRAY(SELECT * FROM dataset_ids));
-        """
-    )
-    query = text(
-        f"""
-        WITH with_parents AS (
-            SELECT :target target_index, h3_cell_to_parent(CAST(:target AS H3INDEX), generate_series(0, :resolution)) parent
-        ),
         dataset_ids AS (
             SELECT DISTINCT(dataset_id) dataset_id FROM h3_data
             WHERE (
                 h3_index = ANY(ARRAY(SELECT parent from with_parents))
-                AND is_redundant_parent = false
+                AND represents_child = false
             ) OR (
                 h3_index = CAST(:target AS H3INDEX)
-                AND is_redundant_parent = true
+                AND represents_child = true
             )
         )
         SELECT id, name, source_org, description FROM datasets
@@ -97,6 +76,8 @@ async def get_h3_tiles(
     session: AsyncSession = Depends(get_async_session),
 ):
     resolution = payload.resolution
+    # dynamically constructing this expression is faster than deriving from
+    # generate_series(0, :resolution) despite the latter resulting to more readable code
     parents_array = ["fill_index"] + [
         f"h3_cell_to_parent(fill_index, {res})" for res in range(0, resolution)
     ]
@@ -114,12 +95,12 @@ with_parents AS (
 ),
 parent_datasets AS (
   SELECT fill_index, COUNT(dataset_id) dataset_count
-  FROM with_parents JOIN h3_data ON h3_index = ANY(parents) AND is_redundant_parent = false GROUP BY fill_index
+  FROM with_parents JOIN h3_data ON h3_index = ANY(parents) AND represents_child = false GROUP BY fill_index
 ),
 children_datasets AS (
   SELECT fill_index, COUNT(dataset_id) dataset_count
   FROM fill
-  JOIN h3_data ON h3_index = fill_index AND is_redundant_parent = true
+  JOIN h3_data ON h3_index = fill_index AND represents_child = true
   GROUP BY fill_index
 )
 SELECT fill_index, (COALESCE(p.dataset_count, 0) + COALESCE(c.dataset_count, 0)) dataset_count FROM parent_datasets p
