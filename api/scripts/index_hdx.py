@@ -11,7 +11,6 @@ from app.models import Dataset, H3Data
 from sqlalchemy import create_engine, text
 from sqlalchemy.orm import sessionmaker, load_only
 from sqlalchemy.orm.session import Session
-from sqlalchemy.sql import exists
 
 from worldex.handlers.raster_handlers import RasterHandler
 
@@ -40,10 +39,11 @@ def create_dataset_from_metadata(
     if "data_foramt" in metadata:
         metadata["data_format"] = metadata.pop("data_foramt")
     if "url" in metadata:
-        metadata["files"] = metadata.pop("url")
+        metadata["files"] = [metadata.pop("url")]
     return Dataset(**metadata), False
 
 
+# TODO: templatize indexing scripts
 def index_parent_of_compact_cells(
    dataset: Dataset, sess: Session
 ) -> None:
@@ -102,22 +102,22 @@ def main():
             print(f"Indexing {dir}")
             try:
                 with s3.open(f"s3://{dir}/metadata.json") as f:
-                    dataset_pop, already_exists = create_dataset_from_metadata(f, sess)
+                    dataset, already_exists = create_dataset_from_metadata(f, sess)
                     if already_exists:
-                        if (dataset_pop.has_compact_only):
+                        if (dataset.has_compact_only):
                             print('Indexing parents of compact cells')
-                            index_parent_of_compact_cells(dataset_pop, sess)
+                            index_parent_of_compact_cells(dataset, sess)
                             sess.commit()
                         else:
-                            print(f'{dataset_pop.name} already exists')
+                            print(f'{dataset.name} already exists')
                         continue
-                    sess.add(dataset_pop)
+                    sess.add(dataset)
                     sess.flush()
                 with s3.open(f"s3://{dir}/h3.parquet") as f:
-                    indices = create_h3_indices(f, dataset_pop.id)
+                    indices = create_h3_indices(f, dataset.id)
                     sess.bulk_save_objects(indices)
                     sess.flush()
-                    index_parent_of_compact_cells(dataset_pop, sess)
+                    index_parent_of_compact_cells(dataset, sess)
                 sess.commit()
             except Exception as e:
                 sess.rollback()
