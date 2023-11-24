@@ -8,8 +8,8 @@ import h3pandas
 import pandas as pd
 import s3fs
 from app.models import Dataset, H3Data
-from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker
+from sqlalchemy import create_engine, text
+from sqlalchemy.orm import sessionmaker, load_only
 from sqlalchemy.orm.session import Session
 from sqlalchemy.sql import exists
 
@@ -27,18 +27,45 @@ SKIP_LIST = [
 
 def create_dataset_from_metadata(
     metadata_file: s3fs.core.S3File, sess: Session
-) -> Dataset:
+) -> (Dataset, bool):
     metadata = json.load(metadata_file)
     dataset_name = metadata["name"]
-    dataset_exists = sess.query(exists().where(Dataset.name == dataset_name)).scalar()
-    assert not dataset_exists, f"'{dataset_name}' dataset already exists"
+    dataset = sess.query(Dataset).filter(Dataset.name == dataset_name).options(load_only(Dataset.id, Dataset.has_compact_only)).first()
+    if dataset:
+        return dataset, True
 
     # TODO: actually create keyword objects
     keywords: list[str] = metadata.pop("keywords")
     # TODO: remove handling once parquet files are corrected
     if "data_foramt" in metadata:
         metadata["data_format"] = metadata.pop("data_foramt")
-    return Dataset(**metadata)
+    if "url" in metadata:
+        metadata["files"] = metadata.pop("url")
+    return Dataset(**metadata), False
+
+
+def index_parent_of_compact_cells(
+   dataset: Dataset, sess: Session
+) -> None:
+    dataset_id = dataset.id
+    res_bounds_query = text(
+        """
+        SELECT MIN(h3_get_resolution(h3_index)), MAX(h3_get_resolution(h3_index)) FROM h3_data WHERE dataset_id = :dataset_id
+        """    
+    ).bindparams(dataset_id=dataset_id)
+    min_res, max_res = sess.execute(res_bounds_query).first()
+    for res in range(max_res, 0, -1):
+        insert_parents_query = text(
+            """
+            INSERT INTO h3_data (h3_index, dataset_id, represents_child)
+            SELECT DISTINCT(h3_cell_to_parent(h3_index, :parent_res)), dataset_id, true
+            FROM h3_data WHERE dataset_id = :dataset_id AND h3_get_resolution(h3_index) = :res
+            ON CONFLICT DO NOTHING;
+            """
+        ).bindparams(res=res, parent_res=res-1, dataset_id=dataset_id)
+        sess.execute(insert_parents_query)
+    dataset.has_compact_only = False
+    sess.flush()
 
 
 def create_h3_indices(file: s3fs.core.S3File, dataset_id: int) -> List[H3Data]:
@@ -63,7 +90,7 @@ def main():
     Session = sessionmaker(bind=engine)
     with Session() as sess:
         dirs = s3.ls("s3:///worldex-temp-storage/indexes/hdx/")
-        for dir in dirs[:600]:
+        for dir in dirs:
             if dir.split("/")[-1] in SKIP_LIST:
                 continue
             files = s3.ls(dir)
@@ -75,10 +102,14 @@ def main():
             print(f"Indexing {dir}")
             try:
                 with s3.open(f"s3://{dir}/metadata.json") as f:
-                    try:
-                        dataset_pop = create_dataset_from_metadata(f, sess)
-                    except AssertionError as e:
-                        print(e)
+                    dataset_pop, already_exists = create_dataset_from_metadata(f, sess)
+                    if already_exists:
+                        if (dataset_pop.has_compact_only):
+                            print('Indexing parents of compact cells')
+                            index_parent_of_compact_cells(dataset_pop, sess)
+                            sess.commit()
+                        else:
+                            print(f'{dataset_pop.name} already exists')
                         continue
                     sess.add(dataset_pop)
                     sess.flush()
@@ -86,6 +117,7 @@ def main():
                     indices = create_h3_indices(f, dataset_pop.id)
                     sess.bulk_save_objects(indices)
                     sess.flush()
+                    index_parent_of_compact_cells(dataset_pop, sess)
                 sess.commit()
             except Exception as e:
                 sess.rollback()

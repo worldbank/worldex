@@ -14,7 +14,7 @@ from sqlalchemy import (
     Index,
     text,
 )
-from sqlalchemy.sql import func
+from sqlalchemy.sql import func, expression
 from sqlalchemy.orm import relationship, Mapped, mapped_column
 from sqlalchemy.dialects.postgresql import JSONB, ARRAY
 from geoalchemy2.types import Geometry
@@ -67,6 +67,7 @@ class Dataset(Base):
     h3_data: Mapped[List["H3Data"]] = relationship(
         backref="dataset", cascade="all, delete-orphan"
     )
+    has_compact_only: Mapped[bool] = mapped_column(server_default=expression.true(), nullable=False)
 
     __table_args__ = (
         Index(
@@ -98,6 +99,7 @@ class H3Data(Base):
 
     id: Mapped[int] = mapped_column(primary_key=True)
     h3_index = Column(H3Index, index=True, nullable=False)
+    represents_child: Mapped[bool] = mapped_column(server_default=expression.false(), nullable=False, index=True)
 
     dataset_id: Mapped[int] = mapped_column(
         Integer, ForeignKey("datasets.id", ondelete="CASCADE"), nullable=False
@@ -147,45 +149,8 @@ class H3Data(Base):
             postgresql_where=text("h3_get_resolution(h3_index) > 7"),
         ),
         Index(
-            "ix_h3_data_res1_parent_dataset_id",
-            text("h3_cell_to_parent(h3_index, 1)"),
-            dataset_id,
-            postgresql_where=text("h3_get_resolution(h3_index) > 1"),
-        ),
-        Index(
-            "ix_h3_data_res2_parent_dataset_id",
-            text("h3_cell_to_parent(h3_index, 2)"),
-            dataset_id,
-            postgresql_where=text("h3_get_resolution(h3_index) > 2"),
-        ),
-        Index(
-            "ix_h3_data_res3_parent_dataset_id",
-            text("h3_cell_to_parent(h3_index, 3)"),
-            dataset_id,
-            postgresql_where=text("h3_get_resolution(h3_index) > 3"),
-        ),
-        Index(
-            "ix_h3_data_res4_parent_dataset_id",
-            text("h3_cell_to_parent(h3_index, 4)"),
-            dataset_id,
-            postgresql_where=text("h3_get_resolution(h3_index) > 4"),
-        ),
-        Index(
-            "ix_h3_data_res5_parent_dataset_id",
-            text("h3_cell_to_parent(h3_index, 5)"),
-            dataset_id,
-            postgresql_where=text("h3_get_resolution(h3_index) > 5"),
-        ),
-        Index(
-            "ix_h3_data_res6_parent_dataset_id",
-            text("h3_cell_to_parent(h3_index, 6)"),
-            dataset_id,
-            postgresql_where=text("h3_get_resolution(h3_index) > 6"),
-        ),
-        Index(
-            "ix_h3_data_res7_parent_dataset_id",
-            text("h3_cell_to_parent(h3_index, 7)"),
-            dataset_id,
-            postgresql_where=text("h3_get_resolution(h3_index) > 7"),
-        ),
+            "ix_h3_data_index_represents_child",
+            "h3_index",
+            "represents_child",
+        )
     )
