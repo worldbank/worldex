@@ -99,7 +99,6 @@ class H3Data(Base):
 
     id: Mapped[int] = mapped_column(primary_key=True)
     h3_index = Column(H3Index, index=True, nullable=False)
-    represents_child: Mapped[bool] = mapped_column(server_default=expression.false(), nullable=False, index=True)
 
     dataset_id: Mapped[int] = mapped_column(
         Integer, ForeignKey("datasets.id", ondelete="CASCADE"), nullable=False
@@ -148,11 +147,26 @@ class H3Data(Base):
             "ix_h3_data_h3_index_parent_res7",
             text("h3_cell_to_parent(h3_index, 7)"),
             postgresql_where=text("h3_get_resolution(h3_index) > 7"),
-        ),
-        Index(
-            "ix_h3_data_index_represents_child_incl_dataset_id",
-            "h3_index",
-            "represents_child",
-            postgresql_include=["dataset_id"]
         )
+    )
+
+
+class H3ChildrenIndicator(Base):
+    """
+    H3 tiles that indicate presence of child cell(s) at higher resolutions.
+    These are redundant, non-compact cells from a dataset used to prevent having
+    to do EXISTS queries agains higher resolution tiles.
+    """
+
+    __tablename__ = "h3_children_indicators"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    h3_index = Column(H3Index, index=True, nullable=False)
+
+    dataset_id: Mapped[int] = mapped_column(
+        Integer, ForeignKey("datasets.id", ondelete="CASCADE"), nullable=False
+    )
+
+    __table_args__ = (
+        UniqueConstraint("dataset_id", "h3_index"),
     )

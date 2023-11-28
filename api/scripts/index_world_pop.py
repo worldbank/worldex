@@ -49,8 +49,8 @@ def index_parent_of_compact_cells(
     for res in range(8, 0, -1):
         insert_parents_query = text(
             """
-            INSERT INTO h3_data (h3_index, dataset_id, represents_child)
-            SELECT DISTINCT(h3_cell_to_parent(h3_index, :parent_res)), dataset_id, true
+            INSERT INTO h3_children_indicators (h3_index, dataset_id)
+            SELECT DISTINCT(h3_cell_to_parent(h3_index, :parent_res)), dataset_id
             FROM h3_data WHERE dataset_id = :dataset_id AND h3_get_resolution(h3_index) = :res
             ON CONFLICT DO NOTHING;
             """
