@@ -48,18 +48,16 @@ def index_parent_of_compact_cells(
    dataset: Dataset, sess: Session
 ) -> None:
     dataset_id = dataset.id
-    res_bounds_query = text(
-        """
-        SELECT MIN(h3_get_resolution(h3_index)), MAX(h3_get_resolution(h3_index)) FROM h3_data WHERE dataset_id = :dataset_id
-        """    
-    ).bindparams(dataset_id=dataset_id)
-    min_res, max_res = sess.execute(res_bounds_query).first()
-    for res in range(max_res, 0, -1):
+    for res in range(8, 0, -1):
         insert_parents_query = text(
             """
-            INSERT INTO h3_data (h3_index, dataset_id, represents_child)
-            SELECT DISTINCT(h3_cell_to_parent(h3_index, :parent_res)), dataset_id, true
-            FROM h3_data WHERE dataset_id = :dataset_id AND h3_get_resolution(h3_index) = :res
+            NSERT INTO h3_children_indicators (h3_index, dataset_id)
+            WITH combined_indices AS (
+                SELECT h3_index FROM h3_data WHERE dataset_id = :dataset_id AND h3_get_resolution(h3_index) = :res
+                UNION
+                SELECT h3_index FROM h3_children_indicators WHERE dataset_id = :dataset_id AND h3_get_resolution(h3_index) = :res
+            )
+            SELECT DISTINCT(h3_cell_to_parent(h3_index, :parent_res)), :dataset_id FROM combined_indices
             ON CONFLICT DO NOTHING;
             """
         ).bindparams(res=res, parent_res=res-1, dataset_id=dataset_id)

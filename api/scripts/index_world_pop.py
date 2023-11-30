@@ -50,8 +50,12 @@ def index_parent_of_compact_cells(
         insert_parents_query = text(
             """
             INSERT INTO h3_children_indicators (h3_index, dataset_id)
-            SELECT DISTINCT(h3_cell_to_parent(h3_index, :parent_res)), dataset_id
-            FROM h3_data WHERE dataset_id = :dataset_id AND h3_get_resolution(h3_index) = :res
+            WITH combined_indices AS (
+                SELECT h3_index FROM h3_data WHERE dataset_id = :dataset_id AND h3_get_resolution(h3_index) = :res
+                UNION
+                SELECT h3_index FROM h3_children_indicators WHERE dataset_id = :dataset_id AND h3_get_resolution(h3_index) = :res
+            )
+            SELECT DISTINCT(h3_cell_to_parent(h3_index, :parent_res)), :dataset_id FROM combined_indices
             ON CONFLICT DO NOTHING;
             """
         ).bindparams(res=res, parent_res=res-1, dataset_id=dataset_id)
