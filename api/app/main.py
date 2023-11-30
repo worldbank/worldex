@@ -46,19 +46,19 @@ async def get_h3_tile_data(
             SELECT :target target_index, h3_cell_to_parent(CAST(:target AS H3INDEX), generate_series(0, :resolution)) parent
         ),
         parent_datasets AS (
-            SELECT dataset_id FROM h3_data WHERE h3_index = ANY(ARRAY(SELECT parent from with_parents))
+            SELECT DISTINCT(dataset_id) dataset_id FROM h3_data
+            WHERE h3_index = ANY(ARRAY(SELECT parent FROM with_parents))
         ),
         children_datasets AS (
-            SELECT dataset_id FROM h3_data
-            WHERE h3_get_resolution(h3_index) > :resolution
-            AND h3_cell_to_parent(h3_index, :resolution) = CAST(:target AS H3INDEX)
+            SELECT DISTINCT(dataset_id) dataset_id FROM h3_children_indicators
+            WHERE h3_index = CAST(:target AS H3INDEX)
         ),
         dataset_ids AS (
-            SELECT dataset_id FROM parent_datasets
-            UNION
+            SELECT dataset_id FROM parent_datasets UNION
             SELECT dataset_id FROM children_datasets
         )
-        SELECT id, name, source_org, description, files FROM datasets WHERE id = ANY(ARRAY(SELECT * FROM dataset_ids));
+        SELECT id, name, source_org, description, files FROM datasets
+        WHERE id = ANY(ARRAY(SELECT dataset_id FROM dataset_ids))
         """
     )
     query = query.bindparams(target=index, resolution=resolution)
@@ -78,45 +78,36 @@ async def get_h3_tiles(
     session: AsyncSession = Depends(get_async_session),
 ):
     resolution = payload.resolution
+    # dynamically constructing this expression is faster than deriving from
+    # generate_series(0, :resolution) despite the latter resulting to more readable code
     parents_array = ["fill_index"] + [
-        f"h3_cell_to_parent(fill_index, {res})" for res in range(1, resolution)
+        f"h3_cell_to_parent(fill_index, {res})" for res in range(0, resolution)
     ]
     parents_comma_delimited = ", ".join(parents_array)
     query = text(
         f"""
-        WITH bbox AS (
-            SELECT ST_Transform(ST_TileEnvelope(:z, :x, :y), 4326) bbox
-        ),
-        fill AS (
-            SELECT h3_polygon_to_cells((SELECT bbox FROM bbox), :resolution) fill_index
-        ),
-        with_parents AS (
-            SELECT fill_index, ARRAY[{parents_comma_delimited}] parents FROM fill GROUP BY fill_index
-        ),
-        parent_datasets AS (
-            SELECT fill_index, ARRAY_AGG(dataset_id) dataset_ids FROM with_parents JOIN h3_data ON h3_index = ANY(parents) GROUP BY fill_index
-        ),
-        children_datasets AS (
-            SELECT fill_index, ARRAY_AGG(datasets.id) dataset_ids
-            FROM fill
-            JOIN datasets ON ST_Within(fill_index::geometry, ST_SetSRID(datasets.bbox, 4326))
-            AND EXISTS(
-                SELECT 1 FROM h3_data WHERE
-                dataset_id = datasets.id
-                AND (
-                    h3_get_resolution(h3_index) > :resolution AND h3_cell_to_parent(h3_index, :resolution) = fill_index
-                )
-            )
-            GROUP BY fill_index
-        )
-        SELECT COALESCE(parent_datasets.fill_index, children_datasets.fill_index) AS index, ARRAY_LENGTH(ARRAY_CAT(
-            COALESCE(parent_datasets.dataset_ids, ARRAY[]::int[]),
-            COALESCE(children_datasets.dataset_ids, ARRAY[]::int[])
-        ), 1) dataset_count
-        FROM parent_datasets
-        FULL JOIN children_datasets
-        ON parent_datasets.fill_index = children_datasets.fill_index
-        """
+WITH bbox AS (
+  SELECT ST_Transform(ST_TileEnvelope(:z, :x, :y), 4326) bbox
+),
+fill AS (
+  SELECT h3_polygon_to_cells((SELECT bbox FROM bbox), :resolution) fill_index
+),
+with_parents AS (
+  SELECT fill_index, ARRAY[{parents_comma_delimited}] parents FROM fill GROUP BY fill_index
+),
+parent_datasets AS (
+  SELECT fill_index, COUNT(dataset_id) dataset_count
+  FROM with_parents JOIN h3_data ON h3_index = ANY(parents) GROUP BY fill_index
+),
+children_datasets AS (
+  SELECT fill_index, COUNT(dataset_id) dataset_count
+  FROM fill
+  JOIN h3_children_indicators ON h3_index = fill_index
+  GROUP BY fill_index
+)
+SELECT fill_index, (COALESCE(p.dataset_count, 0) + COALESCE(c.dataset_count, 0)) dataset_count FROM parent_datasets p
+FULL JOIN children_datasets c USING (fill_index);
+"""
     )
     query = query.bindparams(z=z, x=x, y=y, resolution=resolution)
     results = await session.execute(query)

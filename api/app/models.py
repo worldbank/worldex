@@ -14,7 +14,7 @@ from sqlalchemy import (
     Index,
     text,
 )
-from sqlalchemy.sql import func
+from sqlalchemy.sql import func, expression
 from sqlalchemy.orm import relationship, Mapped, mapped_column
 from sqlalchemy.dialects.postgresql import JSONB, ARRAY
 from geoalchemy2.types import Geometry
@@ -67,6 +67,7 @@ class Dataset(Base):
     h3_data: Mapped[List["H3Data"]] = relationship(
         backref="dataset", cascade="all, delete-orphan"
     )
+    has_compact_only: Mapped[bool] = mapped_column(server_default=expression.true(), nullable=False)
 
     __table_args__ = (
         Index(
@@ -111,6 +112,7 @@ class H3Data(Base):
             postgresql_using="gist",
         ),
         Index("ix_h3_data_h3_index_res", text("h3_get_resolution(h3_index)")),
+        # TODO: cleanup following indices which may no longer be useful
         Index(
             "ix_h3_data_h3_index_parent_res1",
             text("h3_cell_to_parent(h3_index, 1)"),
@@ -145,47 +147,26 @@ class H3Data(Base):
             "ix_h3_data_h3_index_parent_res7",
             text("h3_cell_to_parent(h3_index, 7)"),
             postgresql_where=text("h3_get_resolution(h3_index) > 7"),
-        ),
-        Index(
-            "ix_h3_data_res1_parent_dataset_id",
-            text("h3_cell_to_parent(h3_index, 1)"),
-            dataset_id,
-            postgresql_where=text("h3_get_resolution(h3_index) > 1"),
-        ),
-        Index(
-            "ix_h3_data_res2_parent_dataset_id",
-            text("h3_cell_to_parent(h3_index, 2)"),
-            dataset_id,
-            postgresql_where=text("h3_get_resolution(h3_index) > 2"),
-        ),
-        Index(
-            "ix_h3_data_res3_parent_dataset_id",
-            text("h3_cell_to_parent(h3_index, 3)"),
-            dataset_id,
-            postgresql_where=text("h3_get_resolution(h3_index) > 3"),
-        ),
-        Index(
-            "ix_h3_data_res4_parent_dataset_id",
-            text("h3_cell_to_parent(h3_index, 4)"),
-            dataset_id,
-            postgresql_where=text("h3_get_resolution(h3_index) > 4"),
-        ),
-        Index(
-            "ix_h3_data_res5_parent_dataset_id",
-            text("h3_cell_to_parent(h3_index, 5)"),
-            dataset_id,
-            postgresql_where=text("h3_get_resolution(h3_index) > 5"),
-        ),
-        Index(
-            "ix_h3_data_res6_parent_dataset_id",
-            text("h3_cell_to_parent(h3_index, 6)"),
-            dataset_id,
-            postgresql_where=text("h3_get_resolution(h3_index) > 6"),
-        ),
-        Index(
-            "ix_h3_data_res7_parent_dataset_id",
-            text("h3_cell_to_parent(h3_index, 7)"),
-            dataset_id,
-            postgresql_where=text("h3_get_resolution(h3_index) > 7"),
-        ),
+        )
+    )
+
+
+class H3ChildrenIndicator(Base):
+    """
+    H3 tiles that indicate presence of child cell(s) at higher resolutions.
+    These are redundant, non-compact cells from a dataset used to prevent having
+    to do EXISTS queries agains higher resolution tiles.
+    """
+
+    __tablename__ = "h3_children_indicators"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    h3_index = Column(H3Index, index=True, nullable=False)
+
+    dataset_id: Mapped[int] = mapped_column(
+        Integer, ForeignKey("datasets.id", ondelete="CASCADE"), nullable=False
+    )
+
+    __table_args__ = (
+        UniqueConstraint("dataset_id", "h3_index"),
     )
