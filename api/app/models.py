@@ -106,48 +106,7 @@ class H3Data(Base):
 
     __table_args__ = (
         UniqueConstraint("dataset_id", "h3_index"),
-        Index(
-            "ix_h3_data_h3_index_as_point",
-            text("h3_cell_to_geometry(h3_index)"),
-            postgresql_using="gist",
-        ),
         Index("ix_h3_data_h3_index_res", text("h3_get_resolution(h3_index)")),
-        # TODO: cleanup following indices which may no longer be useful
-        Index(
-            "ix_h3_data_h3_index_parent_res1",
-            text("h3_cell_to_parent(h3_index, 1)"),
-            postgresql_where=text("h3_get_resolution(h3_index) > 1"),
-        ),
-        Index(
-            "ix_h3_data_h3_index_parent_res2",
-            text("h3_cell_to_parent(h3_index, 2)"),
-            postgresql_where=text("h3_get_resolution(h3_index) > 2"),
-        ),
-        Index(
-            "ix_h3_data_h3_index_parent_res3",
-            text("h3_cell_to_parent(h3_index, 3)"),
-            postgresql_where=text("h3_get_resolution(h3_index) > 3"),
-        ),
-        Index(
-            "ix_h3_data_h3_index_parent_res4",
-            text("h3_cell_to_parent(h3_index, 4)"),
-            postgresql_where=text("h3_get_resolution(h3_index) > 4"),
-        ),
-        Index(
-            "ix_h3_data_h3_index_parent_res5",
-            text("h3_cell_to_parent(h3_index, 5)"),
-            postgresql_where=text("h3_get_resolution(h3_index) > 5"),
-        ),
-        Index(
-            "ix_h3_data_h3_index_parent_res6",
-            text("h3_cell_to_parent(h3_index, 6)"),
-            postgresql_where=text("h3_get_resolution(h3_index) > 6"),
-        ),
-        Index(
-            "ix_h3_data_h3_index_parent_res7",
-            text("h3_cell_to_parent(h3_index, 7)"),
-            postgresql_where=text("h3_get_resolution(h3_index) > 7"),
-        )
     )
 
 
