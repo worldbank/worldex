@@ -4,9 +4,10 @@ from datetime import datetime, date
 from typing import Optional
 from typing_extensions import Literal
 from pathlib import Path
+from uuid import uuid4
 
 import pandas as pd
-from pydantic import BaseModel
+from pydantic import BaseModel, UUID4, Field
 from pydantic.networks import AnyUrl
 from shapely import wkt
 from shapely.geometry import box
@@ -22,6 +23,7 @@ class BaseDataset(BaseModel):
     TODO: h3 file
     """
 
+    id: UUID4 = Field(default_factory=uuid4)
     name: str
     source_org: str
     last_fetched: datetime
