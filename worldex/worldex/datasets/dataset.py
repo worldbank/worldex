@@ -11,6 +11,7 @@ from pydantic import BaseModel, UUID4, Field
 from pydantic.networks import AnyUrl
 from shapely import wkt
 from shapely.geometry import box
+from h3ronpy.arrow import cells_to_string, compact, cells_parse
 
 from ..handlers.vector_handlers import VectorHandler
 from ..handlers.raster_handlers import RasterHandler
@@ -45,6 +46,15 @@ class BaseDataset(BaseModel):
             raise Exception(f"{dir} doest not exist or is not a directory")
         return self
 
+    def write(self, df):
+        compacted_df = pd.DataFrame(
+            {"h3_index": cells_to_string(compact(cells_parse(df.h3_index)))}
+        )
+        df.to_parquet(self.dir / "h3.parquet", index=False)
+        compacted_df.to_parquet(self.dir / "h3-compact.parquet", index=False)
+        with open(self.dir / "metadata.json", "w") as f:
+            f.write(self.model_dump_json())
+
     @property
     def dir(self):
         return self._dir
@@ -64,7 +74,5 @@ class BaseDataset(BaseModel):
         h3indices = handler.h3index(window=None)
         self.bbox = wkt.dumps(box(*handler.bbox))
         df = pd.DataFrame({"h3_index": h3indices})
-        df.to_parquet(self.dir / "h3.parquet", index=False)
-        with open(self.dir / "metadata.json", "w") as f:
-            f.write(self.model_dump_json())
+        self.write(df)
         return df

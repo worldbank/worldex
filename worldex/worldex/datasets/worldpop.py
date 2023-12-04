@@ -17,7 +17,9 @@ from pyunpack import Archive
 
 from ..handlers.vector_handlers import VectorHandler
 from ..handlers.raster_handlers import RasterHandler
-from ..utils.filemanager import unzip_file, download_file
+from ..utils.filemanager import download_file
+from h3ronpy.arrow import cells_to_string, compact, cells_parse
+
 from .dataset import BaseDataset
 
 
@@ -116,7 +118,6 @@ class WorldPopDataset(BaseDataset):
             Archive(self.dir / filename).extractall(self.dir)
 
     def index(self, window=(10, 10)):
-        # TODO: Allow none tiff files like 7z files.
         self.download()
         self.unzip()
         boxes = []
@@ -136,7 +137,5 @@ class WorldPopDataset(BaseDataset):
             indices.append(pd.DataFrame({"h3_index": h3indices}))
         self.bbox = wkt.dumps(box(*unary_union(boxes).bounds))
         df = pd.concat(indices).drop_duplicates()
-        df.to_parquet(self.dir / "h3.parquet", index=False)
-        with open(self.dir / "metadata.json", "w") as f:
-            f.write(self.model_dump_json())
+        self.write(df)
         return df
