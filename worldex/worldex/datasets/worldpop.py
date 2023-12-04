@@ -2,26 +2,23 @@
 Automates indexing of world pop datasets
 """
 import os
-from datetime import datetime, date
+from datetime import date, datetime
 from pathlib import Path
-from urllib.parse import parse_qs, urlparse
 from typing import Optional
+from urllib.parse import parse_qs, urlparse
 
 import pandas as pd
 import requests
 from bs4 import BeautifulSoup
-from shapely import wkt
-from shapely.ops import unary_union
-from shapely.geometry import box
 from pyunpack import Archive
+from shapely import wkt
+from shapely.geometry import box
+from shapely.ops import unary_union
 
-from ..handlers.vector_handlers import VectorHandler
 from ..handlers.raster_handlers import RasterHandler
+from ..handlers.vector_handlers import VectorHandler
 from ..utils.filemanager import download_file
-from h3ronpy.arrow import cells_to_string, compact, cells_parse
-
 from .dataset import BaseDataset
-
 
 WORLDPOP_API_CACHE = {}
 
