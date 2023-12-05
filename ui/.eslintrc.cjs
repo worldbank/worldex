@@ -45,6 +45,7 @@ module.exports = {
         "import/prefer-default-export": "warn",
         "jsx-a11y/anchor-is-valid": "warn",
         "max-len": "warn",
+        "no-bitwise": "off",
         "no-nested-ternary": "warn",
         "no-param-reassign": "warn",
         "no-restricted-globals": "warn",
@@ -54,6 +55,6 @@ module.exports = {
         "react/no-unstable-nested-components": "warn",
         "react/react-in-jsx-scope": "off",
         "react/require-default-props": "warn",
-        "react-hooks/exhaustive-deps": "warn",
+        "react-hooks/exhaustive-deps": "warn"
     }
 };
