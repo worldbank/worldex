@@ -17,9 +17,10 @@ export default function DatasetH3Layer(resolution: number, minZoom: number, maxZ
   const selectedH3Index = useSelector((state: RootState) => state.selected.h3Index);
   const dispatch = useDispatch();
 
+  const domains = (import.meta.env.VITE_DATASET_COUNT_BINS).split(',').map(Number);
   const getColor = colorBins({
     attr: 'dataset_count',
-    domains: [1, 2, 3, 4, 5],
+    domains,
     colors: OR_YEL.map(hexToRgb),
   });
 
@@ -90,7 +91,9 @@ export default function DatasetH3Layer(resolution: number, minZoom: number, maxZ
         pickable: true,
         stroked: true,
         lineWidthMinPixels: 1,
-        getLineColor: (d: any) => getColor(d),
+        // @ts-ignore
+        getLineColor: (d: any) => [...getColor(d), 160],
+        // @ts-ignore
         getFillColor: (d: any) => [...getColor(d), 200],
         filled: true,
         getLineWidth: 2,
