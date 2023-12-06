@@ -8,6 +8,7 @@ import { Typography } from '@mui/material';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { setDatasets, setH3Index as setSelectedH3Index } from 'store/selectedSlice';
 import { colorBins, hexToRgb } from 'utils/colors';
+import { DatasetCount } from 'components/common/types';
 
 export const DATASET_H3_LAYER_ID_PREFIX = 'datasetH3Layer';
 
@@ -87,14 +88,14 @@ export default function DatasetH3Layer(resolution: number, minZoom: number, maxZ
         }
       },
       renderSubLayers: (props: any) => new H3HexagonLayer(props, {
-        getHexagon: (d: any) => d.index,
+        getHexagon: (d: DatasetCount) => d.index,
         pickable: true,
         stroked: true,
         lineWidthMinPixels: 1,
         // @ts-ignore
-        getLineColor: (d: any) => [...getColor(d), 160],
+        getLineColor: (d: DatasetCount) => [...getColor(d), 160],
         // @ts-ignore
-        getFillColor: (d: any) => [...getColor(d), 200],
+        getFillColor: (d: DatasetCount) => [...getColor(d), 200],
         filled: true,
         getLineWidth: 2,
         extruded: false,
