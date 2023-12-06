@@ -2,7 +2,8 @@ import { lazy } from 'react';
 import ProtectedRoute from 'components/common/ProtectedRoute';
 import DefaultView from 'components/common/DefaultView';
 import { Navigate, useParams } from 'react-router-dom';
-import Selected from 'components/common/Selected';
+import Selected from 'components/common/sidebar/Selected';
+import SidebarContent from 'components/common/sidebar/Content';
 
 const Main = lazy(
   () => import(/* webpackPrefetch: true */ 'components/views/main/Main'),
@@ -30,7 +31,7 @@ const routes = [
     children: [
       {
         path: '/',
-        element: <Selected />,
+        element: <SidebarContent />,
       },
     ],
   },

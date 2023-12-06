@@ -8,7 +8,7 @@ import {
 } from '@mui/material';
 import { styled } from '@mui/material/styles';
 import LocationSearch from 'components/common/LocationSearch';
-import Selected from 'components/common/Selected';
+import Selected from 'components/common/sidebar/Selected';
 
 const Map = lazy(
   () => import(/* webpackChunkName: 'map' */ 'components/common/map/Map'),
