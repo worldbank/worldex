@@ -118,15 +118,8 @@ FULL JOIN children_datasets c USING (fill_index);
 async def get_dataset_count(
     session: AsyncSession = Depends(get_async_session),
 ):
-    # fast estimate for big table
-    results = await session.execute(text(
-    """
-    SELECT reltuples::bigint AS estimate
-    FROM pg_class
-    WHERE  oid = to_regclass('datasets');
-    """))
-    dataset_count = results.one()[0]
-    return {"dataset_count": dataset_count}
+    results = await session.execute(text("SELECT COUNT(*) FROM datasets;"))
+    return {"dataset_count": results.one()[0]}
 
 if __name__ == "__main__":
     uvicorn.run(app, port=8000, host="0.0.0.0")
