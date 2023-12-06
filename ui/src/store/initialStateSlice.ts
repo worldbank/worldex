@@ -1,4 +1,4 @@
-import { VOYAGER } from '@carto/react-basemaps';
+import { POSITRON } from '@carto/react-basemaps';
 import { InitialCarto3State } from '@carto/react-redux';
 
 export const initialState: InitialCarto3State = {
@@ -10,7 +10,7 @@ export const initialState: InitialCarto3State = {
     bearing: 0,
     dragRotate: false,
   },
-  basemap: VOYAGER,
+  basemap: POSITRON,
   credentials: {}, // carto-required but unnecessary
   googleApiKey: '', // only required when using a Google Basemap,
   googleMapId: '', // only required when using a Google Custom Basemap

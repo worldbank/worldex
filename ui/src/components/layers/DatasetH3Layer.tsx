@@ -1,3 +1,4 @@
+import { OR_YEL } from 'constants/colors';
 import { useDispatch, useSelector } from 'react-redux';
 // @ts-ignore
 import { TileLayer, H3HexagonLayer } from '@deck.gl/geo-layers';
@@ -6,6 +7,8 @@ import { RootState } from 'store/store';
 import { Typography } from '@mui/material';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { setDatasets, setH3Index as setSelectedH3Index } from 'store/selectedSlice';
+import { colorBins, hexToRgb } from 'utils/colors';
+import { DatasetCount } from 'components/common/types';
 
 export const DATASET_H3_LAYER_ID_PREFIX = 'datasetH3Layer';
 
@@ -15,8 +18,16 @@ export default function DatasetH3Layer(resolution: number, minZoom: number, maxZ
   const selectedH3Index = useSelector((state: RootState) => state.selected.h3Index);
   const dispatch = useDispatch();
 
-  const zoom = useSelector(((state: RootState) => Math.floor(state.carto.viewState.zoom)));
-  if (datasetH3Layer && source) {
+  const domains = (import.meta.env.VITE_DATASET_COUNT_BINS).split(',').map(Number);
+  const getColor = colorBins({
+    attr: 'dataset_count',
+    domains,
+    colors: OR_YEL.map(hexToRgb),
+  });
+
+  const zoom = useSelector(((state: RootState) => state.carto.viewState.zoom));
+  const isVisible = (zoom >= minZoom) && (maxZoom ? zoom < maxZoom : true);
+  if (datasetH3Layer && source && isVisible) {
     return new TileLayer({
       id: `dataset-h3-tile-layer-${resolution}`,
       data: source.data,
@@ -77,16 +88,14 @@ export default function DatasetH3Layer(resolution: number, minZoom: number, maxZ
         }
       },
       renderSubLayers: (props: any) => new H3HexagonLayer(props, {
-        getHexagon: (d: any) => d.index,
+        getHexagon: (d: DatasetCount) => d.index,
         pickable: true,
         stroked: true,
         lineWidthMinPixels: 1,
-        getLineColor: (d: any) => (d.index === selectedH3Index ? [255, 0, 0] : [255, 210, 0]),
-        getFillColor: (d: any) => {
-          const opacity = Math.max(40, 220 * Math.min(d.dataset_count / 30, 1));
-          const rgb: [number, number, number] = d.index === selectedH3Index ? [255, 0, 0] : [255, 210, 0];
-          return [...rgb, opacity];
-        },
+        // @ts-ignore
+        getLineColor: (d: DatasetCount) => [...getColor(d), 160],
+        // @ts-ignore
+        getFillColor: (d: DatasetCount) => [...getColor(d), 200],
         filled: true,
         getLineWidth: 2,
         extruded: false,

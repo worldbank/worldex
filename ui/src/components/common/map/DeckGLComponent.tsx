@@ -36,6 +36,8 @@ export default function DeckGLComponent({ layers }: { layers: any[] }) {
       getCursor={handleCursor}
       getTooltip={handleTooltip as any}
       pickingRadius={isMobile ? 10 : 0}
+      minZoom={2}
+      maxZoom={16}
     >
       <Map reuseMaps mapStyle={basemap.options.mapStyle} styleDiffing={false} />
     </DeckGL>
