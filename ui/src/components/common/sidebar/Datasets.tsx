@@ -36,7 +36,7 @@ const DatasetItem = ({idx, dataset}: {idx: number, dataset: Dataset}) => {
             {
               dataset.files && dataset.files.map((file: string) => (
                 <ListItem className="p-0">
-                  <Link href={file}>{file}</Link>
+                  <Link href={file} target="_blank" rel="noopener noreferrer">{file}</Link>
                 </ListItem>
               ))
             }
