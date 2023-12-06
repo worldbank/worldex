@@ -34,8 +34,8 @@ const DatasetItem = ({idx, dataset}: {idx: number, dataset: Dataset}) => {
           <Typography className="text-sm">{dataset.description}</Typography>
           <List className="text-xs">
             {
-              dataset.files && dataset.files.map((file: string) => (
-                <ListItem className="p-0">
+              dataset.files && dataset.files.map((file: string, idx: number) => (
+                <ListItem key={idx} className="p-0">
                   <Link href={file} target="_blank" rel="noopener noreferrer">{file}</Link>
                 </ListItem>
               ))
