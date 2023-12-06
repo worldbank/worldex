@@ -7,6 +7,8 @@ from fastapi import Depends, FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
+from app.sql.datasets import query as datasets_query
+from app.sql.dataset_counts import query as dataset_count_query
 
 app = FastAPI(
     title=settings.project_name,
@@ -40,27 +42,7 @@ async def get_h3_tile_data(
     session: AsyncSession = Depends(get_async_session),
 ):
     resolution = h3.h3_get_resolution(index)
-    query = text(
-        f"""
-        WITH with_parents AS (
-            SELECT :target target_index, h3_cell_to_parent(CAST(:target AS H3INDEX), generate_series(0, :resolution)) parent
-        ),
-        parent_datasets AS (
-            SELECT DISTINCT(dataset_id) dataset_id FROM h3_data
-            WHERE h3_index = ANY(ARRAY(SELECT parent FROM with_parents))
-        ),
-        children_datasets AS (
-            SELECT DISTINCT(dataset_id) dataset_id FROM h3_children_indicators
-            WHERE h3_index = CAST(:target AS H3INDEX)
-        ),
-        dataset_ids AS (
-            SELECT dataset_id FROM parent_datasets UNION
-            SELECT dataset_id FROM children_datasets
-        )
-        SELECT id, name, source_org, description, files FROM datasets
-        WHERE id = ANY(ARRAY(SELECT dataset_id FROM dataset_ids))
-        """
-    )
+    query = text(datasets_query)
     query = query.bindparams(target=index, resolution=resolution)
     results = await session.execute(query)
     return [
@@ -84,31 +66,7 @@ async def get_h3_tiles(
         f"h3_cell_to_parent(fill_index, {res})" for res in range(0, resolution)
     ]
     parents_comma_delimited = ", ".join(parents_array)
-    query = text(
-        f"""
-WITH bbox AS (
-  SELECT ST_Transform(ST_TileEnvelope(:z, :x, :y), 4326) bbox
-),
-fill AS (
-  SELECT h3_polygon_to_cells((SELECT bbox FROM bbox), :resolution) fill_index
-),
-with_parents AS (
-  SELECT fill_index, ARRAY[{parents_comma_delimited}] parents FROM fill GROUP BY fill_index
-),
-parent_datasets AS (
-  SELECT fill_index, COUNT(dataset_id) dataset_count
-  FROM with_parents JOIN h3_data ON h3_index = ANY(parents) GROUP BY fill_index
-),
-children_datasets AS (
-  SELECT fill_index, COUNT(dataset_id) dataset_count
-  FROM fill
-  JOIN h3_children_indicators ON h3_index = fill_index
-  GROUP BY fill_index
-)
-SELECT fill_index, (COALESCE(p.dataset_count, 0) + COALESCE(c.dataset_count, 0)) dataset_count FROM parent_datasets p
-FULL JOIN children_datasets c USING (fill_index);
-"""
-    )
+    query = text(dataset_count_query.format(parents_comma_delimited))
     query = query.bindparams(z=z, x=x, y=y, resolution=resolution)
     results = await session.execute(query)
     return [{"index": row[0], "dataset_count": row[1]} for row in results.fetchall()]
