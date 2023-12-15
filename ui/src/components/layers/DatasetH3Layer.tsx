@@ -93,16 +93,17 @@ export default function DatasetH3Layer(resolution: number, minZoom: number, maxZ
         stroked: true,
         lineWidthMinPixels: 1,
         // @ts-ignore
-        getLineColor: (d: DatasetCount) => [...getColor(d), 160],
+        getLineColor: (d: DatasetCount) => (d.index === selectedH3Index ? [0, 0, 255, 255] : [...getColor(d), 160]),
         // @ts-ignore
         getFillColor: (d: DatasetCount) => [...getColor(d), 200],
         filled: true,
-        getLineWidth: 2,
+        getLineWidth: (d: DatasetCount) => (d.index === selectedH3Index ? 3 : 2),
         extruded: false,
       }),
       updateTriggers: {
         getLineColor: [selectedH3Index],
         getFillColor: [selectedH3Index],
+        getLineWidth: [selectedH3Index],
         visible: [zoom],
       },
     });
