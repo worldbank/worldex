@@ -4,6 +4,7 @@ from typing import List, Optional
 from sqlalchemy.types import UserDefinedType
 from app.db import Base
 from sqlalchemy import (
+    CheckConstraint,
     Column,
     DateTime,
     Integer,
@@ -50,12 +51,21 @@ class Dataset(Base):
     __tablename__ = "datasets"
 
     id: Mapped[int] = mapped_column(primary_key=True, index=True)
+    uid: Mapped[str] = mapped_column(nullable=False, server_default='')
     name: Mapped[str] = mapped_column(nullable=False)
     source_org: Mapped[str] = mapped_column(nullable=True)
     last_fetched: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), nullable=False
     )
+    date_start: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=True
+    )
+    date_end: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=True
+    )
+    url: Mapped[str] = mapped_column(String, nullable=True)
     files: Mapped[list[str]] = mapped_column(ARRAY(String), nullable=True, default=[])
+    accessibility: Mapped[str] = mapped_column(String, nullable=True)
     description: Mapped[str] = mapped_column(nullable=True)
     data_format: Mapped[str] = mapped_column(nullable=False)
     projection: Mapped[str] = mapped_column(default="epsg:4326", nullable=False)
@@ -74,6 +84,15 @@ class Dataset(Base):
             "ix_datasets_bbox_srid",
             text("st_setsrid(bbox, 4326)"),
             postgresql_using="gist",
+        ),
+    )
+
+    __table_args__ = (
+        UniqueConstraint("name", "uid", name="unique_name_uid"),
+        CheckConstraint(
+            '(date_start IS NULL AND date_end IS NULL) OR'
+            '(date_start < date_end)',
+            name="date_order"
         ),
     )
 
