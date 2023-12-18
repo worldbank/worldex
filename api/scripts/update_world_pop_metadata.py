@@ -9,6 +9,7 @@ import pandas as pd
 import s3fs
 from app.models import Dataset, H3Data
 from sqlalchemy import create_engine, text
+from sqlalchemy.sql import exists
 from sqlalchemy.orm import sessionmaker, load_only
 from sqlalchemy.orm.session import Session
 
@@ -17,6 +18,7 @@ from worldex.handlers.raster_handlers import RasterHandler
 DATABASE_CONNECION = os.getenv("DATABASE_URL_SYNC")
 BUCKET = os.getenv("AWS_BUCKET")
 DATASET_DIR = os.getenv("AWS_DATASET_DIRECTORY")
+DNE_LIMIT = 10
 METADATA_UPDATE_FIELDS = [
     "date_start",
     "date_end",
@@ -41,10 +43,12 @@ def update_dataset_metadata(
         field: metadata[field] for field in METADATA_UPDATE_FIELDS
     }
     metadata_payload["uid"] = metadata["id"]
-    dataset = sess.query(Dataset).filter(Dataset.name == dataset_name).update(metadata_payload)
-    dataset = sess.query(Dataset).filter(Dataset.name == dataset_name).options(load_only(Dataset.id, Dataset.has_compact_only)).first()
-    sess.commit()
-    return dataset
+    dataset_exists = sess.query(exists().where(Dataset.name == dataset_name)).scalar()
+    if dataset_exists:
+        dataset = sess.query(Dataset).filter(Dataset.name == dataset_name).update(metadata_payload)
+        sess.commit()
+        return dataset
+    return None
     # TODO: actually create keyword objects
     # keywords: list[str] = metadata.pop("keywords")
 
@@ -71,25 +75,27 @@ def main():
 
     Session = sessionmaker(bind=engine)
     with Session() as sess:
-        result = sess.execute(text("SELECT COUNT(*) FROM datasets WHERE source_org = 'WorldPop' AND (uid IS NOT NULL OR uid != '')"))
-        to_update = result.one()[0]
         dirs = s3.ls("s3:///worldex-temp-storage/indexes/worldpop/")
         # best effort to skip existing datasets assuming ls order has not changed
-        for idx, dir in enumerate(dirs):
-            if idx > to_update:
+        dne_counter = 0
+        for idx, dir in enumerate(dirs[2000:]):
+            if dne_counter > DNE_LIMIT:
+                # crude way to terminate script
+                print(f"No datasets updated after {DNE_LIMIT} consecutive attempts, terminating")
                 break
             if dir.split("/")[-1] in SKIP_LIST:
                 continue
             files = s3.ls(dir)
-            is_parquet = (
+            is_valid_dataset = (
                 f"{dir}/h3-compact.parquet" in files and f"{dir}/metadata.json" in files
             )
-            if not is_parquet:
+            if not is_valid_dataset:
                 continue
             print(f"Indexing {dir}")
             try:
                 with s3.open(f"s3://{dir}/metadata.json") as f:
                     dataset = update_dataset_metadata(f, sess)
+                    dne_counter = 0 if dataset else dne_counter + 1
             except Exception as e:
                 sess.rollback()
                 raise e
