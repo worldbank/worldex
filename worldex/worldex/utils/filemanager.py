@@ -7,10 +7,9 @@ import requests
 
 
 def unzip_file(filename, dir):
-    folder = Path(filename).name
+    dir.mkdir(exist_ok=True, parents=True)
     with zipfile.ZipFile(filename, "r") as zip_ref:
-        zip_ref.extractall(dir / folder)
-    return list((dir / folder).glob("*"))
+        zip_ref.extractall(dir)
 
 
 def download_file(url, filename):

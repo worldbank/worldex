@@ -1011,6 +1011,17 @@ files = [
 ]
 
 [[package]]
+name = "easyprocess"
+version = "1.1"
+description = "Easy to use Python subprocess interface."
+optional = false
+python-versions = "*"
+files = [
+    {file = "EasyProcess-1.1-py3-none-any.whl", hash = "sha256:82eed523a0a5eb12a81fa4eacd9f342caeb3f900eb4b798740e6696ad07e63f9"},
+    {file = "EasyProcess-1.1.tar.gz", hash = "sha256:885898302a57aab948973e8b5d32a4229392b9fb2d986ab1d4ffd590e5ba90ec"},
+]
+
+[[package]]
 name = "email-validator"
 version = "2.1.0.post1"
 description = "A robust email address syntax and deliverability validation library."
@@ -1024,6 +1035,17 @@ files = [
 [package.dependencies]
 dnspython = ">=2.0.0"
 idna = ">=2.0.0"
+
+[[package]]
+name = "entrypoint2"
+version = "1.1"
+description = "easy to use command-line interface for python modules"
+optional = false
+python-versions = "*"
+files = [
+    {file = "entrypoint2-1.1-py2.py3-none-any.whl", hash = "sha256:eeb8c327bdb65cdd1668c023a6b110b7e3d1a046fb05e043861ebd9264b3a257"},
+    {file = "entrypoint2-1.1.tar.gz", hash = "sha256:fc0b7fe7b21acdab47a585ab9407ca7e5c4f96cb6888575db6b0ceb91f0e105a"},
+]
 
 [[package]]
 name = "et-xmlfile"
@@ -3405,6 +3427,17 @@ files = [
 ]
 
 [[package]]
+name = "patool"
+version = "2.0.0"
+description = "portable archive file manager"
+optional = false
+python-versions = ">=3.10"
+files = [
+    {file = "patool-2.0.0-py2.py3-none-any.whl", hash = "sha256:417d136d75eb55c1649c83a0299b52a3b0a852134afd8a74d12b9bdbf4072ec4"},
+    {file = "patool-2.0.0.tar.gz", hash = "sha256:1dd48cd48043fc78ebf88b8ea5b00d5123fba50a6a9d11182fbcfd677681cab5"},
+]
+
+[[package]]
 name = "petl"
 version = "1.7.14"
 description = "A Python package for extracting, transforming and loading tables of data."
@@ -4222,6 +4255,21 @@ files = [
     {file = "pytz-2023.3.post1-py2.py3-none-any.whl", hash = "sha256:ce42d816b81b68506614c11e8937d3aa9e41007ceb50bfdcb0749b921bf646c7"},
     {file = "pytz-2023.3.post1.tar.gz", hash = "sha256:7b4fddbeb94a1eba4b557da24f19fdf9db575192544270a9101d8509f9f43d7b"},
 ]
+
+[[package]]
+name = "pyunpack"
+version = "0.3"
+description = "unpack archive files"
+optional = false
+python-versions = "*"
+files = [
+    {file = "pyunpack-0.3-py2.py3-none-any.whl", hash = "sha256:8f517cfc71215f37f74cf3a7668028828c68dc76f4d02e7a69f227ce978d51a3"},
+    {file = "pyunpack-0.3.tar.gz", hash = "sha256:b9192665c3aa28eaeb2b01198a2f2f985d9a3ecce55f266a657b31cd337d3f12"},
+]
+
+[package.dependencies]
+easyprocess = "*"
+entrypoint2 = "*"
 
 [[package]]
 name = "pywin32"
@@ -5971,4 +6019,4 @@ worldpop = ["beautifulsoup4"]
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.10"
-content-hash = "78f186790f9e60078c379266dd5c30d5a8112672da0aec0b4560c5cfb8804813"
+content-hash = "52546f4fa272e0c1f5d82282576f26f4eb85b9c440e18411d44292b145e427d1"

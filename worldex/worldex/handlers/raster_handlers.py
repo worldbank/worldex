@@ -1,7 +1,6 @@
 from typing import List, Optional, Tuple
 
 import numpy as np
-import pandas as pd
 import rasterio as rio
 from h3ronpy.arrow import cells_to_string
 from h3ronpy.pandas.raster import raster_to_dataframe

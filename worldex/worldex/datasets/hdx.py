@@ -121,7 +121,5 @@ class HDXDataset(BaseDataset):
         h3indices = handler.h3index()
         self.bbox = wkt.dumps(box(*handler.bbox))
         df = pd.DataFrame({"h3_index": h3indices})
-        df.to_parquet(self.dir / "h3.parquet", index=False)
-        with open(self.dir / "metadata.json", "w") as f:
-            f.write(self.model_dump_json())
+        self.write(df)
         return df
