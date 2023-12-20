@@ -1,6 +1,7 @@
 from pathlib import Path
 from typing import List, Optional, Tuple
 
+import pandas as pd
 import geopandas as gpd
 from h3ronpy.arrow import cells_to_string
 from h3ronpy.arrow.vector import wkb_to_cells
@@ -63,9 +64,34 @@ class VectorHandler(BaseHandler):
             x_possible_names=possible_x,
             y_possible_names=possible_y,
             geom_possible_names=possible_geometry,
+            crs="EPSG:4326",
         )
-        gdf.set_crs(epsg=4326, inplace=True)
         return cls(gdf, resolution)
+
+    @classmethod
+    def from_excel(cls, file: File, resolution: Optional[int] = None):
+        df = pd.read_excel(file)
+        x_best_match = next(
+            (col for col in df.columns if col.lower() in POSSIBLE_X), None
+        )
+        y_best_match = next(
+            (col for col in df.columns if col.lower() in POSSIBLE_Y), None
+        )
+        if x_best_match and y_best_match:
+            gdf = gpd.GeoDataFrame(
+                geometry=gpd.GeoSeries.from_xy(df[x_best_match], df[y_best_match]),
+                crs="EPSG:4326",
+            )
+            return cls(gdf, resolution)
+        geom_best_match = next(
+            (col for col in df.columns if col.lower() in POSSIBLE_GEOM), None
+        )
+        if geom_best_match:
+            gpd.GeoDataFrame(
+                geometry=gpd.GeoSeries.from_wkt(df[geom_best_match]), crs="EPSG:4326"
+            )
+            return cls(gdf, resolution)
+        raise ValueError("Cannot convert excel file to geopandas")
 
     def get_resolution(self) -> int:
         if self.resolution is None:
