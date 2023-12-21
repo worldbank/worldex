@@ -9,7 +9,7 @@ import pandas as pd
 import s3fs
 from app.models import Dataset, H3Data
 from sqlalchemy import create_engine, text
-from sqlalchemy.sql import exists
+from sqlalchemy.sql import exists, func
 from sqlalchemy.orm import sessionmaker, load_only
 from sqlalchemy.orm.session import Session
 
@@ -18,7 +18,7 @@ from worldex.handlers.raster_handlers import RasterHandler
 DATABASE_CONNECION = os.getenv("DATABASE_URL_SYNC")
 BUCKET = os.getenv("AWS_BUCKET")
 DATASET_DIR = os.getenv("AWS_DATASET_DIRECTORY")
-DNE_LIMIT = 10
+DNE_LIMIT = 500
 METADATA_UPDATE_FIELDS = [
     "date_start",
     "date_end",
@@ -40,11 +40,12 @@ def update_dataset_metadata(
     metadata = json.load(metadata_file)
     dataset_name = metadata["name"]
     metadata_payload = {
-        field: metadata[field] for field in METADATA_UPDATE_FIELDS
+        field: metadata.pop(field, None) for field in METADATA_UPDATE_FIELDS
     }
     metadata_payload["uid"] = metadata["id"]
     dataset_exists = sess.query(exists().where(Dataset.name == dataset_name)).scalar()
     if dataset_exists:
+        print(f"Updating {dataset_name} metadata")
         dataset = sess.query(Dataset).filter(Dataset.name == dataset_name).update(metadata_payload)
         sess.commit()
         return dataset
@@ -91,7 +92,6 @@ def main():
             )
             if not is_valid_dataset:
                 continue
-            print(f"Indexing {dir}")
             try:
                 with s3.open(f"s3://{dir}/metadata.json") as f:
                     dataset = update_dataset_metadata(f, sess)
