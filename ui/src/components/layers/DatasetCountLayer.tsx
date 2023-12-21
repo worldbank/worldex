@@ -1,4 +1,5 @@
 import { OR_YEL } from 'constants/colors';
+import { ZOOM_H3_RESOLUTION_PAIRS } from 'constants/h3';
 import { useDispatch, useSelector } from 'react-redux';
 // @ts-ignore
 import { TileLayer, H3HexagonLayer } from '@deck.gl/geo-layers';
@@ -10,10 +11,10 @@ import { setDatasets, setH3Index as setSelectedH3Index } from 'store/selectedSli
 import { colorBins, hexToRgb } from 'utils/colors';
 import { DatasetCount } from 'components/common/types';
 
-export const DATASET_H3_LAYER_ID_PREFIX = 'datasetH3Layer';
+export const DATASET_COUNT_LAYER_ID = 'datasetCountLayer';
 
-export default function DatasetH3Layer(resolution: number, minZoom: number, maxZoom?: number) {
-  const datasetH3Layer = useSelector((state: RootState) => state.carto.layers[`${DATASET_H3_LAYER_ID_PREFIX}${resolution}r`]);
+export default function DatasetH3Layer() {
+  const datasetH3Layer = useSelector((state: RootState) => state.carto.layers[DATASET_COUNT_LAYER_ID]);
   const source = useSelector((state) => selectSourceById(state, datasetH3Layer?.source));
   const selectedH3Index = useSelector((state: RootState) => state.selected.h3Index);
   const dispatch = useDispatch();
@@ -25,20 +26,38 @@ export default function DatasetH3Layer(resolution: number, minZoom: number, maxZ
     colors: OR_YEL.map(hexToRgb),
   });
 
-  const zoom = useSelector(((state: RootState) => state.carto.viewState.zoom));
-  const isVisible = (zoom >= minZoom) && (maxZoom ? zoom < maxZoom : true);
-  if (datasetH3Layer && source && isVisible) {
+  const currentZoom = useSelector(((state: RootState) => state.carto.viewState.zoom));
+  const [closestZoom, resolution] = (() => {
+    let i = ZOOM_H3_RESOLUTION_PAIRS.length - 1;
+    for (const [index, [zoom, res]] of ZOOM_H3_RESOLUTION_PAIRS.entries()) {
+      if (zoom === currentZoom) {
+        i = index;
+        break;
+      } else if (zoom > currentZoom) {
+        i = index - 1;
+        break;
+      }
+    }
+    return ZOOM_H3_RESOLUTION_PAIRS[i];
+  })();
+  console.log(`closest zoom to ${currentZoom} is ${closestZoom}`);
+  console.log(`using resolution ${resolution}`);
+  // const isVisible = (zoom >= minZoom) && (maxZoom ? zoom < maxZoom : true);
+  if (datasetH3Layer && source) {
     return new TileLayer({
-      id: `dataset-h3-tile-layer-${resolution}`,
+      id: 'dataset-h3-tile-layer',
       data: source.data,
-      minZoom,
-      maxZoom: minZoom,
-      visible: (zoom >= minZoom) && (maxZoom ? zoom < maxZoom : true),
+      minZoom: closestZoom,
+      maxZoom: closestZoom,
+      // visible: (zoom >= minZoom) && (maxZoom ? zoom < maxZoom : true),
       loadOptions: {
         fetch: {
           method: 'POST',
           body: JSON.stringify({
             resolution,
+            // resolution: ZOOM_H3_RESOLUTION_PAIRS.findIndex((element) => {
+            //   return element[0] === zoom
+            // }),
           }),
           headers: {
             'Content-Type': 'application/json',
@@ -101,12 +120,12 @@ export default function DatasetH3Layer(resolution: number, minZoom: number, maxZ
         extruded: false,
       }),
       updateTriggers: {
-        minZoom: [zoom],
-        maxZoom: [zoom],
+        minZoom: [closestZoom],
+        maxZoom: [closestZoom],
         getLineColor: [selectedH3Index],
         getFillColor: [selectedH3Index],
         getLineWidth: [selectedH3Index],
-        visible: [zoom],
+        visible: [currentZoom],
       },
     });
   }
