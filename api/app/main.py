@@ -46,7 +46,17 @@ async def get_h3_tile_data(
     query = query.bindparams(target=index, resolution=resolution)
     results = await session.execute(query)
     return [
-        {"id": row[0], "name": row[1], "source_org": row[2], "description": row[3], "files": row[4]}
+        {
+            "id": row[0],
+            "name": row[1],
+            "source_org": row[2],
+            "description": row[3],
+            "files": row[4],
+            "url": row[5],
+            "accessibility": row[6],
+            "date_start": row[7],
+            "date_end": row[8],
+        }
         for row in results.fetchall()
     ]
 

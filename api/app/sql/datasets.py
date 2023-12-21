@@ -14,6 +14,16 @@ dataset_ids AS (
     SELECT dataset_id FROM parent_datasets UNION
     SELECT dataset_id FROM children_datasets
 )
-SELECT id, name, source_org, description, files FROM datasets
+SELECT 
+    id,
+    name,
+    source_org,
+    description,
+    files,
+    url,
+    accessibility,
+    date_start,
+    date_end
+FROM datasets
 WHERE id = ANY(ARRAY(SELECT dataset_id FROM dataset_ids))
 """

@@ -4,7 +4,11 @@ export interface Dataset {
   name: string;
   source_org: string;
   description: string;
+  url: string;
   files: string[];
+  accessibility: string;
+  date_start: Date;
+  date_end: Date;
 }
 
 export interface DatasetCount {
