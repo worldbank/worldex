@@ -22,7 +22,7 @@ const DatasetItem = ({idx, dataset}: {idx: number, dataset: Dataset}) => {
       <IconButton onClick={handleClick}><ChevronRight /></IconButton>
       <Popover
         key={idx}
-        className="p-2"
+        className="p-2 max-h-[80vh]"
         open={open}
         anchorEl={anchor}
         onClose={handleClose}
