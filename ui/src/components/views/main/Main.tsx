@@ -1,4 +1,3 @@
-import { ZOOM_H3_RESOLUTION_PAIRS } from 'constants/h3';
 import { AT as atRegex } from 'constants/regex';
 import {
   addLayer,

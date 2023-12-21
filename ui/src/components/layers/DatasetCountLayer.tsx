@@ -117,6 +117,7 @@ export default function DatasetCountLayer() {
         getLineColor: [selectedH3Index],
         getFillColor: [selectedH3Index],
         getLineWidth: [selectedH3Index],
+        visible: [currentZoom],
       },
     });
   }
