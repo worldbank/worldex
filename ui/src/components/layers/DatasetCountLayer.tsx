@@ -28,18 +28,16 @@ export default function DatasetCountLayer() {
   });
 
   const currentZoom = useSelector(((state: RootState) => state.carto.viewState.zoom));
+  // TODO: convert to a functional call
   const [closestZoom, resolution] = (() => {
-    let i = ZOOM_H3_RESOLUTION_PAIRS.length - 1;
-    for (const [index, [zoom, _]] of ZOOM_H3_RESOLUTION_PAIRS.entries()) {
+    for (const [idx, [zoom, _]] of ZOOM_H3_RESOLUTION_PAIRS.entries()) {
       if (zoom === currentZoom) {
-        i = index;
-        break;
+        return ZOOM_H3_RESOLUTION_PAIRS[idx];
       } else if (zoom > currentZoom) {
-        i = index - 1;
-        break;
+        return ZOOM_H3_RESOLUTION_PAIRS[idx - 1];
       }
     }
-    return ZOOM_H3_RESOLUTION_PAIRS[i];
+    return ZOOM_H3_RESOLUTION_PAIRS.at(-1);
   })();
   dispatch(setH3Resolution(resolution));
   if (datasetH3Layer && source) {
