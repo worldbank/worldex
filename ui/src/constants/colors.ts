@@ -7,3 +7,5 @@ export const OR_YEL = [
   'f66356',
   'ee4d5a',
 ];
+
+export const SELECTED_OUTLINE = [0, 0, 255];

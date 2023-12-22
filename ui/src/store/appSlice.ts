@@ -5,6 +5,7 @@ const slice = createSlice({
   initialState: {
     error: null,
     bottomSheetOpen: false,
+    h3Resolution: null,
   },
   reducers: {
     setError: (state, action) => {
@@ -12,6 +13,9 @@ const slice = createSlice({
     },
     setBottomSheetOpen: (state, action) => {
       state.bottomSheetOpen = action.payload;
+    },
+    setH3Resolution: (state, action) => {
+      state.h3Resolution = action.payload;
     },
   },
 });
@@ -24,5 +28,9 @@ export const setError = (payload: string | null) => ({
 });
 export const setBottomSheetOpen = (payload: boolean) => ({
   type: 'app/setBottomSheetOpen',
+  payload,
+});
+export const setH3Resolution = (payload: number) => ({
+  type: 'app/setH3Resolution',
   payload,
 });

@@ -1,4 +1,5 @@
-import { OR_YEL } from 'constants/colors';
+import { OR_YEL, SELECTED_OUTLINE } from 'constants/colors';
+import { ZOOM_H3_RESOLUTION_PAIRS } from 'constants/h3';
 import { useDispatch, useSelector } from 'react-redux';
 // @ts-ignore
 import { TileLayer, H3HexagonLayer } from '@deck.gl/geo-layers';
@@ -9,11 +10,12 @@ import { renderToStaticMarkup } from 'react-dom/server';
 import { setDatasets, setH3Index as setSelectedH3Index } from 'store/selectedSlice';
 import { colorBins, hexToRgb } from 'utils/colors';
 import { DatasetCount } from 'components/common/types';
+import { setH3Resolution } from 'store/appSlice';
 
-export const DATASET_H3_LAYER_ID_PREFIX = 'datasetH3Layer';
+export const DATASET_COUNT_LAYER_ID = 'datasetCountLayer';
 
-export default function DatasetH3Layer(resolution: number, minZoom: number, maxZoom?: number) {
-  const datasetH3Layer = useSelector((state: RootState) => state.carto.layers[`${DATASET_H3_LAYER_ID_PREFIX}${resolution}r`]);
+export default function DatasetCountLayer() {
+  const datasetH3Layer = useSelector((state: RootState) => state.carto.layers[DATASET_COUNT_LAYER_ID]);
   const source = useSelector((state) => selectSourceById(state, datasetH3Layer?.source));
   const selectedH3Index = useSelector((state: RootState) => state.selected.h3Index);
   const dispatch = useDispatch();
@@ -25,15 +27,24 @@ export default function DatasetH3Layer(resolution: number, minZoom: number, maxZ
     colors: OR_YEL.map(hexToRgb),
   });
 
-  const zoom = useSelector(((state: RootState) => state.carto.viewState.zoom));
-  const isVisible = (zoom >= minZoom) && (maxZoom ? zoom < maxZoom : true);
-  if (datasetH3Layer && source && isVisible) {
+  const currentZoom = useSelector(((state: RootState) => state.carto.viewState.zoom));
+  // TODO: convert to a functional call
+  const [closestZoom, resolution] = (() => {
+    for (const [idx, [zoom, _]] of ZOOM_H3_RESOLUTION_PAIRS.entries()) {
+      if (zoom === currentZoom) {
+        return ZOOM_H3_RESOLUTION_PAIRS[idx];
+      } else if (zoom > currentZoom) {
+        return ZOOM_H3_RESOLUTION_PAIRS[idx - 1];
+      }
+    }
+    return ZOOM_H3_RESOLUTION_PAIRS.at(-1);
+  })();
+  dispatch(setH3Resolution(resolution));
+  if (datasetH3Layer && source) {
     return new TileLayer({
-      id: `dataset-h3-tile-layer-${resolution}`,
+      id: 'dataset-h3-tile-layer',
       data: source.data,
-      minZoom,
-      maxZoom: minZoom,
-      visible: (zoom >= minZoom) && (maxZoom ? zoom < maxZoom : true),
+      maxZoom: closestZoom,
       loadOptions: {
         fetch: {
           method: 'POST',
@@ -93,7 +104,7 @@ export default function DatasetH3Layer(resolution: number, minZoom: number, maxZ
         stroked: true,
         lineWidthMinPixels: 1,
         // @ts-ignore
-        getLineColor: (d: DatasetCount) => (d.index === selectedH3Index ? [0, 0, 255, 255] : [...getColor(d), 160]),
+        getLineColor: (d: DatasetCount) => (d.index === selectedH3Index ? [...SELECTED_OUTLINE, 255] : [...getColor(d), 160]),
         // @ts-ignore
         getFillColor: (d: DatasetCount) => [...getColor(d), 200],
         filled: true,
@@ -101,10 +112,11 @@ export default function DatasetH3Layer(resolution: number, minZoom: number, maxZ
         extruded: false,
       }),
       updateTriggers: {
+        minZoom: [closestZoom],
+        maxZoom: [closestZoom],
         getLineColor: [selectedH3Index],
         getFillColor: [selectedH3Index],
         getLineWidth: [selectedH3Index],
-        visible: [zoom],
       },
     });
   }
