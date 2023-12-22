@@ -10,6 +10,7 @@ import { renderToStaticMarkup } from 'react-dom/server';
 import { setDatasets, setH3Index as setSelectedH3Index } from 'store/selectedSlice';
 import { colorBins, hexToRgb } from 'utils/colors';
 import { DatasetCount } from 'components/common/types';
+import { setH3Resolution } from 'store/appSlice';
 
 export const DATASET_COUNT_LAYER_ID = 'datasetCountLayer';
 
@@ -40,8 +41,7 @@ export default function DatasetCountLayer() {
     }
     return ZOOM_H3_RESOLUTION_PAIRS[i];
   })();
-  // console.log(`closest zoom to ${currentZoom.toFixed(2)} is ${closestZoom}`);
-  // console.log(`using resolution ${resolution}`);
+  dispatch(setH3Resolution(resolution));
   if (datasetH3Layer && source) {
     return new TileLayer({
       id: 'dataset-h3-tile-layer',
