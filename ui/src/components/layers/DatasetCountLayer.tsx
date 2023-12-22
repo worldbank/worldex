@@ -29,7 +29,7 @@ export default function DatasetH3Layer() {
   const currentZoom = useSelector(((state: RootState) => state.carto.viewState.zoom));
   const [closestZoom, resolution] = (() => {
     let i = ZOOM_H3_RESOLUTION_PAIRS.length - 1;
-    for (const [index, [zoom, res]] of ZOOM_H3_RESOLUTION_PAIRS.entries()) {
+    for (const [index, [zoom, _]] of ZOOM_H3_RESOLUTION_PAIRS.entries()) {
       if (zoom === currentZoom) {
         i = index;
         break;
@@ -40,24 +40,18 @@ export default function DatasetH3Layer() {
     }
     return ZOOM_H3_RESOLUTION_PAIRS[i];
   })();
-  console.log(`closest zoom to ${currentZoom} is ${closestZoom}`);
-  console.log(`using resolution ${resolution}`);
-  // const isVisible = (zoom >= minZoom) && (maxZoom ? zoom < maxZoom : true);
+  // console.log(`closest zoom to ${currentZoom.toFixed(2)} is ${closestZoom}`);
+  // console.log(`using resolution ${resolution}`);
   if (datasetH3Layer && source) {
     return new TileLayer({
       id: 'dataset-h3-tile-layer',
       data: source.data,
-      minZoom: closestZoom,
       maxZoom: closestZoom,
-      // visible: (zoom >= minZoom) && (maxZoom ? zoom < maxZoom : true),
       loadOptions: {
         fetch: {
           method: 'POST',
           body: JSON.stringify({
             resolution,
-            // resolution: ZOOM_H3_RESOLUTION_PAIRS.findIndex((element) => {
-            //   return element[0] === zoom
-            // }),
           }),
           headers: {
             'Content-Type': 'application/json',
@@ -125,7 +119,6 @@ export default function DatasetH3Layer() {
         getLineColor: [selectedH3Index],
         getFillColor: [selectedH3Index],
         getLineWidth: [selectedH3Index],
-        visible: [currentZoom],
       },
     });
   }
