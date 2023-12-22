@@ -10,7 +10,6 @@ import h3CellsSource from 'data/sources/h3CellsSource';
 import { lazy, useEffect } from 'react';
 import { DATASET_COUNT_LAYER_ID } from 'components/layers/DatasetCountLayer';
 import { SEARCH_LAYER_ID } from 'components/layers/SearchLayer';
-import { DATASET_H3_LAYER_ID_PREFIX } from 'components/layers/DatasetH3Layer';
 import { useDispatch, useSelector } from 'react-redux';
 
 import { Grid } from '@mui/material';
@@ -91,18 +90,10 @@ export default function Main() {
     dispatch(
       addLayer({
         id: SEARCH_LAYER_ID,
-        // source: h3CellsSource.id,
       }),
     );
-    // ZOOM_H3_RESOLUTION_PAIRS.forEach(([, res]) => dispatch(
-    //   addLayer({
-    //     id: `${DATASET_H3_LAYER_ID_PREFIX}${res}r`,
-    //     source: h3CellsSource.id,
-    //   }),
-    // ));
 
     return () => {
-      dispatch(removeLayer(DATASET_H3_LAYER_ID_PREFIX));
       dispatch(removeLayer(SEARCH_LAYER_ID));
       dispatch(removeLayer(DATASET_COUNT_LAYER_ID));
       dispatch(removeSource(h3CellsSource.id));

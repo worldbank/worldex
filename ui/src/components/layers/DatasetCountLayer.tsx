@@ -1,4 +1,4 @@
-import { OR_YEL } from 'constants/colors';
+import { OR_YEL, SELECTED_OUTLINE } from 'constants/colors';
 import { ZOOM_H3_RESOLUTION_PAIRS } from 'constants/h3';
 import { useDispatch, useSelector } from 'react-redux';
 // @ts-ignore
@@ -13,7 +13,7 @@ import { DatasetCount } from 'components/common/types';
 
 export const DATASET_COUNT_LAYER_ID = 'datasetCountLayer';
 
-export default function DatasetH3Layer() {
+export default function DatasetCountLayer() {
   const datasetH3Layer = useSelector((state: RootState) => state.carto.layers[DATASET_COUNT_LAYER_ID]);
   const source = useSelector((state) => selectSourceById(state, datasetH3Layer?.source));
   const selectedH3Index = useSelector((state: RootState) => state.selected.h3Index);
@@ -106,7 +106,7 @@ export default function DatasetH3Layer() {
         stroked: true,
         lineWidthMinPixels: 1,
         // @ts-ignore
-        getLineColor: (d: DatasetCount) => (d.index === selectedH3Index ? [0, 0, 255, 255] : [...getColor(d), 160]),
+        getLineColor: (d: DatasetCount) => (d.index === selectedH3Index ? [...SELECTED_OUTLINE, 255] : [...getColor(d), 160]),
         // @ts-ignore
         getFillColor: (d: DatasetCount) => [...getColor(d), 200],
         filled: true,
