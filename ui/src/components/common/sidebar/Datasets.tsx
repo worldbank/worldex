@@ -4,7 +4,7 @@ import { useState } from "react";
 import { Dataset } from "../types";
 import { format } from "date-fns"
 
-const DatasetItem = ({idx, dataset}: {idx: number, dataset: Dataset}) => {
+const DatasetItem = ({idx, dataset, className}: {idx: number, dataset: Dataset, className: string}) => {
   const [anchor, setAnchor] = useState(null);
   const handleClick = (event: React.MouseEvent<HTMLElement>) => {
     setAnchor(event.currentTarget);
@@ -15,7 +15,7 @@ const DatasetItem = ({idx, dataset}: {idx: number, dataset: Dataset}) => {
   const open = Boolean(anchor);
 
   return (
-    <Stack direction="row" className="p-3 items-center justify-between">
+    <Stack direction="row" className={`p-3 items-center justify-between ${className}`}>
       <Box className="m-0">
         <Typography className="text-sm">{idx+1}. {dataset.name}</Typography>
       </Box>
@@ -87,30 +87,35 @@ const Datasets = ({ datasetsByOrgs }: { datasetsByOrgs: { [source_org: string]: 
           disableGutters
           elevation={0}
           key={org}
-          className="!relative max-height-[60vh] overflow-y-scroll"
         >
           <AccordionSummary>
             <Typography className="font-bold">{org}</Typography>
           </AccordionSummary>
           <Divider />
-          <AccordionDetails className="p-0 max-h-[60vh]">
+          <AccordionDetails
+            className="p-0"
+          >
+            <List className="m-0 p-0 max-h-[60vh] overflow-y-scroll">
             {
               datasets.map((dataset: Dataset, idx: number) => (
-                <List className="m-0 py-0 max-h-full overflow-y-auto">
-                  <ListItem className="p-0">
-                    <Stack className="w-full" spacing={1}>
-                      <DatasetItem idx={idx} dataset={dataset} />
-                      {idx + 1 < datasets.length && <Divider />}
-                    </Stack>
+                <>
+                  <ListItem key={idx} className="p-0">
+                      <DatasetItem idx={idx} dataset={dataset} className="w-full" />
                   </ListItem>
-                </List>
+                  {idx + 1 < datasets.length && (
+                    <ListItem className="p-0">
+                      <Divider className="w-full" />
+                    </ListItem>
+                  )}
+                </>
               ))
             }
+            </List>
           </AccordionDetails>
+          <Divider />
         </Accordion>
       ))
     }
-    <Divider />
   </div>
 );
 
