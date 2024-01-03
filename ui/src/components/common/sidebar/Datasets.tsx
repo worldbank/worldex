@@ -1,5 +1,5 @@
 import ChevronRight from "@mui/icons-material/ChevronRight";
-import { Accordion, AccordionDetails, AccordionSummary, Box, Divider, IconButton, Link, List, ListItem, Popover, Stack, Typography } from "@mui/material";
+import { Accordion, AccordionDetails, AccordionSummary, Box, Divider, IconButton, Link, List, ListItem, Popover, Stack, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Typography } from "@mui/material";
 import { useState } from "react";
 import { Dataset } from "../types";
 import { format } from "date-fns"
@@ -52,17 +52,27 @@ const DatasetItem = ({idx, dataset}: {idx: number, dataset: Dataset}) => {
               <strong>Source:</strong>{" "}<Link href={dataset.url} target="_blank" rel="noopener noreferrer">{dataset.url}</Link>
             </Typography>
           </div>
-          <Typography className="text-sm"><strong>Files:</strong>
-            <List className="text-xs">
-              {
-                dataset.files && dataset.files.map((file: string, idx: number) => (
-                  <ListItem key={idx} className="p-0">
-                    <Link href={file} target="_blank" rel="noopener noreferrer">{file}</Link>
-                  </ListItem>
-                ))
-              }
-            </List>
-          </Typography>
+            { dataset.files && (
+              <>
+                <Typography className="text-sm">
+                  <strong>Files:</strong>
+                </Typography>
+                <TableContainer className="max-w-100 overflow-x-scroll">
+                  <Table size="small" aria-label="files table">
+                    <TableBody>
+                      {dataset.files.map((file: string, idx: number) => (
+                        <TableRow>
+                          <TableCell className="pl-0">
+                            <Link href={file} target="_blank">{file}</Link>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </TableContainer>
+              </>
+            )
+            }
         </div>
       </Popover>
     </Stack>
@@ -73,12 +83,17 @@ const Datasets = ({ datasetsByOrgs }: { datasetsByOrgs: { [source_org: string]: 
   <div>
     { 
       Object.entries(datasetsByOrgs).map(([org, datasets]) => (
-        <Accordion disableGutters elevation={0} key={org} className="!relative">
+        <Accordion
+          disableGutters
+          elevation={0}
+          key={org}
+          className="!relative max-height-[60vh] overflow-y-scroll"
+        >
           <AccordionSummary>
             <Typography className="font-bold">{org}</Typography>
           </AccordionSummary>
           <Divider />
-          <AccordionDetails className="p-0">
+          <AccordionDetails className="p-0 max-h-[60vh]">
             {
               datasets.map((dataset: Dataset, idx: number) => (
                 <List className="m-0 py-0 max-h-full overflow-y-auto">
@@ -95,6 +110,7 @@ const Datasets = ({ datasetsByOrgs }: { datasetsByOrgs: { [source_org: string]: 
         </Accordion>
       ))
     }
+    <Divider />
   </div>
 );
 
