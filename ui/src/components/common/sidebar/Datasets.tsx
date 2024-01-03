@@ -4,6 +4,28 @@ import { useState } from "react";
 import { Dataset } from "../types";
 import { format } from "date-fns"
 
+
+const FilesTable = ({files}: {files: string[]}) => (
+  <>
+    <Typography className="text-sm">
+      <strong>Files:</strong>
+    </Typography>
+    <TableContainer className="max-w-100 overflow-x-scroll">
+      <Table size="small" aria-label="files table">
+        <TableBody>
+          {files.map((file: string, idx: number) => (
+            <TableRow>
+              <TableCell className="pl-0">
+                <Link href={file} target="_blank">{file}</Link>
+              </TableCell>
+            </TableRow>
+          ))}
+        </TableBody>
+      </Table>
+    </TableContainer>
+  </>
+)
+
 const DatasetItem = ({idx, dataset, className}: {idx: number, dataset: Dataset, className: string}) => {
   const [anchor, setAnchor] = useState(null);
   const handleClick = (event: React.MouseEvent<HTMLElement>) => {
@@ -13,6 +35,7 @@ const DatasetItem = ({idx, dataset, className}: {idx: number, dataset: Dataset, 
     setAnchor(null);
   };
   const open = Boolean(anchor);
+  const dateFormat = "yyyy MMM d";
 
   return (
     <Stack direction="row" className={`p-3 items-center justify-between ${className}`}>
@@ -37,11 +60,9 @@ const DatasetItem = ({idx, dataset, className}: {idx: number, dataset: Dataset, 
             {
               (dataset.date_start && dataset.date_end) && (
                 <Typography className="text-sm">
-                  <strong>Date:</strong>{" "}
-                  {format(dataset.date_start, "yyyy MMM d")}
-                  {" - "}
-                  {format(dataset.date_end, "yyyy MMM d")}
-                  </Typography>
+                  <strong>Date:</strong>
+                  {` ${format(dataset.date_start, dateFormat)} - ${format(dataset.date_end, dateFormat)}`}
+                </Typography>
               )
             }
             <Typography className="text-sm">
@@ -52,27 +73,7 @@ const DatasetItem = ({idx, dataset, className}: {idx: number, dataset: Dataset, 
               <strong>Source:</strong>{" "}<Link href={dataset.url} target="_blank" rel="noopener noreferrer">{dataset.url}</Link>
             </Typography>
           </div>
-            { dataset.files && (
-              <>
-                <Typography className="text-sm">
-                  <strong>Files:</strong>
-                </Typography>
-                <TableContainer className="max-w-100 overflow-x-scroll">
-                  <Table size="small" aria-label="files table">
-                    <TableBody>
-                      {dataset.files.map((file: string, idx: number) => (
-                        <TableRow>
-                          <TableCell className="pl-0">
-                            <Link href={file} target="_blank">{file}</Link>
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                </TableContainer>
-              </>
-            )
-            }
+          { dataset.files && <FilesTable files={dataset.files} />}
         </div>
       </Popover>
     </Stack>
