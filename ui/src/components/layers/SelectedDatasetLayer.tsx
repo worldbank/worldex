@@ -1,3 +1,4 @@
+import { SELECTED_OUTLINE } from 'constants/colors';
 import { ZOOM_H3_RESOLUTION_PAIRS } from 'constants/h3';
 import { useSelector } from 'react-redux';
 // @ts-ignore
@@ -13,7 +14,7 @@ export default function SelectedDatasetLayer() {
 
   const { selectedDataset } = useSelector((state: RootState) => state.selected);
   const currentZoom = useSelector(((state: RootState) => state.carto.viewState.zoom));
-  // TODO: convert to a functional call
+  // TODO: decouple this computation from layer code and make it reusable
   const [closestZoom, resolution] = (() => {
     for (const [idx, [zoom, _]] of ZOOM_H3_RESOLUTION_PAIRS.entries()) {
       if (zoom === currentZoom) {
@@ -25,13 +26,11 @@ export default function SelectedDatasetLayer() {
     return ZOOM_H3_RESOLUTION_PAIRS.at(-1);
   })();
 
-  console.log('!', selectedDataset);
-  if (selectedDatasetLayer && source) {
+  if (selectedDataset && selectedDatasetLayer && source) {
     return new TileLayer({
       id: `dataset-${selectedDataset}-tile-layer`,
       data: source.data,
       maxZoom: closestZoom,
-      visible: !!selectedDataset,
       loadOptions: {
         fetch: {
           method: 'POST',
@@ -49,13 +48,11 @@ export default function SelectedDatasetLayer() {
         getHexagon: (d: any) => d.index,
         stroked: true,
         lineWidthMinPixels: 1,
-        getLineColor: 'red',
+        getLineColor: SELECTED_OUTLINE,
         filled: false,
         extruded: false,
       }),
       updateTriggers: {
-        // loadOptions: [selectedDataset],
-        // visible: [selectedDataset],
         minZoom: [closestZoom],
         maxZoom: [closestZoom],
       },

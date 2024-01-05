@@ -18,6 +18,7 @@ export default function DatasetCountLayer() {
   const datasetH3Layer = useSelector((state: RootState) => state.carto.layers[DATASET_COUNT_LAYER_ID]);
   const source = useSelector((state) => selectSourceById(state, datasetH3Layer?.source));
   const selectedH3Index = useSelector((state: RootState) => state.selected.h3Index);
+  const { selectedDataset } = useSelector((state: RootState) => state.selected);
   const dispatch = useDispatch();
 
   const domains = (import.meta.env.VITE_DATASET_COUNT_BINS).split(',').map(Number);
@@ -45,6 +46,7 @@ export default function DatasetCountLayer() {
       id: 'dataset-h3-tile-layer',
       data: source.data,
       maxZoom: closestZoom,
+      // refinementStrategy: 'no-overlap',
       loadOptions: {
         fetch: {
           method: 'POST',

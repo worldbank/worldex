@@ -1,12 +1,15 @@
+import { WebMercatorViewport } from '@deck.gl/core/typed';
 import ChevronRight from "@mui/icons-material/ChevronRight";
 import Visibility from "@mui/icons-material/Visibility";
 import VisibilityOff from "@mui/icons-material/VisibilityOff";
 import { Accordion, AccordionDetails, AccordionSummary, Box, Divider, IconButton, Link, List, ListItem, Popover, Stack, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Typography } from "@mui/material";
+import { format } from "date-fns";
 import { useState } from "react";
-import { Dataset } from "../types";
-import { format } from "date-fns"
+import { useDispatch, useSelector } from "react-redux";
+import { setViewState } from '@carto/react-redux';
 import { setSelectedDataset } from "store/selectedSlice";
-import { useDispatch } from "react-redux";
+import { RootState } from "store/store";
+import { Dataset } from "../types";
 
 
 const FilesTable = ({files}: {files: string[]}) => (
@@ -32,11 +35,21 @@ const FilesTable = ({files}: {files: string[]}) => (
 
 const DatasetItem = ({idx, dataset, className}: {idx: number, dataset: Dataset, className: string}) => {
   const [anchor, setAnchor] = useState(null);
+  const viewState = useSelector((state: RootState) => state.carto.viewState);
+  const { width, height } = viewState;
+  const { selectedDataset } = useSelector((state: RootState) => state.selected);
+  const [minLon, minLat, maxLon, maxLat] = dataset.bbox;
   const dispatch = useDispatch();
   const handleClick = (event: React.MouseEvent<HTMLElement>) => {
     setAnchor(event.currentTarget);
   };
   const toggleVisibility = (datasetId: number) => {
+    // TODO: convert into a function
+    const { latitude, longitude, zoom } = new WebMercatorViewport({ width, height }).fitBounds(
+        [[minLon, minLat], [maxLon, maxLat]], { padding: 200 }
+    );
+    // @ts-ignore
+    dispatch(setViewState({ ...viewState, latitude, longitude, zoom }));
     dispatch(setSelectedDataset(datasetId));
   }
   const handleClose = () => {
@@ -51,7 +64,12 @@ const DatasetItem = ({idx, dataset, className}: {idx: number, dataset: Dataset, 
         <Typography className="text-sm">{idx+1}. {dataset.name}</Typography>
       </Box>
       <Stack direction="row">
-        <IconButton onClick={(event: React.MouseEvent<HTMLElement>) => toggleVisibility(dataset.id)}><Visibility /></IconButton>
+        <IconButton
+          color={ selectedDataset === dataset.id ? "primary" : "default"}
+          onClick={(event: React.MouseEvent<HTMLElement>) => toggleVisibility(dataset.id)}
+        >
+          <Visibility />
+        </IconButton>
         <IconButton onClick={handleClick}><ChevronRight /></IconButton>
       </Stack>
       <Popover

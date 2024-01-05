@@ -1,6 +1,7 @@
 
 export interface Dataset {
   id: number;
+  bbox: number[];
   name: string;
   source_org: string;
   description: string;
