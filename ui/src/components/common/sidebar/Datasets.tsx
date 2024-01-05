@@ -1,8 +1,12 @@
 import ChevronRight from "@mui/icons-material/ChevronRight";
+import Visibility from "@mui/icons-material/Visibility";
+import VisibilityOff from "@mui/icons-material/VisibilityOff";
 import { Accordion, AccordionDetails, AccordionSummary, Box, Divider, IconButton, Link, List, ListItem, Popover, Stack, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Typography } from "@mui/material";
 import { useState } from "react";
 import { Dataset } from "../types";
 import { format } from "date-fns"
+import { setSelectedDataset } from "store/selectedSlice";
+import { useDispatch } from "react-redux";
 
 
 const FilesTable = ({files}: {files: string[]}) => (
@@ -28,9 +32,13 @@ const FilesTable = ({files}: {files: string[]}) => (
 
 const DatasetItem = ({idx, dataset, className}: {idx: number, dataset: Dataset, className: string}) => {
   const [anchor, setAnchor] = useState(null);
+  const dispatch = useDispatch();
   const handleClick = (event: React.MouseEvent<HTMLElement>) => {
     setAnchor(event.currentTarget);
   };
+  const toggleVisibility = (datasetId: number) => {
+    dispatch(setSelectedDataset(datasetId));
+  }
   const handleClose = () => {
     setAnchor(null);
   };
@@ -42,7 +50,10 @@ const DatasetItem = ({idx, dataset, className}: {idx: number, dataset: Dataset, 
       <Box className="m-0">
         <Typography className="text-sm">{idx+1}. {dataset.name}</Typography>
       </Box>
-      <IconButton onClick={handleClick}><ChevronRight /></IconButton>
+      <Stack direction="row">
+        <IconButton onClick={(event: React.MouseEvent<HTMLElement>) => toggleVisibility(dataset.id)}><Visibility /></IconButton>
+        <IconButton onClick={handleClick}><ChevronRight /></IconButton>
+      </Stack>
       <Popover
         key={idx}
         className="p-2 max-h-[80vh]"
