@@ -17,6 +17,7 @@ dataset_ids AS (
 SELECT 
     id,
     name,
+    ST_AsEWKT(bbox),
     source_org,
     description,
     files,

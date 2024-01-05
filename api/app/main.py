@@ -5,6 +5,7 @@ from app.db import get_async_session
 from app.models import DatasetRequest, HealthCheck, H3TileRequest
 from fastapi import Depends, FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from shapely import wkt
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.sql.datasets import query as datasets_query
@@ -50,13 +51,15 @@ async def get_h3_tile_data(
         {
             "id": row[0],
             "name": row[1],
-            "source_org": row[2],
-            "description": row[3],
-            "files": row[4],
-            "url": row[5],
-            "accessibility": row[6],
-            "date_start": row[7],
-            "date_end": row[8],
+            # TODO: decide whether to defer this conversion to frontend, but currently there doesn't seem to be a convenient library
+            "bbox": wkt.loads(row[2]).bounds,
+            "source_org": row[3],
+            "description": row[4],
+            "files": row[5],
+            "url": row[6],
+            "accessibility": row[7],
+            "date_start": row[8],
+            "date_end": row[9],
         }
         for row in results.fetchall()
     ]
