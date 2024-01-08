@@ -2,7 +2,7 @@ import { WebMercatorViewport } from '@deck.gl/core/typed';
 import ChevronRight from "@mui/icons-material/ChevronRight";
 import { Accordion, AccordionDetails, AccordionSummary, Box, Divider, IconButton, Link, List, ListItem, Popover, Stack, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Typography } from "@mui/material";
 import { format } from "date-fns";
-import { useState } from "react";
+import React, { useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { setViewState } from '@carto/react-redux';
 import { setSelectedDataset } from "store/selectedSlice";
@@ -35,6 +35,7 @@ const FilesTable = ({files}: {files: string[]}) => (
 const DatasetItem = ({idx, dataset, className}: {idx: number, dataset: Dataset, className: string}) => {
   const [anchor, setAnchor] = useState(null);
   const handleClick = (event: React.MouseEvent<HTMLElement>) => {
+    event.stopPropagation();
     setAnchor(event.currentTarget);
   };
   const handleClose = () => {
@@ -42,9 +43,45 @@ const DatasetItem = ({idx, dataset, className}: {idx: number, dataset: Dataset, 
   };
   const open = Boolean(anchor);
   const dateFormat = "yyyy MMM d";
+
+  const { selectedDataset } = useSelector((state: RootState) => state.selected);
+  const viewState = useSelector((state: RootState) => state.carto.viewState);
+  const { width, height } = viewState;
+  const dispatch = useDispatch();
+  const toggleVisibility = (datasetId: number, bbox: number[]) => {
+    if (anchor) {
+      return;
+    }
+    // TODO: convert into a function
+    if (datasetId === selectedDataset) {
+      dispatch(setSelectedDataset(null));
+      return;
+    }
+    const [minLon, minLat, maxLon, maxLat] = bbox;
+    const { latitude, longitude, zoom } = new WebMercatorViewport({ width, height }).fitBounds(
+      [[minLon, minLat], [maxLon, maxLat]], { padding: 50 }
+      );
+      // @ts-ignore
+      dispatch(setViewState({ ...viewState, latitude, longitude, zoom }));
+      dispatch(setSelectedDataset(datasetId));
+    }
   
   return (
-    <Stack direction="row" className={`p-3 items-center justify-between ${className}`}>
+    <Stack
+      direction="row"
+      className={classNames(
+        className,
+        "p-3",
+        "items-center",
+        "justify-between",
+        "hover:bg-sky-100",
+        "cursor-pointer",
+        {"bg-sky-100": selectedDataset === dataset.id},
+      )}
+      onClick={(event: React.MouseEvent<HTMLElement>) => {
+        toggleVisibility(dataset.id, dataset.bbox);
+      }}
+    >
       <Box className="m-0">
         <Typography className="text-sm">{idx+1}. {dataset.name}</Typography>
       </Box>
@@ -86,26 +123,8 @@ const DatasetItem = ({idx, dataset, className}: {idx: number, dataset: Dataset, 
   )
 }
 
-const Datasets = ({ datasetsByOrgs }: { datasetsByOrgs: { [source_org: string]: Dataset[]; }}) => {
-  const { selectedDataset } = useSelector((state: RootState) => state.selected);
-  const viewState = useSelector((state: RootState) => state.carto.viewState);
-  const { width, height } = viewState;
-  const dispatch = useDispatch();
-  const toggleVisibility = (datasetId: number, bbox: number[]) => {
-    // TODO: convert into a function
-    // if (datasetId === selectedDataset) {
-    //   dispatch(setSelectedDataset(null));
-    //   return;
-    // }
-    const [minLon, minLat, maxLon, maxLat] = bbox;
-    const { latitude, longitude, zoom } = new WebMercatorViewport({ width, height }).fitBounds(
-      [[minLon, minLat], [maxLon, maxLat]], { padding: 50 }
-      );
-      // @ts-ignore
-      dispatch(setViewState({ ...viewState, latitude, longitude, zoom }));
-      dispatch(setSelectedDataset(datasetId));
-    }
-  return (<div>
+const Datasets = ({ datasetsByOrgs }: { datasetsByOrgs: { [source_org: string]: Dataset[]; }}) => (
+  <div>
     { 
       Object.entries(datasetsByOrgs).map(([org, datasets]) => (
         <Accordion
@@ -127,8 +146,7 @@ const Datasets = ({ datasetsByOrgs }: { datasetsByOrgs: { [source_org: string]: 
                 <>
                   <ListItem
                     key={idx}
-                    className={classNames("p-0", "hover:bg-sky-100", "cursor-pointer", {"bg-sky-100": selectedDataset === dataset.id})}
-                    onClick={(event: React.MouseEvent<HTMLElement>) => toggleVisibility(dataset.id, dataset.bbox)}
+                    className="p-0"
                   >
                     <DatasetItem idx={idx} dataset={dataset} className="w-full" />
                   </ListItem>
@@ -146,7 +164,7 @@ const Datasets = ({ datasetsByOrgs }: { datasetsByOrgs: { [source_org: string]: 
         </Accordion>
       ))
     }
-  </div>)
-};
+  </div>
+);
 
 export default Datasets;
