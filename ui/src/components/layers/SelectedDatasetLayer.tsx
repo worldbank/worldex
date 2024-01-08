@@ -1,10 +1,11 @@
-import { SELECTED_OUTLINE } from 'constants/colors';
+import { OR_YEL, SELECTED_OUTLINE, TEAL } from 'constants/colors';
 import { ZOOM_H3_RESOLUTION_PAIRS } from 'constants/h3';
 import { useSelector } from 'react-redux';
 // @ts-ignore
 import { TileLayer, H3HexagonLayer } from '@deck.gl/geo-layers';
 import { selectSourceById } from '@carto/react-redux';
 import { RootState } from 'store/store';
+import { hexToRgb } from 'utils/colors';
 
 export const SELECTED_DATASET_LAYER_ID = 'selectedDatasetLayer';
 
@@ -25,6 +26,8 @@ export default function SelectedDatasetLayer() {
     }
     return ZOOM_H3_RESOLUTION_PAIRS.at(-1);
   })();
+
+  const color = hexToRgb('1e88e5');
 
   if (selectedDataset && selectedDatasetLayer && source) {
     return new TileLayer({
@@ -48,8 +51,9 @@ export default function SelectedDatasetLayer() {
         getHexagon: (d: any) => d.index,
         stroked: true,
         lineWidthMinPixels: 1,
-        getLineColor: SELECTED_OUTLINE,
-        filled: false,
+        getLineColor: [...color, 120],
+        getFillColor: [...color, 160],
+        filled: true,
         extruded: false,
       }),
       updateTriggers: {

@@ -19,6 +19,8 @@ export default function DatasetCountLayer() {
   const source = useSelector((state) => selectSourceById(state, datasetH3Layer?.source));
   const selectedH3Index = useSelector((state: RootState) => state.selected.h3Index);
   const { selectedDataset } = useSelector((state: RootState) => state.selected);
+  const lineOpacity = selectedDataset ? 12 : 160;
+  const opacity = selectedDataset ? 60 : 200;
   const dispatch = useDispatch();
 
   const domains = (import.meta.env.VITE_DATASET_COUNT_BINS).split(',').map(Number);
@@ -104,21 +106,28 @@ export default function DatasetCountLayer() {
         getHexagon: (d: DatasetCount) => d.index,
         pickable: true,
         stroked: true,
+        // stroked: !selectedDataset,
         lineWidthMinPixels: 1,
         // @ts-ignore
-        getLineColor: (d: DatasetCount) => (d.index === selectedH3Index ? [...SELECTED_OUTLINE, 255] : [...getColor(d), 160]),
+        getLineColor: (d: DatasetCount) => (d.index === selectedH3Index ? [...SELECTED_OUTLINE, 255] : [...getColor(d), lineOpacity]),
         // @ts-ignore
-        getFillColor: (d: DatasetCount) => [...getColor(d), 200],
+        getFillColor: (d: DatasetCount) => [...getColor(d), opacity],
         filled: true,
-        getLineWidth: (d: DatasetCount) => (d.index === selectedH3Index ? 3 : 2),
+        getLineWidth: (d: DatasetCount) => {
+          if (selectedDataset) {
+            return 1;
+          }
+          return d.index === selectedH3Index ? 3 : 2;
+        },
         extruded: false,
       }),
       updateTriggers: {
         minZoom: [closestZoom],
         maxZoom: [closestZoom],
-        getLineColor: [selectedH3Index],
-        getFillColor: [selectedH3Index],
-        getLineWidth: [selectedH3Index],
+        // stroked: selectedDataset,
+        getLineColor: [selectedH3Index, selectedDataset],
+        getFillColor: [selectedH3Index, selectedDataset],
+        getLineWidth: [selectedH3Index, selectedDataset],
       },
     });
   }

@@ -50,7 +50,7 @@ const LocationSearch = ({ className }: { className?: string }) => {
       const result = results[0];
       const [minLat, maxLat, minLon, maxLon] = result.boundingbox;
       const { latitude, longitude, zoom } = new WebMercatorViewport({ width, height }).fitBounds(
-          [[parseFloat(minLon), parseFloat(minLat)], [parseFloat(maxLon), parseFloat(maxLat)]], { padding: 200 }
+          [[parseFloat(minLon), parseFloat(minLat)], [parseFloat(maxLon), parseFloat(maxLat)]], { padding: 50 }
       );
       dispatch(setLocationResponse(result));
       // @ts-ignore

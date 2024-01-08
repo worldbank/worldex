@@ -34,7 +34,6 @@ const FilesTable = ({files}: {files: string[]}) => (
 
 const DatasetItem = ({idx, dataset, className}: {idx: number, dataset: Dataset, className: string}) => {
   const [anchor, setAnchor] = useState(null);
-  const { selectedDataset } = useSelector((state: RootState) => state.selected);
   const handleClick = (event: React.MouseEvent<HTMLElement>) => {
     setAnchor(event.currentTarget);
   };
@@ -94,9 +93,13 @@ const Datasets = ({ datasetsByOrgs }: { datasetsByOrgs: { [source_org: string]: 
   const dispatch = useDispatch();
   const toggleVisibility = (datasetId: number, bbox: number[]) => {
     // TODO: convert into a function
+    // if (datasetId === selectedDataset) {
+    //   dispatch(setSelectedDataset(null));
+    //   return;
+    // }
     const [minLon, minLat, maxLon, maxLat] = bbox;
     const { latitude, longitude, zoom } = new WebMercatorViewport({ width, height }).fitBounds(
-      [[minLon, minLat], [maxLon, maxLat]], { padding: 200 }
+      [[minLon, minLat], [maxLon, maxLat]], { padding: 50 }
       );
       // @ts-ignore
       dispatch(setViewState({ ...viewState, latitude, longitude, zoom }));
@@ -124,7 +127,7 @@ const Datasets = ({ datasetsByOrgs }: { datasetsByOrgs: { [source_org: string]: 
                 <>
                   <ListItem
                     key={idx}
-                    className={classNames("p-0", "hover:bg-sky-100", {"bg-sky-100": selectedDataset === dataset.id})}
+                    className={classNames("p-0", "hover:bg-sky-100", "cursor-pointer", {"bg-sky-100": selectedDataset === dataset.id})}
                     onClick={(event: React.MouseEvent<HTMLElement>) => toggleVisibility(dataset.id, dataset.bbox)}
                   >
                     <DatasetItem idx={idx} dataset={dataset} className="w-full" />
