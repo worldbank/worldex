@@ -32,18 +32,47 @@ const FilesTable = ({files}: {files: string[]}) => (
   </>
 )
 
-const DatasetItem = ({idx, dataset, className}: {idx: number, dataset: Dataset, className: string}) => {
-  const [anchor, setAnchor] = useState(null);
-  const handleClick = (event: React.MouseEvent<HTMLElement>) => {
-    event.stopPropagation();
-    setAnchor(event.currentTarget);
-  };
-  const handleClose = () => {
-    setAnchor(null);
-  };
+const DatasetPopover = ({ dataset, anchor, setAnchor }: { dataset: Dataset, anchor: any, setAnchor: any }) => {
   const open = Boolean(anchor);
   const dateFormat = "yyyy MMM d";
+  return (
+    <Popover
+      className="p-2 max-h-[80vh]"
+      open={open}
+      anchorEl={anchor}
+      onClose={() => { setAnchor(null) }}
+      anchorOrigin={{
+        vertical: 'top',
+        horizontal: 'right',
+      }}
+      >
+      <div className="p-4 max-w-lg">
+        <Typography className="text-sm">{dataset.description}</Typography>
+        <div className="py-2">
+          {
+            (dataset.date_start && dataset.date_end) && (
+              <Typography className="text-sm">
+                <strong>Date:</strong>
+                {` ${format(dataset.date_start, dateFormat)} - ${format(dataset.date_end, dateFormat)}`}
+              </Typography>
+            )
+          }
+          <Typography className="text-sm">
+            <strong>Accessibility:</strong>{" "}
+            <span className="capitalize">{dataset.accessibility}</span>
+          </Typography>
+          <Typography className="text-sm">
+            <strong>Source:</strong>{" "}<Link href={dataset.url} target="_blank" rel="noopener noreferrer">{dataset.url}</Link>
+          </Typography>
+        </div>
+        { dataset.files && <FilesTable files={dataset.files} />}
+      </div>
+    </Popover>
+  )
+}
 
+const DatasetItem = ({idx, dataset}: {idx: number, dataset: Dataset}) => {
+  const [anchor, setAnchor] = useState(null);
   const { selectedDataset } = useSelector((state: RootState) => state.selected);
   const viewState = useSelector((state: RootState) => state.carto.viewState);
   const { width, height } = viewState;
@@ -70,7 +99,6 @@ const DatasetItem = ({idx, dataset, className}: {idx: number, dataset: Dataset, 
     <Stack
       direction="row"
       className={classNames(
-        className,
         "p-3",
         "items-center",
         "justify-between",
@@ -78,47 +106,22 @@ const DatasetItem = ({idx, dataset, className}: {idx: number, dataset: Dataset, 
         "cursor-pointer",
         {"bg-sky-100": selectedDataset === dataset.id},
       )}
-      onClick={(event: React.MouseEvent<HTMLElement>) => {
+      onClick={(evt: React.MouseEvent<HTMLElement>) => {
         toggleVisibility(dataset.id, dataset.bbox);
       }}
     >
       <Box className="m-0">
         <Typography className="text-sm">{idx+1}. {dataset.name}</Typography>
       </Box>
-      <IconButton onClick={handleClick}><ChevronRight /></IconButton>
-      <Popover
-        key={idx}
-        className="p-2 max-h-[80vh]"
-        open={open}
-        anchorEl={anchor}
-        onClose={handleClose}
-        anchorOrigin={{
-          vertical: 'top',
-          horizontal: 'right',
-        }}
-        >
-        <div className="p-4 max-w-lg">
-          <Typography className="text-sm">{dataset.description}</Typography>
-          <div className="py-2">
-            {
-              (dataset.date_start && dataset.date_end) && (
-                <Typography className="text-sm">
-                  <strong>Date:</strong>
-                  {` ${format(dataset.date_start, dateFormat)} - ${format(dataset.date_end, dateFormat)}`}
-                </Typography>
-              )
-            }
-            <Typography className="text-sm">
-              <strong>Accessibility:</strong>{" "}
-              <span className="capitalize">{dataset.accessibility}</span>
-            </Typography>
-            <Typography className="text-sm">
-              <strong>Source:</strong>{" "}<Link href={dataset.url} target="_blank" rel="noopener noreferrer">{dataset.url}</Link>
-            </Typography>
-          </div>
-          { dataset.files && <FilesTable files={dataset.files} />}
-        </div>
-      </Popover>
+      <IconButton onClick={
+        (evt: React.MouseEvent<HTMLElement>) => {
+          evt.stopPropagation();
+          setAnchor(evt.currentTarget);
+        }
+      }>
+        <ChevronRight />
+      </IconButton>
+      <DatasetPopover dataset={dataset} anchor={anchor} setAnchor={setAnchor} />
     </Stack>
   )
 }
@@ -143,19 +146,16 @@ const Datasets = ({ datasetsByOrgs }: { datasetsByOrgs: { [source_org: string]: 
             <List className="m-0 p-0 max-h-[60vh] overflow-y-scroll">
             {
               datasets.map((dataset: Dataset, idx: number) => (
-                <>
                   <ListItem
                     key={idx}
                     className="p-0"
                   >
-                    <DatasetItem idx={idx} dataset={dataset} className="w-full" />
+                    {/* TODO: consider semantic usage of ListItemX components */}
+                    <Stack direction="column" className="w-full">
+                      <DatasetItem idx={idx} dataset={dataset} />
+                      {idx + 1 < datasets.length && <Divider />}
+                    </Stack>
                   </ListItem>
-                  {idx + 1 < datasets.length && (
-                    <ListItem className="p-0">
-                      <Divider className="w-full" />
-                    </ListItem>
-                  )}
-                </>
               ))
             }
             </List>
