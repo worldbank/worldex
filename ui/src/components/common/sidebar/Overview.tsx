@@ -3,11 +3,13 @@ import { useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { setDatasetCount } from "store/selectedSlice";
 import { RootState } from "store/store";
+import DeselectDatasetButton from "./DeselectDatasetButton";
 
 const Overview = () => {
   const { datasetCount }: { datasetCount: number } = useSelector((state: RootState) => state.selected);
   const dispatch = useDispatch();
   const h3Resolution = useSelector((state: RootState) => state.app.h3Resolution);
+  const { selectedDataset } = useSelector((state: RootState) => state.selected);
   
   useEffect(() => {
     fetch(`/api/dataset_count/`, {
@@ -29,6 +31,7 @@ const Overview = () => {
         <Typography className="text-sm">
           Current H3 resolution: {h3Resolution}
         </Typography>
+        { selectedDataset && <DeselectDatasetButton /> }
       </div>
       <Divider />
     </>
