@@ -1,3 +1,4 @@
+import { ZOOM_H3_RESOLUTION_PAIRS } from 'constants/h3';
 import { AT as atRegex } from 'constants/regex';
 import {
   addLayer,
@@ -7,6 +8,8 @@ import {
 } from '@carto/react-redux';
 import h3CellsSource from 'data/sources/h3CellsSource';
 import { lazy, useEffect } from 'react';
+import datasetCoverageSource from 'data/sources/datasetCoverageSource';
+import { DATASET_COVERAGE_LAYER_ID } from 'components/layers/DatasetCoverageLayer';
 import { DATASET_COUNT_LAYER_ID } from 'components/layers/DatasetCountLayer';
 import { SEARCH_LAYER_ID } from 'components/layers/SearchLayer';
 import { useDispatch, useSelector } from 'react-redux';
@@ -17,6 +20,7 @@ import LazyLoadComponent from 'components/common/LazyLoadComponent';
 import { useMapHooks } from 'components/common/map/useMapHooks';
 import { useParams, useSearchParams } from 'react-router-dom';
 import { RootState } from 'store/store';
+import { setClosestZoom, setH3Resolution } from 'store/appSlice';
 
 const MapContainer = lazy(
   () => import(
@@ -99,11 +103,42 @@ export default function Main() {
     };
   }, [dispatch]);
 
+  useEffect(() => {
+    dispatch(addSource(datasetCoverageSource));
+
+    dispatch(
+      addLayer({
+        id: DATASET_COVERAGE_LAYER_ID,
+        source: datasetCoverageSource.id,
+      }),
+    );
+
+    return () => {
+      dispatch(removeLayer(DATASET_COVERAGE_LAYER_ID));
+      dispatch(removeSource(datasetCoverageSource.id));
+    };
+  }, [dispatch]);
+
   // [hygen] Add useEffect
 
   useEffect(() => {
     setSearchParams({ at: `${latitude.toFixed(5)},${longitude.toFixed(5)},${zoom.toFixed(2)}z` });
   }, [setSearchParams, latitude, longitude, zoom]);
+
+  useEffect(() => {
+    const [closestZoom, resolution] = (() => {
+      for (const [idx, [z, _]] of ZOOM_H3_RESOLUTION_PAIRS.entries()) {
+        if (z === zoom) {
+          return ZOOM_H3_RESOLUTION_PAIRS[idx];
+        } else if (z > zoom) {
+          return ZOOM_H3_RESOLUTION_PAIRS[idx - 1];
+        }
+      }
+      return ZOOM_H3_RESOLUTION_PAIRS.at(-1);
+    })();
+    dispatch(setClosestZoom(closestZoom));
+    dispatch(setH3Resolution(resolution));
+  }, [dispatch, latitude, longitude, zoom]);
 
   return (
     <GridMain container item xs>

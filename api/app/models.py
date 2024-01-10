@@ -35,6 +35,11 @@ class H3TileRequest(BaseModel):
     resolution: int
 
 
+class DatasetRequest(BaseModel):
+    resolution: int
+    dataset_id: int
+
+
 dataset_keyword_association_table = Table(
     "dataset_keyword_association_table",
     Base.metadata,

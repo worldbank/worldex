@@ -7,6 +7,7 @@ const slice = createSlice({
     h3Index: null,
     datasets: null,
     datasetCount: null,
+    selectedDataset: null,
   },
   reducers: {
     setH3Index: (state, action) => {
@@ -17,6 +18,9 @@ const slice = createSlice({
     },
     setDatasetCount: (state, action) => {
       state.datasetCount = action.payload;
+    },
+    setSelectedDataset: (state, action) => {
+      state.selectedDataset = action.payload;
     },
   },
 });
@@ -33,5 +37,9 @@ export const setDatasets = (payload: Dataset[]) => ({
 });
 export const setDatasetCount = (payload: number) => ({
   type: 'selected/setDatasetCount',
+  payload,
+});
+export const setSelectedDataset = (payload: number) => ({
+  type: 'selected/setSelectedDataset',
   payload,
 });

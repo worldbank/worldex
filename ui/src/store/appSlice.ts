@@ -6,6 +6,7 @@ const slice = createSlice({
     error: null,
     bottomSheetOpen: false,
     h3Resolution: null,
+    closestZoom: null,
   },
   reducers: {
     setError: (state, action) => {
@@ -16,6 +17,9 @@ const slice = createSlice({
     },
     setH3Resolution: (state, action) => {
       state.h3Resolution = action.payload;
+    },
+    setClosestZoom: (state, action) => {
+      state.closestZoom = action.payload;
     },
   },
 });
@@ -32,5 +36,9 @@ export const setBottomSheetOpen = (payload: boolean) => ({
 });
 export const setH3Resolution = (payload: number) => ({
   type: 'app/setH3Resolution',
+  payload,
+});
+export const setClosestZoom = (payload: number) => ({
+  type: 'app/setClosestZoom',
   payload,
 });

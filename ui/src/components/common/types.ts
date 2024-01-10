@@ -1,6 +1,7 @@
 
 export interface Dataset {
   id: number;
+  bbox: number[];
   name: string;
   source_org: string;
   description: string;
@@ -14,4 +15,13 @@ export interface Dataset {
 export interface DatasetCount {
   index: string;
   dataset_count: number;
+}
+
+// no actual range validation
+// longitude is x-coordinate, latitude is y-coordinate
+export interface BoundingBox {
+  minLon: number;
+  maxLon: number;
+  minLat: number;
+  maxLat: number;
 }
