@@ -6,11 +6,11 @@ import { H3HexagonLayer, TileLayer } from '@deck.gl/geo-layers/typed';
 import { RootState } from 'store/store';
 import { hexToRgb } from 'utils/colors';
 
-export const SELECTED_DATASET_LAYER_ID = 'selectedDatasetLayer';
+export const DATASET_COVERAGE_LAYER_ID = 'datasetCoverageLayer';
 
-export default function SelectedDatasetLayer() {
-  const { selectedDatasetLayer } = useSelector((state: RootState) => state.carto.layers);
-  const source = useSelector((state) => selectSourceById(state, selectedDatasetLayer?.source));
+export default function DatasetCoverageLayer() {
+  const { datasetCoverageLayer } = useSelector((state: RootState) => state.carto.layers);
+  const source = useSelector((state) => selectSourceById(state, datasetCoverageLayer?.source));
 
   const { selectedDataset } = useSelector((state: RootState) => state.selected);
   const currentZoom = useSelector(((state: RootState) => state.carto.viewState.zoom));
@@ -28,9 +28,9 @@ export default function SelectedDatasetLayer() {
 
   const color = hexToRgb('1e88e5');
 
-  if (selectedDataset && selectedDatasetLayer && source) {
+  if (selectedDataset && datasetCoverageLayer && source) {
     return new TileLayer({
-      id: `dataset-${selectedDataset}-tile-layer`,
+      id: `dataset-${selectedDataset}-coverage-tile-layer`,
       data: source.data,
       maxZoom: closestZoom,
       loadOptions: {

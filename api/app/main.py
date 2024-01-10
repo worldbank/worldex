@@ -95,9 +95,7 @@ async def get_dataset_coverage(
     y: int,
     session: AsyncSession = Depends(get_async_session),
 ):
-    resolution = payload.resolution
-    dataset_id = payload.dataset_id
-    query = text(dataset_coverage_query).bindparams(z=z, x=x, y=y, resolution=resolution, dataset_id=dataset_id)
+    query = text(dataset_coverage_query).bindparams(z=z, x=x, y=y, resolution=payload.resolution, dataset_id=payload.dataset_id)
     results = await session.execute(query)
     return [{"index": row[0]} for row in results.fetchall()]
 

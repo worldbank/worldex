@@ -106,7 +106,6 @@ export default function DatasetCountLayer() {
         getHexagon: (d: DatasetCount) => d.index,
         pickable: true,
         stroked: true,
-        // stroked: !selectedDataset,
         lineWidthMinPixels: 1,
         // @ts-ignore
         getLineColor: (d: DatasetCount) => (d.index === selectedH3Index ? [...SELECTED_OUTLINE, 255] : [...getColor(d), lineOpacity]),
@@ -124,7 +123,6 @@ export default function DatasetCountLayer() {
       updateTriggers: {
         minZoom: [closestZoom],
         maxZoom: [closestZoom],
-        // stroked: selectedDataset,
         getLineColor: [selectedH3Index, selectedDataset],
         getFillColor: [selectedH3Index, selectedDataset],
         getLineWidth: [selectedH3Index, selectedDataset],

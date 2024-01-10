@@ -7,8 +7,8 @@ import {
 } from '@carto/react-redux';
 import h3CellsSource from 'data/sources/h3CellsSource';
 import { lazy, useEffect } from 'react';
-import selectedDatasetSource from 'data/sources/selectedDatasetSource';
-import { SELECTED_DATASET_LAYER_ID } from 'components/layers/SelectedDatasetLayer';
+import datasetCoverageSource from 'data/sources/datasetCoverageSource';
+import { DATASET_COVERAGE_LAYER_ID } from 'components/layers/DatasetCoverageLayer';
 import { DATASET_COUNT_LAYER_ID } from 'components/layers/DatasetCountLayer';
 import { SEARCH_LAYER_ID } from 'components/layers/SearchLayer';
 import { useDispatch, useSelector } from 'react-redux';
@@ -102,18 +102,18 @@ export default function Main() {
   }, [dispatch]);
 
   useEffect(() => {
-    dispatch(addSource(selectedDatasetSource));
+    dispatch(addSource(datasetCoverageSource));
 
     dispatch(
       addLayer({
-        id: SELECTED_DATASET_LAYER_ID,
-        source: selectedDatasetSource.id,
+        id: DATASET_COVERAGE_LAYER_ID,
+        source: datasetCoverageSource.id,
       }),
     );
 
     return () => {
-      dispatch(removeLayer(SELECTED_DATASET_LAYER_ID));
-      dispatch(removeSource(selectedDatasetSource.id));
+      dispatch(removeLayer(DATASET_COVERAGE_LAYER_ID));
+      dispatch(removeSource(datasetCoverageSource.id));
     };
   }, [dispatch]);
 
