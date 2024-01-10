@@ -1,3 +1,4 @@
+import { ZOOM_H3_RESOLUTION_PAIRS } from 'constants/h3';
 import { AT as atRegex } from 'constants/regex';
 import {
   addLayer,
@@ -19,6 +20,7 @@ import LazyLoadComponent from 'components/common/LazyLoadComponent';
 import { useMapHooks } from 'components/common/map/useMapHooks';
 import { useParams, useSearchParams } from 'react-router-dom';
 import { RootState } from 'store/store';
+import { setClosestZoom, setH3Resolution } from 'store/appSlice';
 
 const MapContainer = lazy(
   () => import(
@@ -122,6 +124,21 @@ export default function Main() {
   useEffect(() => {
     setSearchParams({ at: `${latitude.toFixed(5)},${longitude.toFixed(5)},${zoom.toFixed(2)}z` });
   }, [setSearchParams, latitude, longitude, zoom]);
+
+  useEffect(() => {
+    const [closestZoom, resolution] = (() => {
+      for (const [idx, [z, _]] of ZOOM_H3_RESOLUTION_PAIRS.entries()) {
+        if (z === zoom) {
+          return ZOOM_H3_RESOLUTION_PAIRS[idx];
+        } else if (z > zoom) {
+          return ZOOM_H3_RESOLUTION_PAIRS[idx - 1];
+        }
+      }
+      return ZOOM_H3_RESOLUTION_PAIRS.at(-1);
+    })();
+    dispatch(setClosestZoom(closestZoom));
+    dispatch(setH3Resolution(resolution));
+  }, [dispatch, latitude, longitude, zoom]);
 
   return (
     <GridMain container item xs>

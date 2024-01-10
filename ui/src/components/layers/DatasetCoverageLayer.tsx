@@ -1,4 +1,4 @@
-import { ZOOM_H3_RESOLUTION_PAIRS } from 'constants/h3';
+import { blue } from '@mui/material/colors';
 import { useSelector } from 'react-redux';
 // @ts-ignore
 import { selectSourceById } from '@carto/react-redux';
@@ -11,22 +11,9 @@ export const DATASET_COVERAGE_LAYER_ID = 'datasetCoverageLayer';
 export default function DatasetCoverageLayer() {
   const { datasetCoverageLayer } = useSelector((state: RootState) => state.carto.layers);
   const source = useSelector((state) => selectSourceById(state, datasetCoverageLayer?.source));
-
   const { selectedDataset } = useSelector((state: RootState) => state.selected);
-  const currentZoom = useSelector(((state: RootState) => state.carto.viewState.zoom));
-  // TODO: decouple this computation from layer code and make it reusable
-  const [closestZoom, resolution] = (() => {
-    for (const [idx, [zoom, _]] of ZOOM_H3_RESOLUTION_PAIRS.entries()) {
-      if (zoom === currentZoom) {
-        return ZOOM_H3_RESOLUTION_PAIRS[idx];
-      } else if (zoom > currentZoom) {
-        return ZOOM_H3_RESOLUTION_PAIRS[idx - 1];
-      }
-    }
-    return ZOOM_H3_RESOLUTION_PAIRS.at(-1);
-  })();
-
-  const color = hexToRgb('1e88e5');
+  const { h3Resolution: resolution, closestZoom } = useSelector((state: RootState) => state.app);
+  const BLUE_600 = hexToRgb(blue['600']); // #1e88e5
 
   if (selectedDataset && datasetCoverageLayer && source) {
     return new TileLayer({
@@ -50,8 +37,8 @@ export default function DatasetCoverageLayer() {
         getHexagon: (d: any) => d.index,
         stroked: true,
         lineWidthMinPixels: 1,
-        getLineColor: [...color, 120],
-        getFillColor: [...color, 160],
+        getLineColor: [...BLUE_600, 120],
+        getFillColor: [...BLUE_600, 160],
         filled: true,
         extruded: false,
       }),
