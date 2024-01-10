@@ -1,4 +1,3 @@
-import { WebMercatorViewport } from '@deck.gl/core/typed';
 import ChevronRight from "@mui/icons-material/ChevronRight";
 import { Accordion, AccordionDetails, AccordionSummary, Box, Divider, IconButton, Link, List, ListItem, Popover, Stack, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Typography } from "@mui/material";
 import { format } from "date-fns";
@@ -7,8 +6,9 @@ import { useDispatch, useSelector } from "react-redux";
 import { setViewState } from '@carto/react-redux';
 import { setSelectedDataset } from "store/selectedSlice";
 import { RootState } from "store/store";
-import { Dataset } from "../types";
+import { BoundingBox, Dataset } from "../types";
 import classNames from "classnames";
+import bboxToViewStateParams from 'utils/bboxToViewStateParams';
 
 
 const FilesTable = ({files}: {files: string[]}) => (
@@ -77,21 +77,16 @@ const DatasetItem = ({idx, dataset}: {idx: number, dataset: Dataset}) => {
   const viewState = useSelector((state: RootState) => state.carto.viewState);
   const { width, height } = viewState;
   const dispatch = useDispatch();
-  const toggleVisibility = (datasetId: number, bbox: number[]) => {
+  const toggleVisibility = (datasetId: number, bbox: BoundingBox) => {
     if (anchor) {
       return;
     }
-    // TODO: convert into a function
     if (datasetId === selectedDataset) {
       dispatch(setSelectedDataset(null));
       return;
     }
-    const [minLon, minLat, maxLon, maxLat] = bbox;
-    const { latitude, longitude, zoom } = new WebMercatorViewport({ width, height }).fitBounds(
-      [[minLon, minLat], [maxLon, maxLat]], { padding: 50 }
-    );
     // @ts-ignore
-    dispatch(setViewState({ ...viewState, latitude, longitude, zoom: Math.max(zoom, 1) }));
+    dispatch(setViewState({ ...viewState, ...bboxToViewStateParams({ bbox, width, height })}));
     dispatch(setSelectedDataset(datasetId));
   }
   
@@ -107,7 +102,9 @@ const DatasetItem = ({idx, dataset}: {idx: number, dataset: Dataset}) => {
         {"bg-sky-100": selectedDataset === dataset.id},
       )}
       onClick={(evt: React.MouseEvent<HTMLElement>) => {
-        toggleVisibility(dataset.id, dataset.bbox);
+        const [minLon, minLat, maxLon, maxLat] = dataset.bbox;
+        const bbox = { minLon, minLat, maxLon, maxLat };
+        toggleVisibility(dataset.id, bbox);
       }}
     >
       <Box className="m-0">

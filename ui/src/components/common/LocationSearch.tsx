@@ -5,8 +5,8 @@ import React, { useState } from "react";
 import { setViewState } from '@carto/react-redux';
 import { useDispatch, useSelector } from "react-redux";
 import { RootState } from "store/store";
-import { WebMercatorViewport } from '@deck.gl/core/typed';
 import { setResponse as setLocationResponse } from 'store/locationSlice';
+import bboxToViewStateParams from 'utils/bboxToViewStateParams';
 
 const SearchButton = ({isLoading}: {isLoading: boolean}) =>
   <div className="flex justify-center items-center w-[2em] mr-[-8px]">
@@ -38,7 +38,6 @@ const LocationSearch = ({ className }: { className?: string }) => {
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault()
     setIsLoading(true);
-    const { width, height } = viewState;
     const encodedQuery = new URLSearchParams(query).toString()
     const resp = await fetch(
       `https://nominatim.openstreetmap.org/search?q=${encodedQuery}&format=json&limit=1&polygon_geojson=1`,
@@ -48,13 +47,12 @@ const LocationSearch = ({ className }: { className?: string }) => {
       setIsError(true);
     } else {
       const result = results[0];
-      const [minLat, maxLat, minLon, maxLon] = result.boundingbox;
-      const { latitude, longitude, zoom } = new WebMercatorViewport({ width, height }).fitBounds(
-          [[parseFloat(minLon), parseFloat(minLat)], [parseFloat(maxLon), parseFloat(maxLat)]], { padding: 50 }
-      );
+      const [ minLat, maxLat, minLon, maxLon ] = result.boundingbox.map(parseFloat);
+      const bbox = { minLat, maxLat, minLon, maxLon };
       dispatch(setLocationResponse(result));
+      const { width, height } = viewState;
       // @ts-ignore
-      dispatch(setViewState({...viewState, latitude, longitude, zoom }));
+      dispatch(setViewState({...viewState, ...bboxToViewStateParams({ bbox, width, height }) }));
     }
     setIsLoading(false);
   }

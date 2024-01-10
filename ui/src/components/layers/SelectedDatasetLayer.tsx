@@ -1,9 +1,8 @@
-import { OR_YEL, SELECTED_OUTLINE, TEAL } from 'constants/colors';
 import { ZOOM_H3_RESOLUTION_PAIRS } from 'constants/h3';
 import { useSelector } from 'react-redux';
 // @ts-ignore
-import { TileLayer, H3HexagonLayer } from '@deck.gl/geo-layers';
 import { selectSourceById } from '@carto/react-redux';
+import { H3HexagonLayer, TileLayer } from '@deck.gl/geo-layers/typed';
 import { RootState } from 'store/store';
 import { hexToRgb } from 'utils/colors';
 
