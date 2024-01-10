@@ -13,6 +13,6 @@ with_parents AS (
 )
 SELECT fill_index FROM with_parents JOIN h3_data ON h3_index = ANY(parents) AND dataset_id = :dataset_id
 UNION ALL
-SELECT fill_index h3_index FROM fill
+SELECT fill_index FROM fill
 JOIN h3_children_indicators ON h3_children_indicators.h3_index = fill_index AND dataset_id = :dataset_id
 """

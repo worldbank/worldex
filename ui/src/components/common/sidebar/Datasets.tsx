@@ -89,11 +89,11 @@ const DatasetItem = ({idx, dataset}: {idx: number, dataset: Dataset}) => {
     const [minLon, minLat, maxLon, maxLat] = bbox;
     const { latitude, longitude, zoom } = new WebMercatorViewport({ width, height }).fitBounds(
       [[minLon, minLat], [maxLon, maxLat]], { padding: 50 }
-      );
-      // @ts-ignore
-      dispatch(setViewState({ ...viewState, latitude, longitude, zoom }));
-      dispatch(setSelectedDataset(datasetId));
-    }
+    );
+    // @ts-ignore
+    dispatch(setViewState({ ...viewState, latitude, longitude, zoom: Math.max(zoom, 1) }));
+    dispatch(setSelectedDataset(datasetId));
+  }
   
   return (
     <Stack
