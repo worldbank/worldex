@@ -10,7 +10,7 @@ from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.sql.datasets import query as datasets_query
 from app.sql.dataset_counts import query as dataset_count_query
-from app.sql.dataset_at_resolution import query as dataset_at_res_query
+from app.sql.dataset_coverage import query as dataset_coverage_query
 
 app = FastAPI(
     title=settings.project_name,
@@ -65,7 +65,7 @@ async def get_h3_tile_data(
     ]
 
 
-# TODO: rename method
+# TODO: rename method as it is already ambiguous compared to other endpoints'
 @app.post("/h3_tiles/{z}/{x}/{y}")
 async def get_h3_tiles(
     payload: H3TileRequest,
@@ -87,8 +87,8 @@ async def get_h3_tiles(
     return [{"index": row[0], "dataset_count": row[1]} for row in results.fetchall()]
 
 
-@app.post("/dataset/{z}/{x}/{y}")
-async def get_dataset_tiles(
+@app.post("/dataset_coverage/{z}/{x}/{y}")
+async def get_dataset_coverage(
     payload: DatasetRequest,
     z: int,
     x: int,
@@ -97,12 +97,7 @@ async def get_dataset_tiles(
 ):
     resolution = payload.resolution
     dataset_id = payload.dataset_id
-    parents_array = ["fill_index"] + [
-        f"h3_cell_to_parent(fill_index, {res})" for res in range(0, resolution)
-    ]
-    parents_comma_delimited = ", ".join(parents_array)
-    query = text(dataset_at_res_query.format(parents_comma_delimited))
-    query = query.bindparams(z=z, x=x, y=y, resolution=resolution, dataset_id=dataset_id)
+    query = text(dataset_coverage_query).bindparams(z=z, x=x, y=y, resolution=resolution, dataset_id=dataset_id)
     results = await session.execute(query)
     return [{"index": row[0]} for row in results.fetchall()]
 
