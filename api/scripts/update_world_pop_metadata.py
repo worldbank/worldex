@@ -18,7 +18,7 @@ from worldex.handlers.raster_handlers import RasterHandler
 DATABASE_CONNECION = os.getenv("DATABASE_URL_SYNC")
 BUCKET = os.getenv("AWS_BUCKET")
 DATASET_DIR = os.getenv("AWS_DATASET_DIRECTORY")
-DNE_LIMIT = 500
+DNE_LIMIT = 1000
 METADATA_UPDATE_FIELDS = [
     "date_start",
     "date_end",
@@ -95,7 +95,12 @@ def main():
             try:
                 with s3.open(f"s3://{dir}/metadata.json") as f:
                     dataset = update_dataset_metadata(f, sess)
-                    dne_counter = 0 if dataset else dne_counter + 1
+                    if dataset:
+                        dne_counter = 0
+                    else:
+                        dne_counter += 1
+                        if (dne_counter % 500 == 0):
+                            print(f"{dne_counter} attempts at updating dataset")
             except Exception as e:
                 sess.rollback()
                 raise e

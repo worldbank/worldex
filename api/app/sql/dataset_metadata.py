@@ -17,9 +17,9 @@ dataset_ids AS (
 SELECT 
     id,
     name,
-    ST_AsEWKT(bbox),
+    ST_AsEWKT(bbox) bbox,
     source_org,
-    description,
+    regexp_replace(description, '\n', '\n', 'g') description,
     files,
     url,
     accessibility,

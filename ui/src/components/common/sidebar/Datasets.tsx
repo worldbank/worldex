@@ -47,7 +47,11 @@ const DatasetPopover = ({ dataset, anchor, setAnchor }: { dataset: Dataset, anch
       }}
       >
       <div className="p-4 max-w-lg">
-        <Typography className="text-sm">{dataset.description}</Typography>
+        {
+          dataset.description.split("\n").map((desc: string) => (
+            <Typography className="mb-1.5 text-sm">{desc}</Typography>
+          ))
+        }
         <div className="py-2">
           {
             (dataset.date_start && dataset.date_end) && (
