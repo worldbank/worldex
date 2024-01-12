@@ -64,6 +64,7 @@ def index_parent_of_compact_cells(
 def create_h3_indices(file: s3fs.core.S3File, dataset_id: int) -> List[H3Data]:
     indices = pd.read_parquet(file)["h3_index"]
     compacted_indices = list(h3.compact(indices))
+    # compacted_indices = list(indices)
     df_pop = pd.DataFrame({"h3_index": compacted_indices}).astype({"h3_index": str})
     return [
         H3Data(h3_index=row["h3_index"], dataset_id=dataset_id)
