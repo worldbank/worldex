@@ -50,8 +50,6 @@ def update_dataset_metadata(
         sess.commit()
         return dataset
     return None
-    # TODO: actually create keyword objects
-    # keywords: list[str] = metadata.pop("keywords")
 
 
 def create_h3_indices(file: s3fs.core.S3File, dataset_id: int) -> List[H3Data]:
@@ -79,7 +77,7 @@ def main():
         dirs = s3.ls("s3:///worldex-temp-storage/indexes/worldpop/")
         # best effort to skip existing datasets assuming ls order has not changed
         dne_counter = 0
-        for idx, dir in enumerate(dirs[2000:]):
+        for idx, dir in enumerate(dirs):
             if dne_counter > DNE_LIMIT:
                 # crude way to terminate script
                 print(f"No datasets updated after {DNE_LIMIT} consecutive attempts, terminating")
