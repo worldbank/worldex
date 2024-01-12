@@ -1,4 +1,4 @@
-query = """
+DATASET_METADATA = """
 WITH with_parents AS (
     SELECT :target target_index, h3_cell_to_parent(CAST(:target AS H3INDEX), generate_series(0, :resolution)) parent
 ),
