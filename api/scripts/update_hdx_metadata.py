@@ -54,7 +54,6 @@ def update_dataset_metadata(
 
 def create_h3_indices(file: s3fs.core.S3File, dataset_id: int) -> List[H3Data]:
     indices = pd.read_parquet(file)["h3_index"]
-    # indices = h3.compact(indices)
     indices = list(indices)
     df_pop = pd.DataFrame({"h3_index": indices}).astype({"h3_index": str})
     return [
@@ -74,7 +73,7 @@ def main():
 
     Session = sessionmaker(bind=engine)
     with Session() as sess:
-        dirs = s3.ls("s3:///worldex-temp-storage/indexes/worldpop/")
+        dirs = s3.ls("s3:///worldex-temp-storage/indexes/hdx/")
         # best effort to skip existing datasets assuming ls order has not changed
         dne_counter = 0
         for idx, dir in enumerate(dirs):
@@ -86,7 +85,7 @@ def main():
                 continue
             files = s3.ls(dir)
             is_valid_dataset = (
-                f"{dir}/h3-compact.parquet" in files and f"{dir}/metadata.json" in files
+                f"{dir}/h3.parquet" in files and f"{dir}/metadata.json" in files
             )
             if not is_valid_dataset:
                 continue

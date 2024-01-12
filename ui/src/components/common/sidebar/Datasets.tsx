@@ -21,7 +21,7 @@ const FilesTable = ({files}: {files: string[]}) => (
         <TableBody>
           {files.map((file: string, idx: number) => (
             <TableRow>
-              <TableCell className="pl-0">
+              <TableCell className="pl-0 whitespace-nowrap">
                 <Link href={file} target="_blank">{file}</Link>
               </TableCell>
             </TableRow>
@@ -47,7 +47,11 @@ const DatasetPopover = ({ dataset, anchor, setAnchor }: { dataset: Dataset, anch
       }}
       >
       <div className="p-4 max-w-lg">
-        <Typography className="text-sm">{dataset.description}</Typography>
+        {
+          dataset.description.split("\n").map((desc: string, idx: number) => (
+            <Typography key={idx} className="mb-1.5 text-sm">{desc}</Typography>
+          ))
+        }
         <div className="py-2">
           {
             (dataset.date_start && dataset.date_end) && (

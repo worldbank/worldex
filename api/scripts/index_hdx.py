@@ -32,14 +32,9 @@ def create_dataset_from_metadata(
     dataset = sess.query(Dataset).filter(Dataset.name == dataset_name).options(load_only(Dataset.id, Dataset.has_compact_only)).first()
     if dataset:
         return dataset, True
-
     # TODO: actually create keyword objects
     keywords: list[str] = metadata.pop("keywords")
-    # TODO: remove handling once parquet files are corrected
-    if "data_foramt" in metadata:
-        metadata["data_format"] = metadata.pop("data_foramt")
-    if "url" in metadata:
-        metadata["files"] = [metadata.pop("url")]
+    metadata["uid"] = metadata.pop("id", "")
     return Dataset(**metadata), False
 
 
@@ -51,7 +46,7 @@ def index_parent_of_compact_cells(
     for res in range(8, 0, -1):
         insert_parents_query = text(
             """
-            NSERT INTO h3_children_indicators (h3_index, dataset_id)
+            INSERT INTO h3_children_indicators (h3_index, dataset_id)
             WITH combined_indices AS (
                 SELECT h3_index FROM h3_data WHERE dataset_id = :dataset_id AND h3_get_resolution(h3_index) = :res
                 UNION

@@ -8,7 +8,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from shapely import wkt
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
-from app.sql.datasets import query as datasets_query
+from app.sql.dataset_metadata import query as dataset_metadata_query
 from app.sql.dataset_counts import query as dataset_count_query
 from app.sql.dataset_coverage import query as dataset_coverage_query
 
@@ -44,8 +44,7 @@ async def get_h3_tile_data(
     session: AsyncSession = Depends(get_async_session),
 ):
     resolution = h3.h3_get_resolution(index)
-    query = text(datasets_query)
-    query = query.bindparams(target=index, resolution=resolution)
+    query = text(dataset_metadata_query).bindparams(target=index, resolution=resolution)
     results = await session.execute(query)
     return [
         {
