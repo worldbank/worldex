@@ -32,14 +32,9 @@ def create_dataset_from_metadata(
     dataset = sess.query(Dataset).filter(Dataset.name == dataset_name).options(load_only(Dataset.id, Dataset.has_compact_only)).first()
     if dataset:
         return dataset, True
-
     # TODO: actually create keyword objects
     keywords: list[str] = metadata.pop("keywords")
-    # TODO: remove handling once parquet files are corrected
-    if "data_foramt" in metadata:
-        metadata["data_format"] = metadata.pop("data_foramt")
-    if "url" in metadata:
-        metadata["files"] = [metadata.pop("url")]
+    metadata["uid"] = metadata.pop("id", "")
     return Dataset(**metadata), False
 
 
@@ -51,7 +46,7 @@ def index_parent_of_compact_cells(
     for res in range(8, 0, -1):
         insert_parents_query = text(
             """
-            NSERT INTO h3_children_indicators (h3_index, dataset_id)
+            INSERT INTO h3_children_indicators (h3_index, dataset_id)
             WITH combined_indices AS (
                 SELECT h3_index FROM h3_data WHERE dataset_id = :dataset_id AND h3_get_resolution(h3_index) = :res
                 UNION
@@ -69,6 +64,7 @@ def index_parent_of_compact_cells(
 def create_h3_indices(file: s3fs.core.S3File, dataset_id: int) -> List[H3Data]:
     indices = pd.read_parquet(file)["h3_index"]
     compacted_indices = list(h3.compact(indices))
+    # compacted_indices = list(indices)
     df_pop = pd.DataFrame({"h3_index": compacted_indices}).astype({"h3_index": str})
     return [
         H3Data(h3_index=row["h3_index"], dataset_id=dataset_id)
