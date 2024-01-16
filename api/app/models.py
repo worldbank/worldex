@@ -32,6 +32,7 @@ class HealthCheck(BaseModel):
 
 
 class H3TileRequest(BaseModel):
+    location: str | None = None
     resolution: int
 
 

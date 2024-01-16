@@ -17,6 +17,7 @@ export default function DatasetCountLayer() {
   const source = useSelector((state: RootState) => selectSourceById(state, datasetH3Layer?.source));
   const { selectedDataset, h3Index: selectedH3Index } = useSelector((state: RootState) => state.selected);
   const { h3Resolution: resolution, closestZoom } = useSelector((state: RootState) => state.app);
+  const { response: location } = useSelector((state: RootState) => state.location);
   const dispatch = useDispatch();
 
   const domains = (import.meta.env.VITE_DATASET_COUNT_BINS).split(',').map(Number);
@@ -28,7 +29,7 @@ export default function DatasetCountLayer() {
 
   if (datasetH3Layer && source) {
     return new TileLayer({
-      id: 'dataset-h3-tile-layer',
+      id: location ? `dataset-count-${location.place_id}-tile-layer` : 'dataset-h3-tile-layer',
       data: source.data,
       maxZoom: closestZoom,
       // refinementStrategy: 'no-overlap',
@@ -37,6 +38,7 @@ export default function DatasetCountLayer() {
           method: 'POST',
           body: JSON.stringify({
             resolution,
+            location: location ? JSON.stringify(location.geojson) : null,
           }),
           headers: {
             'Content-Type': 'application/json',
@@ -86,7 +88,10 @@ export default function DatasetCountLayer() {
         }
       },
       renderSubLayers: (props: any) => new H3HexagonLayer(props, {
-        getHexagon: (d: DatasetCount) => d.index,
+        getHexagon: ((d: DatasetCount) => {
+          const foo = 'bar';
+          return d.index;
+        }),
         pickable: true,
         stroked: true,
         lineWidthMinPixels: 1,

@@ -40,7 +40,7 @@ const LocationSearch = ({ className }: { className?: string }) => {
     setIsLoading(true);
     const encodedQuery = new URLSearchParams(query).toString()
     const resp = await fetch(
-      `https://nominatim.openstreetmap.org/search?q=${encodedQuery}&format=json&limit=1&polygon_geojson=1`,
+      `https://nominatim.openstreetmap.org/search?q=${encodedQuery}&format=json&limit=1&polygon_geojson`,
     );
     const results = await resp.json();
     if (results == null || results.length === 0) {
