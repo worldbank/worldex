@@ -6,7 +6,7 @@ const DATASET_COVERAGE_SOURCE_ID = 'datasetCoverageSource';
 const source = {
   id: DATASET_COVERAGE_SOURCE_ID,
   type: MAP_TYPES.TILESET,
-  data: 'api/dataset_coverage/{z}/{x}/{y}',
+  data: 'worldex/api/dataset_coverage/{z}/{x}/{y}',
 };
 
 export default source;

@@ -53,10 +53,10 @@ export default defineConfig({
     strictPort: true,
     port: 5173,
     proxy: {
-      '/api': {
+      '/worldex/api': {
         target: 'http://localhost:8000/',
         changeOrigin: false,
-        rewrite: (path) => path.replace(/^\/api/, ''),
+        rewrite: (path) => path.replace(/^\/worldex\/api/, ''),
         secure: false,
       }
     }
