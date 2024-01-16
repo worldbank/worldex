@@ -1,9 +1,9 @@
 from .bbox_fill import FILL, FILL_RES2
 
-_query = """
+DATASET_COUNTS = """
 WITH fill AS ({fill_query}),
 with_parents AS (
-  SELECT fill_index, ARRAY[{{}}] parents FROM fill GROUP BY fill_index
+  SELECT fill_index, ARRAY[{parents_array}] parents FROM fill GROUP BY fill_index
 ),
 parent_datasets AS (
   SELECT fill_index, COUNT(dataset_id) dataset_count
@@ -18,6 +18,3 @@ children_datasets AS (
 SELECT fill_index, (COALESCE(p.dataset_count, 0) + COALESCE(c.dataset_count, 0)) dataset_count FROM parent_datasets p
 FULL JOIN children_datasets c USING (fill_index);
 """
-
-DATASET_COUNTS = _query.format(fill_query=FILL)
-DATASET_COUNTS_RES2 = _query.format(fill_query=FILL_RES2)
