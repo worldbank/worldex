@@ -2,6 +2,7 @@
   "name": "worldex-map",
   "version": "0.1.0",
   "private": true,
+  "homepage": "/worldex",
   "dependencies": {
     "@auth0/auth0-react": "^1.12.1",
     "@carto/react-api": "^2.2.3",
