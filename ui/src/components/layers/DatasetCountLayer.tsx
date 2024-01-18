@@ -29,6 +29,8 @@ export default function DatasetCountLayer() {
 
   if (datasetH3Layer && source) {
     return new TileLayer({
+      // assigning a unique layer id will ensure cached tiles
+      // between different locations are segregated
       id: location ? `dataset-count-${location.place_id}-tile-layer` : 'dataset-h3-tile-layer',
       data: source.data,
       maxZoom: closestZoom,
@@ -38,7 +40,11 @@ export default function DatasetCountLayer() {
           method: 'POST',
           body: JSON.stringify({
             resolution,
-            location: location ? JSON.stringify(location.geojson) : null,
+            location: (
+              location && ['Polygon', 'MultiPolygon'].includes(location.geojson.type)
+                ? JSON.stringify(location.geojson)
+                : null
+            ),
           }),
           headers: {
             'Content-Type': 'application/json',

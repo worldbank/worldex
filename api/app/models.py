@@ -32,13 +32,14 @@ class HealthCheck(BaseModel):
 
 
 class H3TileRequest(BaseModel):
-    location: str | None = None
     resolution: int
+    location: str | None = None
 
 
 class DatasetRequest(BaseModel):
     resolution: int
     dataset_id: int
+    location: str | None = None
 
 
 dataset_keyword_association_table = Table(

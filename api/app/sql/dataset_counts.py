@@ -1,5 +1,3 @@
-from .bbox_fill import FILL, FILL_RES2
-
 DATASET_COUNTS = """
 WITH fill AS ({fill_query}),
 with_parents AS (
