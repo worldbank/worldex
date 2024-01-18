@@ -2,7 +2,7 @@ import h3
 import uvicorn
 from app import settings
 from app.db import get_async_session
-from app.models import DatasetRequest, HealthCheck, H3TileRequest
+from app.models import DatasetRequest, HealthCheck, H3TileRequest, DatasetsByLocationRequest
 from fastapi import Depends, FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from shapely import wkt
@@ -104,7 +104,7 @@ async def get_dataset_coverage(
     query = DATASET_COVERAGE.format(fill_query=FILL_RES2 if resolution == 2 else FILL)
     query = text(query).bindparams(z=z, x=x, y=y, location=location, resolution=resolution, dataset_id=payload.dataset_id)
     results = await session.execute(query)
-    return [{"index": row[0]} for row in results.fetchall()]
+    return [row[0] for row in results.fetchall()]
 
 
 @app.post("/dataset_count/")
@@ -116,3 +116,44 @@ async def get_dataset_count(
 
 if __name__ == "__main__":
     uvicorn.run(app, port=8000, host="0.0.0.0")
+
+
+@app.post("/datasets_by_location/")
+async def get_datasets_by_location(
+    payload: DatasetsByLocationRequest,
+    session: AsyncSession = Depends(get_async_session),
+):
+    location = payload.location
+    results = await session.execute(text("""
+    WITH bounds AS (
+        SELECT st_geomfromgeojson(CAST(:location AS TEXT)) bounds
+    )
+    SELECT
+        id,
+        name,
+        ST_AsEWKT(bbox) bbox,
+        source_org,
+        regexp_replace(description, '\n', '\n', 'g') description,
+        files,
+        url,
+        accessibility,
+        date_start,
+        date_end
+    FROM datasets
+    WHERE ST_Intersects(ST_SetSRID(bbox, 4326), (SELECT bounds FROM bounds))
+    """).bindparams(location=location))
+    return [
+        {
+            "id": row[0],
+            "name": row[1],
+            "bbox": wkt.loads(row[2]).bounds,
+            "source_org": row[3],
+            "description": row[4],
+            "files": row[5],
+            "url": row[6],
+            "accessibility": row[7],
+            "date_start": row[8],
+            "date_end": row[9],
+        }
+        for row in results.fetchall()
+    ]

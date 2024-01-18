@@ -46,7 +46,7 @@ export default function DatasetCoverageLayer() {
       },
       refinementStrategy: 'never',
       renderSubLayers: (props: any) => new H3HexagonLayer(props, {
-        getHexagon: (d: any) => d.index,
+        getHexagon: (d: any) => d,
         stroked: true,
         lineWidthMinPixels: 1,
         getLineColor: [...BLUE_600, 120],
