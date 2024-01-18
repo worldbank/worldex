@@ -31,7 +31,11 @@ export default function DatasetCountLayer() {
     return new TileLayer({
       // assigning a unique layer id will ensure cached tiles
       // between different locations are segregated
-      id: location ? `dataset-count-${location.place_id}-tile-layer` : 'dataset-h3-tile-layer',
+      id: (
+        location && location.place_id
+          ? `dataset-count-${location.place_id}-tile-layer`
+          : 'dataset-h3-tile-layer'
+      ),
       data: source.data,
       maxZoom: closestZoom,
       // refinementStrategy: 'no-overlap',
@@ -115,6 +119,7 @@ export default function DatasetCountLayer() {
         extruded: false,
       }),
       updateTriggers: {
+        id: [selectedDataset, location?.place_id],
         minZoom: [closestZoom],
         maxZoom: [closestZoom],
         getLineColor: [selectedH3Index, selectedDataset],

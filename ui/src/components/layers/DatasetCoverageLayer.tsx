@@ -21,7 +21,7 @@ export default function DatasetCoverageLayer() {
       // assigning a unique layer id will ensure cached tiles
       // between different datasets/locations are segregated
       id: (
-        location
+        location && location.place_id
           ? `dataset-${selectedDataset}-${location.place_id}-tile-layer`
           : `dataset-${selectedDataset}-coverage-tile-layer`
       ),
@@ -55,6 +55,7 @@ export default function DatasetCoverageLayer() {
         extruded: false,
       }),
       updateTriggers: {
+        id: [selectedDataset, location?.place_id],
         minZoom: [closestZoom],
         maxZoom: [closestZoom],
       },
