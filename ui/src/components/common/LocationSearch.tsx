@@ -5,7 +5,7 @@ import React, { useState } from "react";
 import { setViewState } from '@carto/react-redux';
 import { useDispatch, useSelector } from "react-redux";
 import { RootState } from "store/store";
-import { setResponse as setLocationResponse } from 'store/locationSlice';
+import { setFilteredDatasets, setResponse as setLocationResponse } from 'store/locationSlice';
 import bboxToViewStateParams from 'utils/bboxToViewStateParams';
 
 const SearchButton = ({isLoading}: {isLoading: boolean}) =>
@@ -53,6 +53,21 @@ const LocationSearch = ({ className }: { className?: string }) => {
       const { width, height } = viewState;
       // @ts-ignore
       dispatch(setViewState({...viewState, ...bboxToViewStateParams({ bbox, width, height }) }));
+      
+      if (result && ['Polygon', 'MultiPolygon'].includes(result.geojson.type)) {
+        const datasetsResp = await fetch('/api/datasets_by_location/', {
+          method: 'post',
+          headers: {
+            'Accept': 'application/json',
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ location: JSON.stringify(result.geojson) })
+        });
+        const datasetsResults = await datasetsResp.json();
+        if (datasetsResults) {
+          dispatch(setFilteredDatasets(datasetsResults));
+        }
+      }
     }
     setIsLoading(false);
   }
@@ -61,6 +76,7 @@ const LocationSearch = ({ className }: { className?: string }) => {
     setQuery("");
     setIsError(false);
     dispatch(setLocationResponse(null));
+    dispatch(setFilteredDatasets(null));
   }
 
   return (
