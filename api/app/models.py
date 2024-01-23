@@ -44,6 +44,7 @@ class DatasetRequest(BaseModel):
 
 class DatasetsByLocationRequest(BaseModel):
     location: str
+    resolution: int
 
 
 dataset_keyword_association_table = Table(

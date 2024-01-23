@@ -7,6 +7,7 @@ import { useDispatch, useSelector } from "react-redux";
 import { RootState } from "store/store";
 import { setFilteredDatasets, setResponse as setLocationResponse } from 'store/locationSlice';
 import bboxToViewStateParams from 'utils/bboxToViewStateParams';
+import { ZOOM_H3_RESOLUTION_PAIRS } from "constants/h3";
 
 const SearchButton = ({isLoading}: {isLoading: boolean}) =>
   <div className="flex justify-center items-center w-[2em] mr-[-8px]">
@@ -33,6 +34,7 @@ const LocationSearch = ({ className }: { className?: string }) => {
   const [isLoading, setIsLoading] = useState(false);
   const [isError, setIsError] = useState(false);
   const dispatch = useDispatch();
+  // const { h3Resolution: resolution } = useSelector((state: RootState) => state.app);
   const viewState = useSelector((state: RootState) => state.carto.viewState);
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
@@ -51,17 +53,33 @@ const LocationSearch = ({ className }: { className?: string }) => {
       const bbox = { minLat, maxLat, minLon, maxLon };
       dispatch(setLocationResponse(result));
       const { width, height } = viewState;
+      const viewStateParams = bboxToViewStateParams({ bbox, width, height });
+      const { zoom } = viewStateParams;
       // @ts-ignore
-      dispatch(setViewState({...viewState, ...bboxToViewStateParams({ bbox, width, height }) }));
+      dispatch(setViewState({...viewState, ...viewStateParams }));
       
       if (result && ['Polygon', 'MultiPolygon'].includes(result.geojson.type)) {
+        // TODO: put into a function
+        const [_, resolution] = (() => {
+          for (const [idx, [z, _]] of ZOOM_H3_RESOLUTION_PAIRS.entries()) {
+            if (z === zoom) {
+              return ZOOM_H3_RESOLUTION_PAIRS[idx];
+            } else if (z > zoom) {
+              return ZOOM_H3_RESOLUTION_PAIRS[idx - 1];
+            }
+          }
+          return ZOOM_H3_RESOLUTION_PAIRS.at(-1);
+        })();
         const datasetsResp = await fetch('/api/datasets_by_location/', {
           method: 'post',
           headers: {
             'Accept': 'application/json',
             'Content-Type': 'application/json',
           },
-          body: JSON.stringify({ location: JSON.stringify(result.geojson) })
+          body: JSON.stringify({
+            location: JSON.stringify(result.geojson),
+            resolution,
+          })
         });
         const datasetsResults = await datasetsResp.json();
         if (datasetsResults) {
