@@ -9,6 +9,7 @@ from shapely import wkt
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.sql.bounds_fill import FILL, FILL_RES2
+from app.sql.datasets_by_location import LOCATION_FILL, LOCATION_FILL_RES2, DATASETS_BY_LOCATION
 from app.sql.dataset_metadata import DATASET_METADATA
 from app.sql.dataset_counts import DATASET_COUNTS
 from app.sql.dataset_coverage import DATASET_COVERAGE
@@ -129,41 +130,10 @@ async def get_datasets_by_location(
         f"h3_cell_to_parent(fill_index, {res})" for res in range(0, resolution)
     ]
     parents_comma_delimited = ", ".join(parents_array)
-    query = f"""
-WITH bounds AS (SELECT ST_GeomFromGeoJSON(CAST(:location AS TEXT)) bounds),
-fill AS (SELECT h3_polygon_to_cells((SELECT bounds FROM bounds), :resolution) fill_index),
-with_parents AS (
-  SELECT fill_index, ARRAY[{parents_comma_delimited}] parents FROM fill GROUP BY fill_index
-),
-parent_datasets AS (
-  SELECT dataset_id FROM h3_data JOIN with_parents ON h3_index = ANY(parents) GROUP BY dataset_id
-),
-children_datasets AS (
-  SELECT dataset_id
-  FROM h3_children_indicators
-  JOIN fill ON h3_index = fill_index
-  GROUP BY dataset_id
-),
-filtered_datasets AS (
-  SELECT dataset_id id FROM parent_datasets
-  UNION ALL
-  SELECT dataset_id id FROM children_datasets
-)
-SELECT
-  id,
-  name,
-  ST_AsEWKT(bbox) bbox,
-  source_org,
-  regexp_replace(description, '\n', '\n', 'g') description,
-  files,
-  url,
-  accessibility,
-  date_start,
-  date_end 
-FROM datasets
-JOIN filtered_datasets
-USING (id);
-    """
+    query = DATASETS_BY_LOCATION.format(
+        parents_array=parents_comma_delimited,
+        fill_query=LOCATION_FILL_RES2 if resolution == 2 else LOCATION_FILL
+    )
     query = text(query).bindparams(location=location, resolution=resolution)
     results = await session.execute(query)
     return [
