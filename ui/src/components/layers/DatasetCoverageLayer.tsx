@@ -13,11 +13,18 @@ export default function DatasetCoverageLayer() {
   const source = useSelector((state) => selectSourceById(state, datasetCoverageLayer?.source));
   const { selectedDataset } = useSelector((state: RootState) => state.selected);
   const { h3Resolution: resolution, closestZoom } = useSelector((state: RootState) => state.app);
+  const { response: location } = useSelector((state: RootState) => state.location);
   const BLUE_600 = hexToRgb(blue['600']); // #1e88e5
 
   if (selectedDataset && datasetCoverageLayer && source) {
     return new TileLayer({
-      id: `dataset-${selectedDataset}-coverage-tile-layer`,
+      // assigning a unique layer id will ensure cached tiles
+      // between different datasets/locations are segregated
+      id: (
+        location && location.place_id
+          ? `dataset-${selectedDataset}-${location.place_id}-tile-layer`
+          : `dataset-${selectedDataset}-coverage-tile-layer`
+      ),
       data: source.data,
       maxZoom: closestZoom,
       loadOptions: {
@@ -26,6 +33,11 @@ export default function DatasetCoverageLayer() {
           body: JSON.stringify({
             resolution,
             dataset_id: selectedDataset,
+            location: (
+              location && ['Polygon', 'MultiPolygon'].includes(location.geojson.type)
+                ? JSON.stringify(location.geojson)
+                : null
+            ),
           }),
           headers: {
             'Content-Type': 'application/json',
@@ -34,7 +46,7 @@ export default function DatasetCoverageLayer() {
       },
       refinementStrategy: 'never',
       renderSubLayers: (props: any) => new H3HexagonLayer(props, {
-        getHexagon: (d: any) => d.index,
+        getHexagon: (d: any) => d,
         stroked: true,
         lineWidthMinPixels: 1,
         getLineColor: [...BLUE_600, 120],
@@ -43,6 +55,7 @@ export default function DatasetCoverageLayer() {
         extruded: false,
       }),
       updateTriggers: {
+        id: [selectedDataset, location?.place_id],
         minZoom: [closestZoom],
         maxZoom: [closestZoom],
       },

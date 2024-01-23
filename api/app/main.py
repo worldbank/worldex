@@ -2,13 +2,14 @@ import h3
 import uvicorn
 from app import settings
 from app.db import get_async_session
-from app.models import DatasetRequest, HealthCheck, H3TileRequest
+from app.models import DatasetRequest, HealthCheck, H3TileRequest, DatasetsByLocationRequest
 from fastapi import Depends, FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from shapely import wkt
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
-from app.sql.bbox_fill import FILL, FILL_RES2
+from app.sql.bounds_fill import FILL, FILL_RES2
+from app.sql.datasets_by_location import LOCATION_FILL, LOCATION_FILL_RES2, DATASETS_BY_LOCATION
 from app.sql.dataset_metadata import DATASET_METADATA
 from app.sql.dataset_counts import DATASET_COUNTS
 from app.sql.dataset_coverage import DATASET_COVERAGE
@@ -75,6 +76,7 @@ async def get_h3_tiles(
     session: AsyncSession = Depends(get_async_session),
 ):
     resolution = payload.resolution
+    location = payload.location
     # dynamically constructing this expression is faster than deriving from
     # generate_series(0, :resolution) despite the latter resulting to more readable code
     parents_array = ["fill_index"] + [
@@ -85,7 +87,7 @@ async def get_h3_tiles(
         parents_array=parents_comma_delimited,
         fill_query=FILL_RES2 if resolution == 2 else FILL
     )
-    query = text(query).bindparams(z=z, x=x, y=y, resolution=resolution)
+    query = text(query).bindparams(z=z, x=x, y=y, resolution=resolution, location=location)
     results = await session.execute(query)
     return [{"index": row[0], "dataset_count": row[1]} for row in results.fetchall()]
 
@@ -99,10 +101,11 @@ async def get_dataset_coverage(
     session: AsyncSession = Depends(get_async_session),
 ):
     resolution = payload.resolution
+    location = payload.location
     query = DATASET_COVERAGE.format(fill_query=FILL_RES2 if resolution == 2 else FILL)
-    query = text(query).bindparams(z=z, x=x, y=y, resolution=resolution, dataset_id=payload.dataset_id)
+    query = text(query).bindparams(z=z, x=x, y=y, location=location, resolution=resolution, dataset_id=payload.dataset_id)
     results = await session.execute(query)
-    return [{"index": row[0]} for row in results.fetchall()]
+    return [row[0] for row in results.fetchall()]
 
 
 @app.post("/dataset_count/")
@@ -114,3 +117,37 @@ async def get_dataset_count(
 
 if __name__ == "__main__":
     uvicorn.run(app, port=8000, host="0.0.0.0")
+
+
+@app.post("/datasets_by_location/")
+async def get_datasets_by_location(
+    payload: DatasetsByLocationRequest,
+    session: AsyncSession = Depends(get_async_session),
+):
+    location = payload.location
+    resolution = payload.resolution
+    parents_array = ["fill_index"] + [
+        f"h3_cell_to_parent(fill_index, {res})" for res in range(0, resolution)
+    ]
+    parents_comma_delimited = ", ".join(parents_array)
+    query = DATASETS_BY_LOCATION.format(
+        parents_array=parents_comma_delimited,
+        fill_query=LOCATION_FILL_RES2 if resolution == 2 else LOCATION_FILL
+    )
+    query = text(query).bindparams(location=location, resolution=resolution)
+    results = await session.execute(query)
+    return [
+        {
+            "id": row[0],
+            "name": row[1],
+            "bbox": wkt.loads(row[2]).bounds,
+            "source_org": row[3],
+            "description": row[4],
+            "files": row[5],
+            "url": row[6],
+            "accessibility": row[7],
+            "date_start": row[8],
+            "date_end": row[9],
+        }
+        for row in results.fetchall()
+    ]

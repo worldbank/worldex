@@ -31,7 +31,7 @@ const Selected = () => {
           { selectedDataset && <DeselectDatasetButton /> }
       </div>
       <Divider />
-      { datasets && <Datasets datasetsByOrgs={datasetsByOrgs} />}
+      { datasets && <Datasets header="Tile Datasets" datasetsByOrgs={datasetsByOrgs} />}
     </>
   )
 } 

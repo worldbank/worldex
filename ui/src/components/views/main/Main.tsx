@@ -126,6 +126,7 @@ export default function Main() {
   }, [setSearchParams, latitude, longitude, zoom]);
 
   useEffect(() => {
+    // TODO: convert to a reusable function
     const [closestZoom, resolution] = (() => {
       for (const [idx, [z, _]] of ZOOM_H3_RESOLUTION_PAIRS.entries()) {
         if (z === zoom) {

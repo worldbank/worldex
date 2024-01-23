@@ -1,5 +1,6 @@
-from .bbox_fill import FILL, FILL_RES2
-
+# we take a minimal query time penalty for using generate_series()
+# instead of concatenating the h3_cell_to_parent() calls for each
+# resolution. but this is more elegent imo
 DATASET_COVERAGE = """
 WITH fill AS ({fill_query}),
 with_parents AS (

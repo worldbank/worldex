@@ -4,12 +4,17 @@ import { useDispatch, useSelector } from "react-redux";
 import { setDatasetCount } from "store/selectedSlice";
 import { RootState } from "store/store";
 import DeselectDatasetButton from "./DeselectDatasetButton";
+import groupBy from "utils/groupBy";
+import Datasets from "./Datasets";
+import { Dataset } from "../types";
 
 const Overview = () => {
   const { datasetCount }: { datasetCount: number } = useSelector((state: RootState) => state.selected);
   const dispatch = useDispatch();
   const h3Resolution = useSelector((state: RootState) => state.app.h3Resolution);
   const { selectedDataset } = useSelector((state: RootState) => state.selected);
+  const { response: location, filteredDatasets }: { response: any, filteredDatasets: Dataset[] } = useSelector((state: RootState) => state.location);
+  const datasetsByOrgs = filteredDatasets ? groupBy(filteredDatasets, "source_org") : null;
   
   useEffect(() => {
     fetch(`/api/dataset_count/`, {
@@ -34,6 +39,7 @@ const Overview = () => {
         { selectedDataset && <DeselectDatasetButton /> }
       </div>
       <Divider />
+      { datasetsByOrgs && <Datasets header={`${location.name} Datasets`} datasetsByOrgs={datasetsByOrgs} /> }
     </>
   );
 };
