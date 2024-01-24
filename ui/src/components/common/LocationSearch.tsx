@@ -46,7 +46,7 @@ const LocationSearch = ({ className }: { className?: string }) => {
     setIsLoading(true);
     const encodedQuery = new URLSearchParams(query).toString()
     const resp = await fetch(
-      `https://nominatim.openstreetmap.org/search?q=${encodedQuery}&format=json&limit=1&polygon_geojson`,
+      `https://nominatim.openstreetmap.org/search?q=${encodedQuery}&format=json&limit=1&polygon_geojson=1`,
     );
     const results = await resp.json();
     if (results == null || results.length === 0) {
@@ -59,7 +59,6 @@ const LocationSearch = ({ className }: { className?: string }) => {
       const { width, height } = viewState;
       const viewStateParams = bboxToViewStateParams({ bbox, width, height });
       const { zoom } = viewStateParams;
-      dispatch(setH3IndexPresent(false));
       // @ts-ignore
       dispatch(setViewState({...viewState, ...viewStateParams }));
       
@@ -92,7 +91,7 @@ const LocationSearch = ({ className }: { className?: string }) => {
         }
         
         if (selectedH3Index) {
-          // deselect the current tile if it's among the tiles rendered inside the location feature
+          // deselect current tile if it's not among the tiles rendered inside the location feature
           const locationFeature = result.geojson.type === 'Polygon' ? polygon(result.geojson.coordinates) : multiPolygon(result.geojson.coordinates);
           const selectedTilePoint = point(cellToLatLng(selectedH3Index).reverse());
           if (getResolution(selectedH3Index) != resolution || !booleanWithin(selectedTilePoint, locationFeature)) {

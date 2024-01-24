@@ -80,17 +80,22 @@ const DatasetItem = ({idx, dataset}: {idx: number, dataset: Dataset}) => {
   const { selectedDataset } = useSelector((state: RootState) => state.selected);
   const viewState = useSelector((state: RootState) => state.carto.viewState);
   const { width, height } = viewState;
+  const { response: location } = useSelector((state: RootState) => state.location);
   const dispatch = useDispatch();
   const toggleVisibility = (datasetId: number, bbox: BoundingBox) => {
     if (anchor) {
+      // do not do anything if popover is active
       return;
     }
     if (datasetId === selectedDataset) {
       dispatch(setSelectedDataset(null));
       return;
     }
-    // @ts-ignore
-    dispatch(setViewState({ ...viewState, ...bboxToViewStateParams({ bbox, width, height })}));
+    // do not zoom/pan to dataset's bbox if a location feature is currently active
+    if (!['Polygon', 'MultiPolygon'].includes(location?.geojson.type)) {
+      // @ts-ignore
+      dispatch(setViewState({ ...viewState, ...bboxToViewStateParams({ bbox, width, height })}));
+    }
     dispatch(setSelectedDataset(datasetId));
   }
   
