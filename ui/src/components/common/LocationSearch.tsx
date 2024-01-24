@@ -1,13 +1,17 @@
-import { CircularProgress, IconButton, Paper, TextField } from "@mui/material"
-import SearchIcon from '@mui/icons-material/Search';
-import ClearIcon from '@mui/icons-material/Clear';
-import React, { useState } from "react";
 import { setViewState } from '@carto/react-redux';
-import { useDispatch, useSelector } from "react-redux";
-import { RootState } from "store/store";
-import { setFilteredDatasets, setResponse as setLocationResponse } from 'store/locationSlice';
-import bboxToViewStateParams from 'utils/bboxToViewStateParams';
+import ClearIcon from '@mui/icons-material/Clear';
+import SearchIcon from '@mui/icons-material/Search';
+import { CircularProgress, IconButton, Paper, TextField } from "@mui/material";
+import booleanWithin from "@turf/boolean-within";
+import { multiPolygon, point, polygon } from "@turf/helpers";
 import { ZOOM_H3_RESOLUTION_PAIRS } from "constants/h3";
+import { cellToLatLng, getResolution } from "h3-js";
+import React, { useState } from "react";
+import { useDispatch, useSelector } from "react-redux";
+import { setFilteredDatasets, setResponse as setLocationResponse } from 'store/locationSlice';
+import { setH3Index as setSelectedH3Index } from 'store/selectedSlice';
+import { RootState } from "store/store";
+import bboxToViewStateParams from 'utils/bboxToViewStateParams';
 
 const SearchButton = ({isLoading}: {isLoading: boolean}) =>
   <div className="flex justify-center items-center w-[2em] mr-[-8px]">
@@ -34,7 +38,7 @@ const LocationSearch = ({ className }: { className?: string }) => {
   const [isLoading, setIsLoading] = useState(false);
   const [isError, setIsError] = useState(false);
   const dispatch = useDispatch();
-  // const { h3Resolution: resolution } = useSelector((state: RootState) => state.app);
+  const { h3Index: selectedH3Index }: { h3Index: string } = useSelector((state: RootState) => state.selected);
   const viewState = useSelector((state: RootState) => state.carto.viewState);
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
@@ -55,6 +59,7 @@ const LocationSearch = ({ className }: { className?: string }) => {
       const { width, height } = viewState;
       const viewStateParams = bboxToViewStateParams({ bbox, width, height });
       const { zoom } = viewStateParams;
+      dispatch(setH3IndexPresent(false));
       // @ts-ignore
       dispatch(setViewState({...viewState, ...viewStateParams }));
       
@@ -84,6 +89,15 @@ const LocationSearch = ({ className }: { className?: string }) => {
         const datasetsResults = await datasetsResp.json();
         if (datasetsResults) {
           dispatch(setFilteredDatasets(datasetsResults));
+        }
+        
+        if (selectedH3Index) {
+          // deselect the current tile if it's among the tiles rendered inside the location feature
+          const locationFeature = result.geojson.type === 'Polygon' ? polygon(result.geojson.coordinates) : multiPolygon(result.geojson.coordinates);
+          const selectedTilePoint = point(cellToLatLng(selectedH3Index).reverse());
+          if (getResolution(selectedH3Index) != resolution || !booleanWithin(selectedTilePoint, locationFeature)) {
+            dispatch(setSelectedH3Index(null));
+          }
         }
       }
     }
