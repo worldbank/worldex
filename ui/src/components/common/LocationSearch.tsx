@@ -41,6 +41,35 @@ const LocationSearch = ({ className }: { className?: string }) => {
   const { h3Index: selectedH3Index }: { h3Index: string } = useSelector((state: RootState) => state.selected);
   const viewState = useSelector((state: RootState) => state.carto.viewState);
 
+  const getDatasets = async ({ result, zoom }: { result: any, zoom: number }) => {
+    const [_, resolution] = getClosestZoomResolutionPair(zoom);
+    const datasetsResp = await fetch('/api/datasets_by_location/', {
+      method: 'post',
+      headers: {
+        'Accept': 'application/json',
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        location: JSON.stringify(result.geojson),
+        resolution,
+      })
+    });
+    const datasetsResults = await datasetsResp.json();
+    if (datasetsResults) {
+      dispatch(setFilteredDatasets(datasetsResults));
+    }
+
+    dispatch(setPendingLocationCheck(true));
+    if (selectedH3Index) {
+      // deselect current tile if it's not among the tiles rendered inside the location feature
+      const locationFeature = result.geojson.type === 'Polygon' ? polygon(result.geojson.coordinates) : multiPolygon(result.geojson.coordinates);
+      const selectedTilePoint = point(cellToLatLng(selectedH3Index).reverse());
+      if (getResolution(selectedH3Index) != resolution || !booleanWithin(selectedTilePoint, locationFeature)) {
+        dispatch(setSelectedH3Index(null));
+      }
+    }
+  }
+
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault()
     setIsLoading(true);
@@ -63,32 +92,7 @@ const LocationSearch = ({ className }: { className?: string }) => {
       dispatch(setViewState({...viewState, ...viewStateParams }));
       
       if (result && ['Polygon', 'MultiPolygon'].includes(result.geojson.type)) {
-        const [_, resolution] = getClosestZoomResolutionPair(zoom);
-        const datasetsResp = await fetch('/api/datasets_by_location/', {
-          method: 'post',
-          headers: {
-            'Accept': 'application/json',
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            location: JSON.stringify(result.geojson),
-            resolution,
-          })
-        });
-        const datasetsResults = await datasetsResp.json();
-        if (datasetsResults) {
-          dispatch(setFilteredDatasets(datasetsResults));
-        }
-        
-        dispatch(setPendingLocationCheck(true));
-        if (selectedH3Index) {
-          // deselect current tile if it's not among the tiles rendered inside the location feature
-          const locationFeature = result.geojson.type === 'Polygon' ? polygon(result.geojson.coordinates) : multiPolygon(result.geojson.coordinates);
-          const selectedTilePoint = point(cellToLatLng(selectedH3Index).reverse());
-          if (getResolution(selectedH3Index) != resolution || !booleanWithin(selectedTilePoint, locationFeature)) {
-            dispatch(setSelectedH3Index(null));
-          }
-        }
+        getDatasets({ result, zoom });
       }
     }
     setIsLoading(false);
