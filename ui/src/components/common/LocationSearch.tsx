@@ -4,14 +4,14 @@ import SearchIcon from '@mui/icons-material/Search';
 import { CircularProgress, IconButton, Paper, TextField } from "@mui/material";
 import booleanWithin from "@turf/boolean-within";
 import { multiPolygon, point, polygon } from "@turf/helpers";
-import { ZOOM_H3_RESOLUTION_PAIRS } from "constants/h3";
 import { cellToLatLng, getResolution } from "h3-js";
 import React, { useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { setFilteredDatasets, setResponse as setLocationResponse, setPendingLocationCheck } from 'store/locationSlice';
-import { setSelectedDataset, setH3Index as setSelectedH3Index } from 'store/selectedSlice';
+import { setH3Index as setSelectedH3Index } from 'store/selectedSlice';
 import { RootState } from "store/store";
 import bboxToViewStateParams from 'utils/bboxToViewStateParams';
+import getClosestZoomResolutionPair from 'utils/getClosestZoomResolutionPair';
 
 const SearchButton = ({isLoading}: {isLoading: boolean}) =>
   <div className="flex justify-center items-center w-[2em] mr-[-8px]">
@@ -63,17 +63,7 @@ const LocationSearch = ({ className }: { className?: string }) => {
       dispatch(setViewState({...viewState, ...viewStateParams }));
       
       if (result && ['Polygon', 'MultiPolygon'].includes(result.geojson.type)) {
-        // TODO: put into a function
-        const [_, resolution] = (() => {
-          for (const [idx, [z, _]] of ZOOM_H3_RESOLUTION_PAIRS.entries()) {
-            if (z === zoom) {
-              return ZOOM_H3_RESOLUTION_PAIRS[idx];
-            } else if (z > zoom) {
-              return ZOOM_H3_RESOLUTION_PAIRS[idx - 1];
-            }
-          }
-          return ZOOM_H3_RESOLUTION_PAIRS.at(-1);
-        })();
+        const [_, resolution] = getClosestZoomResolutionPair(zoom);
         const datasetsResp = await fetch('/api/datasets_by_location/', {
           method: 'post',
           headers: {
