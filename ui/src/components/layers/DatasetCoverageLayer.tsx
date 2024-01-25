@@ -51,7 +51,7 @@ export default function DatasetCoverageLayer() {
       refinementStrategy: 'never',
       onViewportLoad: (data) => {
         if (pendingLocationCheck && data.every((tile) => tile.content.length === 0)) {
-          // if location search results filter out dataset tiles, then deselect the dataset
+          // if location search result filters out all tiles of the selected dataset, then deselect the dataset
           dispatch(setSelectedDataset(null));
           dispatch(setPendingLocationCheck(false));
         }
