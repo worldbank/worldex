@@ -1,5 +1,5 @@
 /* eslint-disable */
-export const ZOOM_H3_RESOLUTION_PAIRS = [
+export const ZOOM_H3_RESOLUTION_PAIRS: [number, number][] = [
     [1, 2],
     [2, 3],
     [3, 4],

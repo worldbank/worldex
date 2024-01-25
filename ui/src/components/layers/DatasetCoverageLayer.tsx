@@ -1,10 +1,12 @@
 import { blue } from '@mui/material/colors';
-import { useSelector } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
 // @ts-ignore
 import { selectSourceById } from '@carto/react-redux';
 import { H3HexagonLayer, TileLayer } from '@deck.gl/geo-layers/typed';
 import { RootState } from 'store/store';
 import { hexToRgb } from 'utils/colors';
+import { setSelectedDataset } from 'store/selectedSlice';
+import { setPendingLocationCheck } from 'store/locationSlice';
 
 export const DATASET_COVERAGE_LAYER_ID = 'datasetCoverageLayer';
 
@@ -13,10 +15,12 @@ export default function DatasetCoverageLayer() {
   const source = useSelector((state) => selectSourceById(state, datasetCoverageLayer?.source));
   const { selectedDataset } = useSelector((state: RootState) => state.selected);
   const { h3Resolution: resolution, closestZoom } = useSelector((state: RootState) => state.app);
-  const { response: location } = useSelector((state: RootState) => state.location);
+  const { response: location, pendingLocationCheck } = useSelector((state: RootState) => state.location);
   const BLUE_600 = hexToRgb(blue['600']); // #1e88e5
+  const dispatch = useDispatch();
 
   if (selectedDataset && datasetCoverageLayer && source) {
+    // @ts-ignore
     return new TileLayer({
       // assigning a unique layer id will ensure cached tiles
       // between different datasets/locations are segregated
@@ -45,6 +49,13 @@ export default function DatasetCoverageLayer() {
         },
       },
       refinementStrategy: 'never',
+      onViewportLoad: (data) => {
+        if (pendingLocationCheck && data.every((tile) => tile.content.length === 0)) {
+          // if location search result filters out all tiles of the selected dataset, then deselect the dataset
+          dispatch(setSelectedDataset(null));
+          dispatch(setPendingLocationCheck(false));
+        }
+      },
       renderSubLayers: (props: any) => new H3HexagonLayer(props, {
         getHexagon: (d: any) => d,
         stroked: true,

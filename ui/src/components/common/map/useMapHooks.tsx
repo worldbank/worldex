@@ -1,4 +1,4 @@
-import { useDispatch } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
 import { styled } from '@mui/material/styles';
 import { setViewState, ViewState } from '@carto/react-redux';
 import { Typography } from '@carto/react-ui';
@@ -6,6 +6,8 @@ import { renderToStaticMarkup } from 'react-dom/server';
 import { useMemo } from 'react';
 import { debounce } from '@mui/material';
 import { MAXIMUM_ZOOM, MINIMUM_ZOOM } from 'constants/h3';
+import { setPendingLocationCheck } from 'store/locationSlice';
+import { RootState } from 'store/store';
 
 const TooltipContent = styled('div')(({ theme }) => ({
   color: theme.palette.common.white,
@@ -33,6 +35,7 @@ export function useMapHooks() {
   const dispatch = useDispatch();
 
   let isHovering = false;
+  const { pendingLocationCheck } = useSelector((state: RootState) => state.location);
 
   const debouncedSetViewState = debounce((viewState: ViewState) => {
     const newViewState = { ...viewState };
@@ -44,6 +47,9 @@ export function useMapHooks() {
   }, 100)
 
   const handleViewStateChange = ({ viewState }: { viewState: ViewState }) => {
+    if (pendingLocationCheck) {
+      dispatch(setPendingLocationCheck(false));
+    }
     debouncedSetViewState(viewState);
   };
 

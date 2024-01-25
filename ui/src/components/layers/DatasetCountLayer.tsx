@@ -98,10 +98,7 @@ export default function DatasetCountLayer() {
         }
       },
       renderSubLayers: (props: any) => new H3HexagonLayer(props, {
-        getHexagon: ((d: DatasetCount) => {
-          const foo = 'bar';
-          return d.index;
-        }),
+        getHexagon: ((d: DatasetCount) => d.index),
         pickable: true,
         stroked: true,
         lineWidthMinPixels: 1,
