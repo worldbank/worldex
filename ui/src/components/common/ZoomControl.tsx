@@ -7,6 +7,7 @@ import RemoveOutlinedIcon from '@mui/icons-material/RemoveOutlined';
 import { setViewState } from '@carto/react-redux';
 import { RootState } from 'store/store';
 import { MAXIMUM_ZOOM, MINIMUM_ZOOM } from 'constants/h3';
+import { setPendingLocationCheck } from 'store/locationSlice';
 
 const GridZoomControl = styled(Grid)(({ theme }) => ({
   backgroundColor: theme.palette.background.paper,
@@ -30,6 +31,7 @@ export default function ZoomControl({
   const increaseZoom = useCallback(() => {
     const nextZoom = zoomLevel + 1;
     if (nextZoom <= MAXIMUM_ZOOM) {
+      dispatch(setPendingLocationCheck(false));
       // @ts-ignore
       dispatch(setViewState({ zoom: nextZoom }));
     }
@@ -38,6 +40,7 @@ export default function ZoomControl({
   const decreaseZoom = useCallback(() => {
     const nextZoom = zoomLevel - 1;
     if (nextZoom >= MINIMUM_ZOOM) {
+      dispatch(setPendingLocationCheck(false));
       // @ts-ignore
       dispatch(setViewState({ zoom: nextZoom }));
     }

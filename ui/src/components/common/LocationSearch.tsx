@@ -8,8 +8,8 @@ import { ZOOM_H3_RESOLUTION_PAIRS } from "constants/h3";
 import { cellToLatLng, getResolution } from "h3-js";
 import React, { useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { setFilteredDatasets, setResponse as setLocationResponse } from 'store/locationSlice';
-import { setH3Index as setSelectedH3Index } from 'store/selectedSlice';
+import { setFilteredDatasets, setResponse as setLocationResponse, setPendingLocationCheck } from 'store/locationSlice';
+import { setSelectedDataset, setH3Index as setSelectedH3Index } from 'store/selectedSlice';
 import { RootState } from "store/store";
 import bboxToViewStateParams from 'utils/bboxToViewStateParams';
 
@@ -90,6 +90,7 @@ const LocationSearch = ({ className }: { className?: string }) => {
           dispatch(setFilteredDatasets(datasetsResults));
         }
         
+        dispatch(setPendingLocationCheck(true));
         if (selectedH3Index) {
           // deselect current tile if it's not among the tiles rendered inside the location feature
           const locationFeature = result.geojson.type === 'Polygon' ? polygon(result.geojson.coordinates) : multiPolygon(result.geojson.coordinates);
