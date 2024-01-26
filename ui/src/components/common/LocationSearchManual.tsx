@@ -118,6 +118,7 @@ const LocationSearchManual = ({ className }: { className?: string }) => {
           <Autocomplete
             id="location-search"
             options={options}
+            filterOptions={(options, state) => options}
             getOptionLabel={(option) => option.display_name || option.name}
             isOptionEqualToValue={(option, value) => option.place_id === value.place_id}
             inputValue={query}
