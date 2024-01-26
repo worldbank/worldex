@@ -33,7 +33,6 @@ const ClearButton = () =>
 
 
 const LocationSearchManual = ({ className }: { className?: string }) => {
-  const [value, setValue] = useState(null);
   const [query, setQuery] = useState("");
 
   const [options, setOptions] = useState([]);
@@ -90,7 +89,6 @@ const LocationSearchManual = ({ className }: { className?: string }) => {
 
   const selectLocation = (event: React.ChangeEvent<HTMLInputElement>, location: any | null) => {
     setQuery(location.display_name || location.option.name);
-    setValue(location);
 
     const [ minLat, maxLat, minLon, maxLon ] = location.boundingbox.map(parseFloat);
     const bbox = { minLat, maxLat, minLon, maxLon };
@@ -107,7 +105,7 @@ const LocationSearchManual = ({ className }: { className?: string }) => {
 
   const clearLocation = () => {
     setQuery("");
-    setValue(null);
+    // setValue(null);
     dispatch(setLocationResponse(null));
     setIsError(false);
     setOptions([]);
@@ -127,7 +125,7 @@ const LocationSearchManual = ({ className }: { className?: string }) => {
             // and also to reclaim the reserved space/padding for them
             forcePopupIcon={false}
             disableClearable
-            value={value}
+            // value={value}
             inputValue={query}
             onChange={selectLocation}
             renderInput={(params) => {
