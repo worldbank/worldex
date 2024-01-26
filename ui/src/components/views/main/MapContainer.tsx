@@ -9,6 +9,7 @@ import {
 import { styled } from '@mui/material/styles';
 import LocationSearch from 'components/common/LocationSearch';
 import Selected from 'components/common/sidebar/Selected';
+import LocationSearchManual from 'components/common/LocationSearchManual';
 
 const Map = lazy(
   () => import(/* webpackChunkName: 'map' */ 'components/common/map/Map'),
@@ -66,7 +67,8 @@ export default function MapContainer() {
       {hidden ? null : (
         <StyledZoomControl showCurrentZoom className="zoomControl" />
       )}
-      <LocationSearch className="absolute top-2.5 left-2.5 p-2" />
+      <LocationSearchManual className="absolute top-2.5 left-2.5 p-2 w-72" />
+      {/* <LocationSearch className="absolute top-2.5 left-2.5 p-2" /> */}
     </GridMapWrapper>
   );
 }

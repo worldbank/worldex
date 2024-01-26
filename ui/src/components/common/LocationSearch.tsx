@@ -108,7 +108,7 @@ const LocationSearch = ({ className }: { className?: string }) => {
   return (
     <Paper className={className}>
       <div className="flex items-end">
-        <form onSubmit={handleSubmit} onReset={clearLocation}>
+        <form className="w-full" onSubmit={handleSubmit} onReset={clearLocation}>
           <TextField
             error={isError}
             helperText={isError && "No results."}
