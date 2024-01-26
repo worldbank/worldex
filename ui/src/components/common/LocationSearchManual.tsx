@@ -43,34 +43,34 @@ const LocationSearchManual = ({ className }: { className?: string }) => {
   const { h3Index: selectedH3Index }: { h3Index: string } = useSelector((state: RootState) => state.selected);
   const viewState = useSelector((state: RootState) => state.carto.viewState);
 
-  // const getDatasets = async ({ result, zoom }: { result: any, zoom: number }) => {
-  //   const [_, resolution] = getClosestZoomResolutionPair(zoom);
-  //   const datasetsResp = await fetch('/api/datasets_by_location/', {
-  //     method: 'post',
-  //     headers: {
-  //       'Accept': 'application/json',
-  //       'Content-Type': 'application/json',
-  //     },
-  //     body: JSON.stringify({
-  //       location: JSON.stringify(result.geojson),
-  //       resolution,
-  //     })
-  //   });
-  //   const datasetsResults = await datasetsResp.json();
-  //   if (datasetsResults) {
-  //     dispatch(setFilteredDatasets(datasetsResults));
-  //   }
+  const getDatasets = async ({ location, zoom }: { location: any, zoom: number }) => {
+    const [_, resolution] = getClosestZoomResolutionPair(zoom);
+    const datasetsResp = await fetch('/api/datasets_by_location/', {
+      method: 'post',
+      headers: {
+        'Accept': 'application/json',
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        location: JSON.stringify(location.geojson),
+        resolution,
+      })
+    });
+    const datasetsResults = await datasetsResp.json();
+    if (datasetsResults) {
+      dispatch(setFilteredDatasets(datasetsResults));
+    }
 
-  //   dispatch(setPendingLocationCheck(true));
-  //   if (selectedH3Index) {
-  //     // deselect current tile if it's not among the tiles rendered inside the location feature
-  //     const locationFeature = result.geojson.type === 'Polygon' ? polygon(result.geojson.coordinates) : multiPolygon(result.geojson.coordinates);
-  //     const selectedTilePoint = point(cellToLatLng(selectedH3Index).reverse());
-  //     if (getResolution(selectedH3Index) != resolution || !booleanWithin(selectedTilePoint, locationFeature)) {
-  //       dispatch(setSelectedH3Index(null));
-  //     }
-  //   }
-  // }
+    dispatch(setPendingLocationCheck(true));
+    if (selectedH3Index) {
+      // deselect current tile if it's not among the tiles rendered inside the location feature
+      const locationFeature = (location.geojson.type === 'Polygon' ? polygon : multiPolygon)(location.geojson.coordinates);
+      const selectedTilePoint = point(cellToLatLng(selectedH3Index).reverse());
+      if (getResolution(selectedH3Index) != resolution || !booleanWithin(selectedTilePoint, locationFeature)) {
+        dispatch(setSelectedH3Index(null));
+      }
+    }
+  }
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault()
@@ -83,46 +83,32 @@ const LocationSearchManual = ({ className }: { className?: string }) => {
     if (results == null || results.length === 0) {
       setIsError(true);
     } else {
-      // console.log("setting options to", results)
       setOptions(results);
-      // const result = results[0];
-      // const [ minLat, maxLat, minLon, maxLon ] = result.boundingbox.map(parseFloat);
-      // const bbox = { minLat, maxLat, minLon, maxLon };
-      // dispatch(setLocationResponse(result));
-      // const { width, height } = viewState;
-      // const viewStateParams = bboxToViewStateParams({ bbox, width, height });
-      // const { zoom } = viewStateParams;
-      // @ts-ignore
-      // dispatch(setViewState({...viewState, ...viewStateParams }));
-      
-      // if (result && ['Polygon', 'MultiPolygon'].includes(result.geojson.type)) {
-      //   getDatasets({ result, zoom });
-      // }
     }
     setIsLoading(false);
   }
 
   const selectLocation = (event: React.ChangeEvent<HTMLInputElement>, location: any | null) => {
-    console.log("selectin location", location)
     setQuery(location.display_name || location.option.name);
     setValue(location);
-    // const result = results[0];
-      const [ minLat, maxLat, minLon, maxLon ] = location.boundingbox.map(parseFloat);
-      const bbox = { minLat, maxLat, minLon, maxLon };
-      dispatch(setLocationResponse(location));
-      const { width, height } = viewState;
-      const viewStateParams = bboxToViewStateParams({ bbox, width, height });
-      // const { zoom } = viewStateParams;
-      // @ts-ignore
-      dispatch(setViewState({...viewState, ...viewStateParams }));
-      // if (result && ['Polygon', 'MultiPolygon'].includes(result.geojson.type)) {
-      //   getDatasets({ result, zoom });
-      // }
-      
+
+    const [ minLat, maxLat, minLon, maxLon ] = location.boundingbox.map(parseFloat);
+    const bbox = { minLat, maxLat, minLon, maxLon };
+    dispatch(setLocationResponse(location));
+    const { width, height } = viewState;
+    const viewStateParams = bboxToViewStateParams({ bbox, width, height });
+    const { zoom } = viewStateParams;
+    // @ts-ignore
+    dispatch(setViewState({...viewState, ...viewStateParams }));
+    if (['Polygon', 'MultiPolygon'].includes(location.geojson.type)) {
+      getDatasets({ location, zoom });
+    }
   }
 
   const clearLocation = () => {
     setQuery("");
+    setValue(null);
+    dispatch(setLocationResponse(null));
     setIsError(false);
     setOptions([]);
     dispatch(setFilteredDatasets(null));
@@ -146,28 +132,30 @@ const LocationSearchManual = ({ className }: { className?: string }) => {
             onChange={selectLocation}
             renderInput={(params) => {
               return (
-              <TextField
-                {...params}
-                error={isError}
-                helperText={isError && "No results."}
-                label="Search location"
-                variant="outlined"
-                value={query}
-                onChange={
-                  (event: React.ChangeEvent<HTMLInputElement>) => {
-                    setIsError(false);
-                    setQuery(event.target.value);
+                <TextField
+                  {...params}
+                  error={isError}
+                  helperText={isError && "No results."}
+                  label="Search location"
+                  variant="outlined"
+                  value={query}
+                  onChange={
+                    (event: React.ChangeEvent<HTMLInputElement>) => {
+                      setIsError(false);
+                      setQuery(event.target.value);
+                    }
                   }
-                }
-                InputProps={{
-                  ...params.InputProps,
-                  className: `${params.InputProps.className} pr-0.5`,
-                  endAdornment: (<>
-                    <SearchButton isLoading={isLoading} />
-                    <ClearButton />
-                  </>)
-                }}
-            )}}
+                  InputProps={{
+                    ...params.InputProps,
+                    className: `${params.InputProps.className} pr-0.5`,
+                    endAdornment: (<>
+                      <SearchButton isLoading={isLoading} />
+                      <ClearButton />
+                    </>)
+                  }}
+                />
+              )
+            }}
             // renderOption={(props, option) => {
             //   return <div className="hidden" />
             // }}
@@ -177,5 +165,6 @@ const LocationSearchManual = ({ className }: { className?: string }) => {
       </div>
     </Paper>
   )
+}
 
 export default LocationSearchManual;
