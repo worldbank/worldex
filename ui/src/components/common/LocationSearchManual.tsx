@@ -105,7 +105,6 @@ const LocationSearchManual = ({ className }: { className?: string }) => {
 
   const clearLocation = () => {
     setQuery("");
-    // setValue(null);
     dispatch(setLocationResponse(null));
     setIsError(false);
     setOptions([]);
@@ -121,43 +120,38 @@ const LocationSearchManual = ({ className }: { className?: string }) => {
             options={options}
             getOptionLabel={(option) => option.display_name || option.name}
             isOptionEqualToValue={(option, value) => option.place_id === value.place_id}
+            inputValue={query}
+            onChange={selectLocation}
+            renderInput={(params) => <TextField
+              {...params}
+              error={isError}
+              helperText={isError && "No results."}
+              label="Search location"
+              variant="outlined"
+              value={query}
+              onChange={
+                (event: React.ChangeEvent<HTMLInputElement>) => {
+                  setIsError(false);
+                  setQuery(event.target.value);
+                }
+              }
+              InputProps={{
+                ...params.InputProps,
+                endAdornment: (<>
+                    <SearchButton isLoading={isLoading} />
+                    <ClearButton />
+                  </>)
+                }}
+            />}
             // we disable popup and clear since we implement custom behaviors,
             // and also to reclaim the reserved space/padding for them
             forcePopupIcon={false}
             disableClearable
-            // value={value}
-            inputValue={query}
-            onChange={selectLocation}
-            renderInput={(params) => {
-              return (
-                <TextField
-                  {...params}
-                  error={isError}
-                  helperText={isError && "No results."}
-                  label="Search location"
-                  variant="outlined"
-                  value={query}
-                  onChange={
-                    (event: React.ChangeEvent<HTMLInputElement>) => {
-                      setIsError(false);
-                      setQuery(event.target.value);
-                    }
-                  }
-                  InputProps={{
-                    ...params.InputProps,
-                    className: `${params.InputProps.className} pr-0.5`,
-                    endAdornment: (<>
-                      <SearchButton isLoading={isLoading} />
-                      <ClearButton />
-                    </>)
-                  }}
-                />
-              )
-            }}
-            // renderOption={(props, option) => {
-            //   return <div className="hidden" />
-            // }}
-            // open={options.length > 0}
+            // prevent the 'No options' notice from showing
+            // while the user is still inputting their query
+            open={options.length > 0}
+            openOnFocus={false}
+            onClose={(event: React.SyntheticEvent, reason: string) => {setOptions([])}}
           />
         </form>
       </div>
