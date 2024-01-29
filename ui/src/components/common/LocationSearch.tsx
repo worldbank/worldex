@@ -1,7 +1,7 @@
 import { setViewState } from '@carto/react-redux';
 import ClearIcon from '@mui/icons-material/Clear';
 import SearchIcon from '@mui/icons-material/Search';
-import { CircularProgress, IconButton, Paper, TextField } from "@mui/material";
+import { Autocomplete, CircularProgress, IconButton, Paper, TextField } from "@mui/material";
 import booleanWithin from "@turf/boolean-within";
 import { multiPolygon, point, polygon } from "@turf/helpers";
 import { cellToLatLng, getResolution } from "h3-js";
@@ -12,6 +12,9 @@ import { setH3Index as setSelectedH3Index } from 'store/selectedSlice';
 import { RootState } from "store/store";
 import bboxToViewStateParams from 'utils/bboxToViewStateParams';
 import getClosestZoomResolutionPair from 'utils/getClosestZoomResolutionPair';
+import isEqual from 'lodash.isequal';
+import uniqWith from 'lodash.uniqwith';
+import isEqualWith from 'lodash.isequalwith';
 
 const SearchButton = ({isLoading}: {isLoading: boolean}) =>
   <div className="flex justify-center items-center w-[2em] mr-[-8px]">
@@ -35,13 +38,14 @@ const ClearButton = () =>
 const LocationSearch = ({ className }: { className?: string }) => {
   const [query, setQuery] = useState("");
 
+  const [options, setOptions] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
   const [isError, setIsError] = useState(false);
   const dispatch = useDispatch();
   const { h3Index: selectedH3Index }: { h3Index: string } = useSelector((state: RootState) => state.selected);
   const viewState = useSelector((state: RootState) => state.carto.viewState);
 
-  const getDatasets = async ({ result, zoom }: { result: any, zoom: number }) => {
+  const getDatasets = async ({ location, zoom }: { location: any, zoom: number }) => {
     const [_, resolution] = getClosestZoomResolutionPair(zoom);
     const datasetsResp = await fetch('/api/datasets_by_location/', {
       method: 'post',
@@ -50,7 +54,7 @@ const LocationSearch = ({ className }: { className?: string }) => {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        location: JSON.stringify(result.geojson),
+        location: JSON.stringify(location.geojson),
         resolution,
       })
     });
@@ -62,7 +66,7 @@ const LocationSearch = ({ className }: { className?: string }) => {
     dispatch(setPendingLocationCheck(true));
     if (selectedH3Index) {
       // deselect current tile if it's not among the tiles rendered inside the location feature
-      const locationFeature = result.geojson.type === 'Polygon' ? polygon(result.geojson.coordinates) : multiPolygon(result.geojson.coordinates);
+      const locationFeature = (location.geojson.type === 'Polygon' ? polygon : multiPolygon)(location.geojson.coordinates);
       const selectedTilePoint = point(cellToLatLng(selectedH3Index).reverse());
       if (getResolution(selectedH3Index) != resolution || !booleanWithin(selectedTilePoint, locationFeature)) {
         dispatch(setSelectedH3Index(null));
@@ -75,62 +79,92 @@ const LocationSearch = ({ className }: { className?: string }) => {
     setIsLoading(true);
     const encodedQuery = new URLSearchParams(query).toString()
     const resp = await fetch(
-      `https://nominatim.openstreetmap.org/search?q=${encodedQuery}&format=json&limit=1&polygon_geojson=1`,
+      `https://nominatim.openstreetmap.org/search?q=${encodedQuery}&format=json&polygon_geojson=1`,
     );
     const results = await resp.json();
     if (results == null || results.length === 0) {
       setIsError(true);
     } else {
-      const result = results[0];
-      const [ minLat, maxLat, minLon, maxLon ] = result.boundingbox.map(parseFloat);
-      const bbox = { minLat, maxLat, minLon, maxLon };
-      dispatch(setLocationResponse(result));
-      const { width, height } = viewState;
-      const viewStateParams = bboxToViewStateParams({ bbox, width, height });
-      const { zoom } = viewStateParams;
-      // @ts-ignore
-      dispatch(setViewState({...viewState, ...viewStateParams }));
-      
-      if (result && ['Polygon', 'MultiPolygon'].includes(result.geojson.type)) {
-        getDatasets({ result, zoom });
-      }
+      const dedupedResults = uniqWith(results, (result: any, other: any) =>
+        isEqualWith(result, other, (result: any, other: any) =>
+          isEqual(result.geojson.coordinates, other.geojson.coordinates)
+        )
+      );
+      setOptions(dedupedResults);
     }
     setIsLoading(false);
+  }
+
+  const selectLocation = (event: React.ChangeEvent<HTMLInputElement>, location: any | null) => {
+    setQuery(location.display_name || location.option.name);
+
+    const [ minLat, maxLat, minLon, maxLon ] = location.boundingbox.map(parseFloat);
+    const bbox = { minLat, maxLat, minLon, maxLon };
+    // TODO: rename from location response to something more descriptive
+    dispatch(setLocationResponse(location));
+    const { width, height } = viewState;
+    const viewStateParams = bboxToViewStateParams({ bbox, width, height });
+    const { zoom } = viewStateParams;
+    // @ts-ignore
+    dispatch(setViewState({...viewState, ...viewStateParams }));
+    if (['Polygon', 'MultiPolygon'].includes(location.geojson.type)) {
+      getDatasets({ location, zoom });
+    }
   }
 
   const clearLocation = () => {
     setQuery("");
     setIsError(false);
+    setOptions([]);
     dispatch(setLocationResponse(null));
     dispatch(setFilteredDatasets(null));
   }
 
+  // use Autocomplete as the base component since it conveniently
+  // combines free text search and dropdown functionalities
   return (
     <Paper className={className}>
       <div className="flex items-end">
         <form className="w-full" onSubmit={handleSubmit} onReset={clearLocation}>
-          <TextField
-            error={isError}
-            helperText={isError && "No results."}
-            label="Search Location"
-            variant="outlined"
-            value={query}
-            onChange={
-              (event: React.ChangeEvent<HTMLInputElement>) => {
-                setIsError(false);
-                setQuery(event.target.value);
+          <Autocomplete
+            id="location-search"
+            options={options}
+            // disable filtering based on substring matching; simply use all of nominatim's results
+            filterOptions={(options, state) => options}
+            getOptionLabel={(option) => option.display_name || option.name}
+            isOptionEqualToValue={(option, value) => option.place_id === value.place_id}
+            inputValue={query}
+            onChange={selectLocation}
+            renderInput={(params) => <TextField
+              {...params}
+              error={isError}
+              helperText={isError && "No results."}
+              label="Search location"
+              variant="outlined"
+              value={query}
+              onChange={
+                (event: React.ChangeEvent<HTMLInputElement>) => {
+                  setIsError(false);
+                  setQuery(event.target.value);
+                }
               }
-            }
-            InputProps={{
-              // @ts-ignore
-              endAdornment: (
-                <>
-                  <SearchButton isLoading={isLoading} />
-                  <ClearButton />
-                </>
-              ),
-              className: "pr-0.5"
-            }}
+              InputProps={{
+                ...params.InputProps,
+                endAdornment: (<>
+                    <SearchButton isLoading={isLoading} />
+                    <ClearButton />
+                  </>)
+                }}
+            />}
+            // disable popup and clear to reclaim their reserved space
+            // custom behavior is used in their place
+            forcePopupIcon={false}
+            disableClearable
+            // prevent the 'No options' notice from showing
+            // while the user is still inputting their query
+            open={options.length > 0}
+            openOnFocus={false}
+            onClose={(event: React.SyntheticEvent, reason: string) => {setOptions([])}}
           />
         </form>
       </div>
