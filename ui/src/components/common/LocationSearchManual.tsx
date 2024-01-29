@@ -12,6 +12,9 @@ import { setH3Index as setSelectedH3Index } from 'store/selectedSlice';
 import { RootState } from "store/store";
 import bboxToViewStateParams from 'utils/bboxToViewStateParams';
 import getClosestZoomResolutionPair from 'utils/getClosestZoomResolutionPair';
+import isEqual from 'lodash.isequal';
+import uniqWith from 'lodash.uniqwith';
+import isEqualWith from 'lodash.isequalwith';
 
 const SearchButton = ({isLoading}: {isLoading: boolean}) =>
   <div className="flex justify-center items-center w-[2em] mr-[-8px]">
@@ -82,7 +85,12 @@ const LocationSearchManual = ({ className }: { className?: string }) => {
     if (results == null || results.length === 0) {
       setIsError(true);
     } else {
-      setOptions(results);
+      const dedupedResults = uniqWith(results, (result: any, other: any) =>
+        isEqualWith(result, other, (result: any, other: any) =>
+          isEqual(result.geojson.coordinates, other.geojson.coordinates)
+        )
+      );
+      setOptions(dedupedResults);
     }
     setIsLoading(false);
   }
