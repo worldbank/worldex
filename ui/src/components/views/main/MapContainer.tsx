@@ -4,7 +4,7 @@ import ZoomControl from 'components/common/ZoomControl';
 import { getLayers } from 'components/layers';
 import { useSelector } from 'react-redux';
 import {
-  Grid, useMediaQuery, Theme, GridProps, Paper, Card,
+  Grid, useMediaQuery, Theme, GridProps,
 } from '@mui/material';
 import { styled } from '@mui/material/styles';
 import LocationSearch from 'components/common/LocationSearch';

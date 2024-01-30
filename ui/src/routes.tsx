@@ -1,8 +1,6 @@
 import { lazy } from 'react';
 import ProtectedRoute from 'components/common/ProtectedRoute';
 import DefaultView from 'components/common/DefaultView';
-import { Navigate, useParams } from 'react-router-dom';
-import Selected from 'components/common/sidebar/Selected';
 import SidebarContent from 'components/common/sidebar/Content';
 
 const Main = lazy(

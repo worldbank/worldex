@@ -1,4 +1,3 @@
-import { ZOOM_H3_RESOLUTION_PAIRS } from 'constants/h3';
 import { AT as atRegex } from 'constants/regex';
 import {
   addLayer,
@@ -18,7 +17,7 @@ import { Grid } from '@mui/material';
 import { styled } from '@mui/material/styles';
 import LazyLoadComponent from 'components/common/LazyLoadComponent';
 import { useMapHooks } from 'components/common/map/useMapHooks';
-import { useParams, useSearchParams } from 'react-router-dom';
+import { useSearchParams } from 'react-router-dom';
 import { RootState } from 'store/store';
 import { setClosestZoom, setH3Resolution } from 'store/appSlice';
 import getClosestZoomResolutionPair from 'utils/getClosestZoomResolutionPair';

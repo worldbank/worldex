@@ -1,6 +1,5 @@
 import { POSITRON } from '@carto/react-basemaps';
 import { InitialCarto3State } from '@carto/react-redux';
-import { FlyToInterpolator, TRANSITION_EVENTS } from '@deck.gl/core/typed';
 
 export const initialState: InitialCarto3State = {
   viewState: {
