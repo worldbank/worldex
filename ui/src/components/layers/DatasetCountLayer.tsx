@@ -55,7 +55,8 @@ export default function DatasetCountLayer() {
           },
         },
       },
-      onClick: async (info: any, event: any) => {
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      onClick: async (info: any, event: object) => {
         const targetIndex = info.object.index;
         if (selectedH3Index === targetIndex) {
           dispatch(setSelectedH3Index(null));
@@ -98,7 +99,7 @@ export default function DatasetCountLayer() {
           }
         }
       },
-      renderSubLayers: (props: any) => new H3HexagonLayer(props, {
+      renderSubLayers: (props: object) => new H3HexagonLayer(props, {
         getHexagon: ((d: DatasetCount) => d.index),
         pickable: true,
         stroked: true,

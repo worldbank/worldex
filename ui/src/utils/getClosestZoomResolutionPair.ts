@@ -1,3 +1,4 @@
+/* eslint-disable no-else-return, no-restricted-syntax */
 import { ZOOM_H3_RESOLUTION_PAIRS } from 'constants/h3';
 
 const getClosestZoomResolutionPair = (currentZoom: number): [number, number] => {
@@ -7,7 +8,6 @@ const getClosestZoomResolutionPair = (currentZoom: number): [number, number] => 
     } else if (z > currentZoom) {
       return ZOOM_H3_RESOLUTION_PAIRS[idx - 1];
     }
-    // eslint-disable-next-line no-else-return
   }
   return ZOOM_H3_RESOLUTION_PAIRS.at(-1);
 };

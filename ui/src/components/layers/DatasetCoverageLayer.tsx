@@ -57,7 +57,7 @@ export default function DatasetCoverageLayer() {
           dispatch(setPendingLocationCheck(false));
         }
       },
-      renderSubLayers: (props: any) => new H3HexagonLayer(props, {
+      renderSubLayers: (props: object) => new H3HexagonLayer(props, {
         getHexagon: (d: string) => d,
         stroked: true,
         lineWidthMinPixels: 1,

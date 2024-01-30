@@ -1,3 +1,4 @@
+/* eslint-disable no-restricted-syntax */
 export const hexToRgb = (hex: string): [number, number, number] => {
   const numericValue = parseInt(hex.startsWith('#') ? hex.slice(1) : hex, 16);
   const r = (numericValue >> 16) & 0xFF;
@@ -6,11 +7,17 @@ export const hexToRgb = (hex: string): [number, number, number] => {
   return [r, g, b];
 };
 
-export const colorBins = ({ attr, domains, colors }: { attr: string, domains: number[], colors: number[][] }) => ((d: any) => {
-  for (const [idx, value] of domains.entries()) {
-    if (d[attr] < value) {
-      return [...colors[idx]];
+export const colorBins = <K extends PropertyKey>({ attr, domains, colors }: {
+  attr: K;
+  domains: number[];
+  colors: number[][];
+}) => (
+    (d: Record<K, number>) => {
+      for (const [idx, value] of domains.entries()) {
+        if (d[attr] < value) {
+          return [...colors[idx]];
+        }
+      }
+      return [...colors.at(-1)];
     }
-  }
-  return [...colors.at(-1)];
-});
+  );

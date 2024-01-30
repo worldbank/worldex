@@ -31,9 +31,9 @@ module.exports = {
         "react",
         "@typescript-eslint"
     ],
-    // TODO: set reasonable rules from warn to error (default) and resolve offending files
+    // set reasonable rules from warn to error and resolve offending files
     "rules": {
-        "@typescript-eslint/ban-ts-comment": "warn",
+        "@typescript-eslint/ban-ts-comment": "off",
         "@typescript-eslint/naming-convention": "warn",
         "@typescript-eslint/no-explicit-any": "warn",
         "@typescript-eslint/no-shadow": "warn",
@@ -42,9 +42,11 @@ module.exports = {
         "consistent-return": "warn",
         "import/no-cycle": "warn",
         "import/no-extraneous-dependencies": "warn",
-        "import/prefer-default-export": "warn",
+        // bc of carto template files
+        "import/no-extraneous-dependencies": "off",
+        "import/prefer-default-export": "off",
         "jsx-a11y/anchor-is-valid": "warn",
-        "max-len": "warn",
+        "max-len": ["warn", { "code": 120 }],
         "no-bitwise": "off",
         "no-else-return": "warn",
         "no-nested-ternary": "warn",
