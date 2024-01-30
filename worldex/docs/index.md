@@ -2,14 +2,30 @@
 
 ## Introduction
 
-`worldex` is a python package for cataloging the geospatial data using h3 indices. It provides a suite of tools that standardizes cataloging geospatial data and streamlines common processes needed for indexing data.
+`worldex` is a python package for cataloging geospatial data using H3 indices. It provides a suite of tools that standardizes cataloging geospatial data and streamlines common processes needed for indexing data.
 
-## Concepts
+## H3 indices
 
-#### H3 indices
+H3 is a geospatial indexing system that partitions the world into hexagonal cells with varying resolutions. It can index both vector and raster data into indexes that allows for quick aggregation for visualizations.
 
-H3 is a geospatial indexing system that partitions the world into hexagonal cells. Some advantages using H3.
+To learn more about H3 indices, go to the official documentation: https://h3geo.org/docs/
 
-To learn more about H3 indices, go to the official documentaiton: https://h3geo.org/docs/
+## Catalog Fields
 
-### Dataset
+A list of fields worldex considers
+
+1. `id` - A unique id for dataset within the worldex system. By default generated a uuid4 for this. This helps keep track of future updates.
+2. `name` - The name of the dataset.
+3. `source_org` - The organization where this dataset was stored.
+4. `last_fetched` - The date where the dataset was last fetched for indexing.
+5. `files` - A list of urls or file paths of the files.
+6. `description` - A description of the datasets
+7. `data_format` - The data format of the data
+8. `projection` - The projection of the data
+9. `properties` - A dictionary containing additional information regarding the dataset that is not part of the fields
+10. `bbox` - WKT representation of the bounds of the dataset
+11. `keywords` - A list of strings for the dataset
+12. `date_start` - The start of date range of the dataset covers
+13. `date_end` - The start of date range of the dataset covers
+14. `accessibility` - The accessibility of the data
+15. `url` - A url for the website

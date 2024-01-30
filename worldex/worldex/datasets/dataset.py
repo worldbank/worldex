@@ -15,6 +15,7 @@ from typing_extensions import Literal
 
 from ..handlers.raster_handlers import RasterHandler
 from ..handlers.vector_handlers import VectorHandler
+from ..utils.deep_merge import deep_merge
 
 
 class BaseDataset(BaseModel):
@@ -39,6 +40,7 @@ class BaseDataset(BaseModel):
     date_end: Optional[date] = None
     accessibility: Optional[Literal["public/open", "public/login", "private"]] = None
     url: Optional[AnyUrl] = None
+    _home_url: Optional[AnyUrl] = None
 
     def set_dir(self, dir):
         self._dir = Path(dir)
@@ -55,6 +57,90 @@ class BaseDataset(BaseModel):
         with open(self.dir / "metadata.json", "w") as f:
             f.write(self.model_dump_json())
 
+    def get_base_metadata_schema(self):
+        home_url = self._home_url
+        bbox = wkt.loads(self.bbox)
+        metadata_information = dict(
+            title=self.name, producers=[], production_date=self.last_fetched
+        )
+        description = dict(
+            idno=self.id,
+            language="eng",
+            characterSet=["utf8"],
+            hierarchyLevel="dataset",
+            contact=[
+                dict(
+                    organizationName=self.source_org,
+                    contactInfo=dict(
+                        onlineResource=dict(linkage=home_url, name="Website")
+                    ),
+                    role="pointOfContact",
+                ),
+            ],
+            metadataStandardName="ISO 19115:2003/19139",
+            # TODO: Fix this
+            referenceSystemInfo=[
+                dict(code=self.projection, codeSpace="EPSG"),
+                dict(code="WGS 84", codeSpace="World Geodetic System (WGS)"),
+            ],
+            identificationInfo=dict(
+                abstract=self.description,
+                credit=self.source_org,
+                status="completed",
+                pointOfContact=[],
+                resourceMaintenance=[dict(maintenanceOrUpdateFrequency="notPlanned")],
+                # TODO: FIX
+                descriptiveKeywords=[],
+                resourceConstraints=[
+                    dict(
+                        legalConstraints=dict(
+                            accessConstraints=["unrestricted"],
+                            useConstraints=["licenceUnrestricted"],
+                        )
+                    )
+                ],
+                extent=dict(
+                    geographicElement=[
+                        dict(
+                            geographicBoundingBox=dict(
+                                southBoundLatitude=bbox.bounds[0],
+                                westBoundLongitude=bbox.bounds[1],
+                                northBoundLatitude=bbox.bounds[2],
+                                eastBoundLongitude=bbox.bounds[3],
+                            )
+                        ),
+                    ],
+                ),
+                language=["eng"],
+                characterSet=list(dict(codeListValue="utf8")),
+                distributionInfo=dict(
+                    distributor=[
+                        dict(
+                            organizationName=self.source_org,
+                            contactInfo=dict(
+                                onlineResource=dict(linkage=home_url, name="Website")
+                            ),
+                            role="pointOfContact",
+                        )
+                    ],
+                ),
+                metadataMaintenance=dict(maintenanceAndUpdateFrequency="notPlanned"),
+            ),
+        )
+        return {
+            "metadata_information": metadata_information,
+            "description": description,
+        }
+
+    def get_specific_metadata_schema(self):
+        return {}
+
+    def to_metadata_schema(self, others=None):
+        base_schema = self.get_base_metadata_schema()
+        default = self.get_specific_metadata_schema() or {}
+        others = others if others else {}
+        return deep_merge(base_schema, default, others)
+
     @property
     def dir(self):
         return self._dir
@@ -64,9 +150,7 @@ class BaseDataset(BaseModel):
         h3indices = handler.h3index()
         self.bbox = wkt.dumps(box(*handler.bbox))
         df = pd.DataFrame({"h3_index": h3indices})
-        df.to_parquet(self.dir / "h3.parquet", index=False)
-        with open(self.dir / "metadata.json", "w") as f:
-            f.write(self.model_dump_json())
+        self.write(df)
         return df
 
     def index_from_riosrc(self, src, window=None):
