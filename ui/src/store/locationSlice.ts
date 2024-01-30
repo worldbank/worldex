@@ -5,8 +5,7 @@ const slice = createSlice({
   name: 'location',
   initialState: {
     query: null,
-    // TODO: rename as result?
-    response: null,
+    location: null,
     filteredDatasets: null,
     pendingLocationCheck: false,
   },
@@ -14,8 +13,8 @@ const slice = createSlice({
     setQuery: (state, action) => {
       state.query = action.payload;
     },
-    setResponse: (state, action) => {
-      state.response = action.payload;
+    setLocation: (state, action) => {
+      state.location = action.payload;
     },
     setFilteredDatasets: (state, action) => {
       state.filteredDatasets = action.payload;
@@ -32,8 +31,8 @@ export const setQuery = (payload: string | null) => ({
   type: 'location/setQuery',
   payload,
 });
-export const setResponse = (payload: any) => ({
-  type: 'location/setResponse',
+export const setLocation = (payload: any) => ({
+  type: 'location/setLocation',
   payload,
 });
 export const setFilteredDatasets = (payload: Dataset[]) => ({

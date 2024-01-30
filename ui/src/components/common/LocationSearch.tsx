@@ -7,7 +7,7 @@ import { multiPolygon, point, polygon } from "@turf/helpers";
 import { cellToLatLng, getResolution } from "h3-js";
 import React, { useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { setFilteredDatasets, setResponse as setLocationResponse, setPendingLocationCheck } from 'store/locationSlice';
+import { setFilteredDatasets, setLocation, setPendingLocationCheck } from 'store/locationSlice';
 import { setH3Index as setSelectedH3Index } from 'store/selectedSlice';
 import { RootState } from "store/store";
 import bboxToViewStateParams from 'utils/bboxToViewStateParams';
@@ -100,8 +100,7 @@ const LocationSearch = ({ className }: { className?: string }) => {
 
     const [ minLat, maxLat, minLon, maxLon ] = location.boundingbox.map(parseFloat);
     const bbox = { minLat, maxLat, minLon, maxLon };
-    // TODO: rename from location response to something more descriptive
-    dispatch(setLocationResponse(location));
+    dispatch(setLocation(location));
     const { width, height } = viewState;
     const viewStateParams = bboxToViewStateParams({ bbox, width, height });
     const { zoom } = viewStateParams;
@@ -116,7 +115,7 @@ const LocationSearch = ({ className }: { className?: string }) => {
     setQuery("");
     setIsError(false);
     setOptions([]);
-    dispatch(setLocationResponse(null));
+    dispatch(setLocation(null));
     dispatch(setFilteredDatasets(null));
   }
 

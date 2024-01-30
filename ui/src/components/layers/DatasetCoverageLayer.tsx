@@ -15,7 +15,7 @@ export default function DatasetCoverageLayer() {
   const source = useSelector((state) => selectSourceById(state, datasetCoverageLayer?.source));
   const { selectedDataset } = useSelector((state: RootState) => state.selected);
   const { h3Resolution: resolution, closestZoom } = useSelector((state: RootState) => state.app);
-  const { response: location, pendingLocationCheck } = useSelector((state: RootState) => state.location);
+  const { location, pendingLocationCheck } = useSelector((state: RootState) => state.location);
   const BLUE_600 = hexToRgb(blue['600']); // #1e88e5
   const dispatch = useDispatch();
 
