@@ -72,6 +72,7 @@ export default function DatasetCountLayer() {
       onHover: (info: any) => {
         if (info?.object) {
           if (info?.object?.index) {
+            // eslint-disable-next-line no-param-reassign
             info.object = {
               html: renderToStaticMarkup(
                 <>
@@ -103,7 +104,11 @@ export default function DatasetCountLayer() {
         stroked: true,
         lineWidthMinPixels: 1,
         // @ts-ignore
-        getLineColor: (d: DatasetCount) => (d.index === selectedH3Index ? [...SELECTED_OUTLINE, 255] : [...getColor(d), selectedDataset ? 12 : 160]),
+        getLineColor: (d: DatasetCount) => (
+          d.index === selectedH3Index
+            ? [...SELECTED_OUTLINE, 255]
+            : [...getColor(d), selectedDataset ? 12 : 160]
+        ),
         // @ts-ignore
         getFillColor: (d: DatasetCount) => [...getColor(d), selectedDataset ? 60 : 200],
         filled: true,

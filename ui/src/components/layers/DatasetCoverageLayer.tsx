@@ -51,13 +51,14 @@ export default function DatasetCoverageLayer() {
       refinementStrategy: 'never',
       onViewportLoad: (data) => {
         if (pendingLocationCheck && data.every((tile) => tile.content.length === 0)) {
-          // if location search result filters out all tiles of the selected dataset, then deselect the dataset
+          // if location search result filters out all tiles of
+          // the selected dataset, then deselect the dataset
           dispatch(setSelectedDataset(null));
           dispatch(setPendingLocationCheck(false));
         }
       },
       renderSubLayers: (props: any) => new H3HexagonLayer(props, {
-        getHexagon: (d: any) => d,
+        getHexagon: (d: string) => d,
         stroked: true,
         lineWidthMinPixels: 1,
         getLineColor: [...BLUE_600, 120],
