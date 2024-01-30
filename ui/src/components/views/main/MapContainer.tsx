@@ -8,7 +8,6 @@ import {
 } from '@mui/material';
 import { styled } from '@mui/material/styles';
 import LocationSearch from 'components/common/LocationSearch';
-import Selected from 'components/common/sidebar/Selected';
 
 const Map = lazy(
   () => import(/* webpackChunkName: 'map' */ 'components/common/map/Map'),
@@ -63,10 +62,8 @@ export default function MapContainer() {
   return (
     <GridMapWrapper item isGmaps={isGmaps}>
       <Map layers={layers} />
-      {hidden ? null : (
-        <StyledZoomControl showCurrentZoom className="zoomControl" />
-      )}
-      <LocationSearch className="absolute top-2.5 left-2.5 p-2" />
+      {!hidden && <StyledZoomControl showCurrentZoom className="zoomControl" />}
+      <LocationSearch className="absolute top-2.5 left-2.5 p-2 w-72" />
     </GridMapWrapper>
   );
 }

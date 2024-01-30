@@ -17,7 +17,7 @@ export default function DatasetCountLayer() {
   const source = useSelector((state: RootState) => selectSourceById(state, datasetH3Layer?.source));
   const { selectedDataset, h3Index: selectedH3Index } = useSelector((state: RootState) => state.selected);
   const { h3Resolution: resolution, closestZoom } = useSelector((state: RootState) => state.app);
-  const { response: location } = useSelector((state: RootState) => state.location);
+  const { location } = useSelector((state: RootState) => state.location);
   const dispatch = useDispatch();
 
   const domains = (import.meta.env.VITE_DATASET_COUNT_BINS).split(',').map(Number);

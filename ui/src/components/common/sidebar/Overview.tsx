@@ -13,7 +13,7 @@ const Overview = () => {
   const dispatch = useDispatch();
   const h3Resolution = useSelector((state: RootState) => state.app.h3Resolution);
   const { selectedDataset } = useSelector((state: RootState) => state.selected);
-  const { response: location, filteredDatasets }: { response: any, filteredDatasets: Dataset[] } = useSelector((state: RootState) => state.location);
+  const { location, filteredDatasets }: { location: any, filteredDatasets: Dataset[] } = useSelector((state: RootState) => state.location);
   const datasetsByOrgs = filteredDatasets ? groupBy(filteredDatasets, "source_org") : null;
   
   useEffect(() => {
