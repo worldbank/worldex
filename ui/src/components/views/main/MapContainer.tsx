@@ -8,6 +8,7 @@ import {
 } from '@mui/material';
 import { styled } from '@mui/material/styles';
 import LocationSearch from 'components/common/LocationSearch';
+import { RootState } from 'store/store';
 
 const Map = lazy(
   () => import(/* webpackChunkName: 'map' */ 'components/common/map/Map'),
@@ -52,8 +53,12 @@ const StyledZoomControl = styled(ZoomControl)(({ theme }) => ({
 
 export default function MapContainer() {
   const isGmaps = useSelector(
-    // @ts-ignore
-    (state) => BASEMAPS[state.carto.basemap].type === 'gmaps',
+    (state: RootState) => (
+      typeof state.carto.basemap === 'string'
+        // @ts-ignore
+        ? BASEMAPS[state.carto.basemap].type
+        : state.carto.basemap.type
+    ) === 'gmaps',
   );
   const layers = getLayers();
 
