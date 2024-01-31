@@ -10,8 +10,10 @@ import { useMapHooks } from './useMapHooks';
 export default function DeckGLComponent({ layers }: { layers: any[] }) {
   const viewState = useSelector((state: RootState) => state.carto.viewState);
   const basemap = useSelector(
-    // @ts-ignore
-    (state: RootState) => BASEMAPS[state.carto.basemap],
+    (state: RootState) => typeof state.carto.basemap === 'string'
+      // @ts-ignore
+      ? BASEMAPS[state.carto.basemap]
+      : state.carto.basemap,
   );
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));

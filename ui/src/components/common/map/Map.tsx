@@ -3,6 +3,7 @@ import { useSelector } from 'react-redux';
 import 'maplibre-gl/dist/maplibre-gl.css';
 import { styled } from '@mui/material/styles';
 import { BASEMAPS } from '@carto/react-basemaps';
+import { RootState } from 'store/store';
 
 const DeckGLComponent = lazy(
   () =>
@@ -29,8 +30,12 @@ const MapContainer = styled('div')(({ theme }) => ({
 }));
 
 export default function Map({ layers }: { layers: any[] }) {
-  // @ts-ignore
-  const basemap = useSelector((state) => BASEMAPS[state.carto.basemap]);
+  const basemap = useSelector(
+    (state: RootState) => typeof state.carto.basemap === 'string'
+      // @ts-ignore
+      ? BASEMAPS[state.carto.basemap]
+      : state.carto.basemap,
+  );
 
   const mapsAvailable = {
     [BASEMAP_TYPES.mapbox]: () => <DeckGLComponent layers={layers} />,

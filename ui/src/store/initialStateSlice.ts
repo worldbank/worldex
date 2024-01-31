@@ -1,6 +1,13 @@
 import { POSITRON } from '@carto/react-basemaps';
 import { InitialCarto3State } from '@carto/react-redux';
 
+const STAMEN_TONER = {
+  type: 'mapbox',
+  options: {
+    mapStyle: 'https://tiles.stadiamaps.com/styles/stamen_toner_lite.json',
+  },
+};
+
 export const initialState: InitialCarto3State = {
   viewState: {
     latitude: 31.802892,
@@ -14,7 +21,8 @@ export const initialState: InitialCarto3State = {
     // transitionInterpolator: new FlyToInterpolator(),
     // transitionInterruption: TRANSITION_EVENTS.IGNORE,
   },
-  basemap: POSITRON,
+  // @ts-ignore
+  basemap: (import.meta.env.VITE_USE_STAMEN_TONER) === 'true' ? STAMEN_TONER : POSITRON,
   credentials: {}, // carto-required but unnecessary
   googleApiKey: '', // only required when using a Google Basemap,
   googleMapId: '', // only required when using a Google Custom Basemap
