@@ -23,6 +23,7 @@
     "@loaders.gl/polyfills": "4.1.0-alpha.11",
     "@loaders.gl/schema": "4.1.0-alpha.11",
     "@loaders.gl/shapefile": "4.1.0-alpha.11",
+    "@loaders.gl/zip": "^4.0.5",
     "@mapbox/tile-cover": "^3.0.2",
     "@mui/icons-material": "^5.14.16",
     "@mui/material": "^5.14.16",
