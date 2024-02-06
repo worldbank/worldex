@@ -9,7 +9,7 @@ import type { BinaryGeometry, Geometry } from '@loaders.gl/schema';
 import { SHPLoader } from '@loaders.gl/shapefile';
 import { ZipLoader } from '@loaders.gl/zip';
 import { useEffect, useState } from 'react';
-import { setFileUrl, setIsLoadingPreview } from 'store/previewSlice';
+import { setErrorMessage, setFileUrl, setIsLoadingPreview } from 'store/previewSlice';
 import { RootState } from 'store/store';
 import bboxToViewStateParams from 'utils/bboxToViewStateParams';
 import { hexToRgb } from 'utils/colors';
@@ -73,7 +73,7 @@ export default function PreviewLayer() {
         const filename = Object.keys(d).find((k) => k.endsWith('.shp'));
         return parse(d[filename], [SHPLoader], { shapefile: { shape: 'geojson-table' } });
       }).then((d: object) => {
-        console.log(d);
+        // console.log(d);
         // @ts-ignore
         const geometries = parseGeometries(d.geometries);
         const features = joinProperties(geometries, []);
@@ -85,7 +85,7 @@ export default function PreviewLayer() {
           shape: 'geojson-table',
           type: 'FeatureCollection',
         };
-        console.log(ret);
+        // console.log(ret);
         const {
           minX: minLon,
           minY: minLat,
@@ -104,6 +104,7 @@ export default function PreviewLayer() {
         return ret;
       }).catch((e) => {
         dispatch(setFileUrl(null));
+        dispatch(setErrorMessage(e.message));
       })
         .finally(() => {
           dispatch(setIsLoadingPreview(false));

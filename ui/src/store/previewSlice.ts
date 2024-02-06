@@ -6,6 +6,7 @@ const slice = createSlice({
   initialState: {
     fileUrl: null,
     isLoadingPreview: false,
+    errorMessage: null,
   },
   reducers: {
     setFileUrl: (state, action) => {
@@ -13,6 +14,9 @@ const slice = createSlice({
     },
     setIsLoadingPreview: (state, action) => {
       state.isLoadingPreview = action.payload;
+    },
+    setErrorMessage: (state, action) => {
+      state.errorMessage = action.payload;
     },
   },
 });
@@ -25,5 +29,9 @@ export const setFileUrl = (payload: string) => ({
 });
 export const setIsLoadingPreview = (payload: boolean) => ({
   type: 'preview/setIsLoadingPreview',
+  payload,
+});
+export const setErrorMessage = (payload: string) => ({
+  type: 'preview/setErrorMessage',
   payload,
 });
