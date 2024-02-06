@@ -12,7 +12,6 @@ const isPreviewable = (file: string) => file.endsWith('.zip');
 
 const FilesTable = ({files}: {files: string[]}) => {
   const { previewedFileUrl } = useSelector((state: RootState) => state.selected);
-  console.log(previewedFileUrl);
   const dispatch = useDispatch();
   return <>
     <Typography className="text-sm">
@@ -29,7 +28,7 @@ const FilesTable = ({files}: {files: string[]}) => {
                       ? (
                         <IconButton 
                           color={ previewedFileUrl === file ? "primary" : "default" }
-                          onClick={() => dispatch(setPreviewedFileUrl(file)) }>
+                          onClick={() => dispatch(setPreviewedFileUrl(file === previewedFileUrl ? null : file)) }>
                           <VisibilityIcon />
                         </IconButton>
                       ) : (

@@ -10,6 +10,7 @@ import { useEffect, useState } from 'react';
 import '@loaders.gl/polyfills';
 import type { BinaryGeometry, Geometry } from '@loaders.gl/schema';
 import { binaryToGeometry } from '@loaders.gl/gis';
+import { hexToRgb } from 'utils/colors';
 
 export const PREVIEW_LAYER_ID = 'previewLayer';
 
@@ -42,20 +43,22 @@ const parseGeometries = (geometries: BinaryGeometry[]): Geometry[] => {
 
 export default function PreviewLayer() {
   const { previewLayer } = useSelector((state: RootState) => state.carto.layers);
+  const { previewedFileUrl } = useSelector((state: RootState) => state.selected);
   // @ts-ignore
   const [data, setData] = useState(null);
+
   useEffect(() => {
-    console.log('setting data');
+    if (!previewedFileUrl) {
+      setData(null);
+    }
     setData(
       load(
-        'https://cors-anywhere.herokuapp.com/data.humdata.org/dataset/7ae5e7fb-7754-4a5c-8fc0-2fef0f60cfa0/resource/814d9449-37a2-488f-8de4-205c64b43ea3/download/djiroad2001ignundp.zip',
+        `https://cors-anywhere.herokuapp.com/${previewedFileUrl}`,
         ZipLoader,
       // @ts-ignore
       ).then((d) => {
-        // const foo = 'bar';
-        console.log('unzipped', d);
-        // @ts-ignore
-        return parse(d['DJI_Road_2001_IGN_UNDP.shp'], [SHPLoader], { shapefile: { shape: 'geojson-table' } });
+        const filename = Object.keys(d).find((k) => k.endsWith('.shp'));
+        return parse(d[filename], [SHPLoader], { shapefile: { shape: 'geojson-table' } });
       }).then((d: object) => {
         console.log(d);
         // @ts-ignore
@@ -72,7 +75,7 @@ export default function PreviewLayer() {
         return ret;
       }),
     );
-  }, []);
+  }, [previewedFileUrl]);
 
   if (previewLayer && data) {
     return new GeoJsonLayer({
@@ -82,8 +85,8 @@ export default function PreviewLayer() {
       stroked: true,
       filled: true,
       lineWidthMinPixels: 2,
-      getLineColor: [0, 255, 0],
-      getFillColor: [0, 255, 0, 0.5],
+      getLineColor: [...hexToRgb('#9c27b0')],
+      getFillColor: [...hexToRgb('#9c27b0'), 0.5],
     });
   }
 }
