@@ -9,6 +9,7 @@ const slice = createSlice({
     datasets: null,
     datasetCount: null,
     selectedDataset: null,
+    previewedFileUrl: null,
   },
   reducers: {
     setH3Index: (state, action) => {
@@ -22,6 +23,9 @@ const slice = createSlice({
     },
     setSelectedDataset: (state, action) => {
       state.selectedDataset = action.payload;
+    },
+    setPreviewedFileUrl: (state, action) => {
+      state.previewedFileUrl = action.payload;
     },
   },
 });
@@ -42,5 +46,9 @@ export const setDatasetCount = (payload: number) => ({
 });
 export const setSelectedDataset = (payload: number) => ({
   type: 'selected/setSelectedDataset',
+  payload,
+});
+export const setPreviewedFileUrl = (payload: string) => ({
+  type: 'selected/setPreviewedFileUrl',
   payload,
 });

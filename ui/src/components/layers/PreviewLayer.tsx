@@ -81,7 +81,7 @@ export default function PreviewLayer() {
       pickable: true,
       stroked: true,
       filled: true,
-      lineWidthMinPixels: 1,
+      lineWidthMinPixels: 2,
       getLineColor: [0, 255, 0],
       getFillColor: [0, 255, 0, 0.5],
     });
