@@ -27,16 +27,14 @@ const FilesTable = ({files}: {files: string[]}) => {
                   {
                     isPreviewable(file)
                     ? (
-                      <IconButton
-                        disabled={isLoadingPreview}
-                        color={ fileUrl === file ? "primary" : "default" }
-                        onClick={() => dispatch(setFileUrl(file === fileUrl ? null : file)) }>
-                        {
-                          isLoadingPreview && (file === fileUrl)
-                            ? <CircularProgress className="p-0" size="1em" />
-                            : <VisibilityIcon />
-                        }
-                      </IconButton>
+                      isLoadingPreview && (file === fileUrl)
+                        ? <CircularProgress className="m-2" size="1em" />
+                        : <IconButton
+                          disabled={isLoadingPreview}
+                          color={ fileUrl === file ? "primary" : "default" }
+                          onClick={() => dispatch(setFileUrl(file === fileUrl ? null : file)) }>
+                            <VisibilityIcon />
+                           </IconButton>
                     ) : (
                       <IconButton disabled>
                         <VisibilityOffIcon />

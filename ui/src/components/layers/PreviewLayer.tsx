@@ -59,7 +59,7 @@ export default function PreviewLayer() {
     dispatch(setIsLoadingPreview(true));
     setData(
       load(
-        `http://localhost:8088/${fileUrl}`,
+        `cors-anywhere/${fileUrl}`,
         ZipLoader,
         {
           fetch: {

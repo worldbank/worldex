@@ -59,7 +59,13 @@ export default defineConfig({
         changeOrigin: false,
         rewrite: (path) => path.replace(/^\/api/, ''),
         secure: false,
-      }
+      },
+      '/cors-anywhere': {
+        target: 'http://localhost:8088/',
+        changeOrigin: false,
+        rewrite: (path) => path.replace(/^\/cors-anywhere/, ''),
+        secure: false,
+      },
     }
   }
 });
