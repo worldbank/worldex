@@ -1,0 +1,9 @@
+
+de_modules/
+.git/
+
+.dockerignore
+Dockerfile
+
+.gitignore
+.env

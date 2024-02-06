@@ -59,8 +59,15 @@ export default function PreviewLayer() {
     dispatch(setIsLoadingPreview(true));
     setData(
       load(
-        `https://cors-anywhere.herokuapp.com/${fileUrl}`,
+        `http://localhost:8088/${fileUrl}`,
         ZipLoader,
+        {
+          fetch: {
+            headers: {
+              'X-Requested-With': 'XMLHttpRequest',
+            },
+          },
+        },
       // @ts-ignore
       ).then((d) => {
         const filename = Object.keys(d).find((k) => k.endsWith('.shp'));
