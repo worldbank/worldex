@@ -1,15 +1,17 @@
 /* eslint-disable class-methods-use-this */
-import { useSelector } from 'react-redux';
 import { GeoJsonLayer } from '@deck.gl/layers/typed';
-// import { CartoLayer } from '@deck.gl/carto';
-import { RootState } from 'store/store';
-import { SHPLoader, ShapefileLoader } from '@loaders.gl/shapefile';
-import { ZipLoader } from '@loaders.gl/zip';
+import { useDispatch, useSelector } from 'react-redux';
+import { setViewState } from '@carto/react-redux';
 import { load, parse } from '@loaders.gl/core';
-import { useEffect, useState } from 'react';
+import { binaryToGeometry } from '@loaders.gl/gis';
 import '@loaders.gl/polyfills';
 import type { BinaryGeometry, Geometry } from '@loaders.gl/schema';
-import { binaryToGeometry } from '@loaders.gl/gis';
+import { SHPLoader } from '@loaders.gl/shapefile';
+import { ZipLoader } from '@loaders.gl/zip';
+import { useEffect, useState } from 'react';
+import { setFileUrl, setIsLoadingPreview } from 'store/previewSlice';
+import { RootState } from 'store/store';
+import bboxToViewStateParams from 'utils/bboxToViewStateParams';
 import { hexToRgb } from 'utils/colors';
 
 export const PREVIEW_LAYER_ID = 'previewLayer';
@@ -43,17 +45,21 @@ const parseGeometries = (geometries: BinaryGeometry[]): Geometry[] => {
 
 export default function PreviewLayer() {
   const { previewLayer } = useSelector((state: RootState) => state.carto.layers);
-  const { previewedFileUrl } = useSelector((state: RootState) => state.selected);
+  const { fileUrl } = useSelector((state: RootState) => state.preview);
   // @ts-ignore
   const [data, setData] = useState(null);
+  const dispatch = useDispatch();
+  const { viewState } = useSelector((state: RootState) => state.carto);
 
   useEffect(() => {
-    if (!previewedFileUrl) {
+    if (fileUrl == null) {
       setData(null);
+      return;
     }
+    dispatch(setIsLoadingPreview(true));
     setData(
       load(
-        `https://cors-anywhere.herokuapp.com/${previewedFileUrl}`,
+        `https://cors-anywhere.herokuapp.com/${fileUrl}`,
         ZipLoader,
       // @ts-ignore
       ).then((d) => {
@@ -64,18 +70,39 @@ export default function PreviewLayer() {
         // @ts-ignore
         const geometries = parseGeometries(d.geometries);
         const features = joinProperties(geometries, []);
+        // @ts-ignore
+        const { header } = d;
         const ret = {
-          // @ts-ignore
-          header: d.header,
+          header,
           features,
           shape: 'geojson-table',
           type: 'FeatureCollection',
         };
         console.log(ret);
+        const {
+          minX: minLon,
+          minY: minLat,
+          maxX: maxLon,
+          maxY: maxLat,
+        } = header.bbox;
+        const bbox = {
+          minLon, minLat, maxLon, maxLat,
+        };
+        // TODO: convert to a utility with bbox and dispatch as params - we've used this thrice by now
+        const { width, height } = viewState;
+        const viewStateParams = bboxToViewStateParams({ bbox, width, height });
+        const zoom = Math.max(viewStateParams.zoom, 2);
+        // @ts-ignore
+        dispatch(setViewState({ ...viewState, ...viewStateParams, zoom }));
         return ret;
-      }),
+      }).catch((e) => {
+        dispatch(setFileUrl(null));
+      })
+        .finally(() => {
+          dispatch(setIsLoadingPreview(false));
+        }),
     );
-  }, [previewedFileUrl]);
+  }, [fileUrl]);
 
   if (previewLayer && data) {
     return new GeoJsonLayer({

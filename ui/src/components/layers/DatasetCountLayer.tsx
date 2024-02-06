@@ -18,6 +18,7 @@ export default function DatasetCountLayer() {
   const { selectedDataset, h3Index: selectedH3Index } = useSelector((state: RootState) => state.selected);
   const { h3Resolution: resolution, closestZoom } = useSelector((state: RootState) => state.app);
   const { location } = useSelector((state: RootState) => state.location);
+  const { fileUrl } = useSelector((state: RootState) => state.preview);
   const dispatch = useDispatch();
 
   const domains = (import.meta.env.VITE_DATASET_COUNT_BINS).split(',').map(Number);
@@ -26,6 +27,8 @@ export default function DatasetCountLayer() {
     domains,
     colors: OR_YEL.map(hexToRgb),
   });
+
+  const shouldDim = selectedDataset || !!fileUrl;
 
   if (datasetH3Layer && source) {
     return new TileLayer({
@@ -108,10 +111,10 @@ export default function DatasetCountLayer() {
         getLineColor: (d: DatasetCount) => (
           d.index === selectedH3Index
             ? [...SELECTED_OUTLINE, 255]
-            : [...getColor(d), selectedDataset ? 12 : 160]
+            : [...getColor(d), shouldDim ? 12 : 160]
         ),
         // @ts-ignore
-        getFillColor: (d: DatasetCount) => [...getColor(d), selectedDataset ? 60 : 200],
+        getFillColor: (d: DatasetCount) => [...getColor(d), shouldDim ? 60 : 200],
         filled: true,
         getLineWidth: (d: DatasetCount) => {
           if (selectedDataset) {
@@ -125,9 +128,9 @@ export default function DatasetCountLayer() {
         id: [selectedDataset, location?.place_id],
         minZoom: [closestZoom],
         maxZoom: [closestZoom],
-        getLineColor: [selectedH3Index, selectedDataset],
-        getFillColor: [selectedH3Index, selectedDataset],
-        getLineWidth: [selectedH3Index, selectedDataset],
+        getLineColor: [selectedH3Index, shouldDim],
+        getFillColor: [selectedH3Index, shouldDim],
+        getLineWidth: [selectedH3Index, shouldDim],
       },
     });
   }

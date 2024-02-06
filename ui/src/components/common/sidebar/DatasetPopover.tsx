@@ -1,17 +1,18 @@
-import { IconButton, Link, Popover, Table, TableBody, TableCell, TableContainer, TableRow, Typography } from "@mui/material";
+import { CircularProgress, IconButton, Link, Popover, Table, TableBody, TableCell, TableContainer, TableRow, Typography } from "@mui/material";
 import { format } from "date-fns";
 import { Dataset } from "../types";
 import VisibilityIcon from '@mui/icons-material/Visibility';
 import VisibilityOffIcon from '@mui/icons-material/VisibilityOff';
 import { useDispatch, useSelector } from "react-redux";
-import { setPreviewedFileUrl } from "store/selectedSlice";
 import { RootState } from "store/store";
+import { setFileUrl } from "store/previewSlice";
 
 
 const isPreviewable = (file: string) => file.endsWith('.zip');
 
 const FilesTable = ({files}: {files: string[]}) => {
-  const { previewedFileUrl } = useSelector((state: RootState) => state.selected);
+  const { isLoadingPreview, fileUrl } = useSelector((state: RootState) => state.preview);
+  console.log(fileUrl);
   const dispatch = useDispatch();
   return <>
     <Typography className="text-sm">
@@ -25,17 +26,22 @@ const FilesTable = ({files}: {files: string[]}) => {
               <TableCell className="pl-0 pr-1">
                   {
                     isPreviewable(file)
-                      ? (
-                        <IconButton 
-                          color={ previewedFileUrl === file ? "primary" : "default" }
-                          onClick={() => dispatch(setPreviewedFileUrl(file === previewedFileUrl ? null : file)) }>
-                          <VisibilityIcon />
-                        </IconButton>
-                      ) : (
-                        <IconButton disabled>
-                          <VisibilityOffIcon />
-                        </IconButton>
-                      )
+                    ? (
+                      <IconButton
+                        disabled={isLoadingPreview}
+                        color={ fileUrl === file ? "primary" : "default" }
+                        onClick={() => dispatch(setFileUrl(file === fileUrl ? null : file)) }>
+                        {
+                          isLoadingPreview && (file === fileUrl)
+                            ? <CircularProgress className="p-0" size="1em" />
+                            : <VisibilityIcon />
+                        }
+                      </IconButton>
+                    ) : (
+                      <IconButton disabled>
+                        <VisibilityOffIcon />
+                      </IconButton>
+                    )
                   }
               </TableCell>
               <TableCell className="pl-0 whitespace-nowrap">
