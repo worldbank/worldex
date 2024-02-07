@@ -2,6 +2,7 @@ import { useSelector } from 'react-redux';
 import { GeoJsonLayer } from '@deck.gl/layers/typed';
 import { RootState } from 'store/store';
 
+// TODO: rename to location layer?
 export const SEARCH_LAYER_ID = 'searchLayer';
 
 export default function SearchLayer() {

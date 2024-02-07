@@ -1,6 +1,5 @@
 import ChevronRight from "@mui/icons-material/ChevronRight";
-import { Accordion, AccordionDetails, AccordionSummary, Box, Divider, IconButton, Link, List, ListItem, Popover, Stack, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Typography } from "@mui/material";
-import { format } from "date-fns";
+import { Accordion, AccordionDetails, AccordionSummary, Box, Divider, IconButton, List, ListItem, Stack, Typography } from "@mui/material";
 import React, { useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { setViewState } from '@carto/react-redux';
@@ -9,71 +8,8 @@ import { RootState } from "store/store";
 import { BoundingBox, Dataset } from "../types";
 import classNames from "classnames";
 import bboxToViewStateParams from 'utils/bboxToViewStateParams';
+import DatasetPopover from "./DatasetPopover";
 
-
-const FilesTable = ({files}: {files: string[]}) => (
-  <>
-    <Typography className="text-sm">
-      <strong>Files:</strong>
-    </Typography>
-    <TableContainer className="max-w-100 overflow-x-scroll">
-      <Table size="small" aria-label="files table">
-        <TableBody>
-          {files.map((file: string, idx: number) => (
-            <TableRow>
-              <TableCell className="pl-0 whitespace-nowrap">
-                <Link href={file} target="_blank">{file}</Link>
-              </TableCell>
-            </TableRow>
-          ))}
-        </TableBody>
-      </Table>
-    </TableContainer>
-  </>
-)
-
-const DatasetPopover = ({ dataset, anchor, setAnchor }: { dataset: Dataset, anchor: any, setAnchor: any }) => {
-  const open = Boolean(anchor);
-  const dateFormat = "yyyy MMM d";
-  return (
-    <Popover
-      className="p-2 max-h-[80vh]"
-      open={open}
-      anchorEl={anchor}
-      onClose={() => { setAnchor(null) }}
-      anchorOrigin={{
-        vertical: 'top',
-        horizontal: 'right',
-      }}
-      >
-      <div className="p-4 max-w-lg">
-        {
-          dataset.description.split("\n").map((desc: string, idx: number) => (
-            <Typography key={idx} className="mb-1.5 text-sm">{desc}</Typography>
-          ))
-        }
-        <div className="py-2">
-          {
-            (dataset.date_start && dataset.date_end) && (
-              <Typography className="text-sm">
-                <strong>Date:</strong>
-                {` ${format(dataset.date_start, dateFormat)} - ${format(dataset.date_end, dateFormat)}`}
-              </Typography>
-            )
-          }
-          <Typography className="text-sm">
-            <strong>Accessibility:</strong>{" "}
-            <span className="capitalize">{dataset.accessibility}</span>
-          </Typography>
-          <Typography className="text-sm">
-            <strong>Source:</strong>{" "}<Link href={dataset.url} target="_blank" rel="noopener noreferrer">{dataset.url}</Link>
-          </Typography>
-        </div>
-        { dataset.files && <FilesTable files={dataset.files} />}
-      </div>
-    </Popover>
-  )
-}
 
 const DatasetItem = ({idx, dataset}: {idx: number, dataset: Dataset}) => {
   const [anchor, setAnchor] = useState(null);

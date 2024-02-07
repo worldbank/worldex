@@ -29,6 +29,11 @@ services:
     depends_on:
       - api
     profiles: ["preview"]
+  cors-anywhere:
+    build:
+      context: ./cors-anywhere
+    ports:
+      - 8088:8080
   api:
     build:
       context: ./api

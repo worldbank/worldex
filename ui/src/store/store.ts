@@ -11,6 +11,7 @@ import {
 import appSlice from './appSlice';
 import locationSlice from './locationSlice';
 import selectedSlice from './selectedSlice';
+import previewSlice from './previewSlice';
 
 interface AppStore extends Store {
   asyncReducers: ReducersMapObject;
@@ -22,6 +23,7 @@ const staticReducers = {
   app: appSlice,
   location: locationSlice,
   selected: selectedSlice,
+  preview: previewSlice,
 };
 
 const store: AppStore = {

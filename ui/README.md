@@ -65,3 +65,11 @@ You can learn more in the [Vite documentation](https://vitejs.dev/guide/#getting
 
 To learn React, check out the [React documentation](https://reactjs.org/).
 </details>
+
+
+# Proxy Passing
+We proxy pass `/api` and `/cors-anywhere` requests to their corresponding services. This is configured differently on dev and production.
+
+For dev, this is configured on [vite.config.ts](./vite.config.ts) under `server.proxy`. See https://vitejs.dev/config/server-options#server-proxy for more info.
+
+For production, this is configured on [nginx.conf](./nginx.conf) under their `location` directives. See https://nginx.org/en/docs/http/ngx_http_proxy_module.html#proxy_pass for more info.

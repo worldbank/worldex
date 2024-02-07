@@ -9,6 +9,7 @@ import {
 import { styled } from '@mui/material/styles';
 import LocationSearch from 'components/common/LocationSearch';
 import { RootState } from 'store/store';
+import PreviewErrorSnackbar from 'components/common/PreviewErrorSnackbar';
 
 const Map = lazy(
   () => import(/* webpackChunkName: 'map' */ 'components/common/map/Map'),
@@ -61,7 +62,6 @@ export default function MapContainer() {
     ) === 'gmaps',
   );
   const layers = getLayers();
-
   const hidden = useMediaQuery((theme: Theme) => theme.breakpoints.down('md'));
 
   return (
@@ -69,6 +69,7 @@ export default function MapContainer() {
       <Map layers={layers} />
       {!hidden && <StyledZoomControl showCurrentZoom className="zoomControl" />}
       <LocationSearch className="absolute top-2.5 left-2.5 p-2 w-72" />
+      <PreviewErrorSnackbar />
     </GridMapWrapper>
   );
 }
