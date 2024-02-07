@@ -4,7 +4,6 @@ import 'maplibre-gl/dist/maplibre-gl.css';
 import { styled } from '@mui/material/styles';
 import { BASEMAPS } from '@carto/react-basemaps';
 import { RootState } from 'store/store';
-import { Alert, Snackbar } from '@mui/material';
 
 const DeckGLComponent = lazy(
   () =>
@@ -49,7 +48,5 @@ export default function Map({ layers }: { layers: any[] }) {
     <div>Not a valid map provider</div>
   );
 
-  return <MapContainer>
-    {map}
-  </MapContainer>;
+  return <MapContainer>{map}</MapContainer>;
 }

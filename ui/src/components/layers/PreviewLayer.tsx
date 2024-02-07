@@ -13,35 +13,9 @@ import { setErrorMessage, setFileUrl, setIsLoadingPreview } from 'store/previewS
 import { RootState } from 'store/store';
 import bboxToViewStateParams from 'utils/bboxToViewStateParams';
 import { hexToRgb } from 'utils/colors';
+import { joinProperties, parseGeometries } from 'utils/shapefile';
 
 export const PREVIEW_LAYER_ID = 'previewLayer';
-
-type Feature = any;
-
-const joinProperties = (geometries: Geometry[], properties: object[]): Feature[] => {
-  const features: Feature[] = [];
-  // eslint-disable-next-line no-plusplus
-  for (let i = 0; i < geometries.length; i++) {
-    const geometry = geometries[i];
-    const feature: Feature = {
-      type: 'Feature',
-      geometry,
-      // properties can be undefined if dbfResponse above was empty
-      properties: (properties && properties[i]) || {},
-    };
-    features.push(feature);
-  }
-
-  return features;
-};
-
-const parseGeometries = (geometries: BinaryGeometry[]): Geometry[] => {
-  const geojsonGeometries: any[] = [];
-  for (const geom of geometries) {
-    geojsonGeometries.push(binaryToGeometry(geom));
-  }
-  return geojsonGeometries;
-};
 
 export default function PreviewLayer() {
   const { previewLayer } = useSelector((state: RootState) => state.carto.layers);
@@ -73,19 +47,12 @@ export default function PreviewLayer() {
         const filename = Object.keys(d).find((k) => k.endsWith('.shp'));
         return parse(d[filename], [SHPLoader], { shapefile: { shape: 'geojson-table' } });
       }).then((d: object) => {
-        // console.log(d);
         // @ts-ignore
         const geometries = parseGeometries(d.geometries);
         const features = joinProperties(geometries, []);
         // @ts-ignore
         const { header } = d;
-        const ret = {
-          header,
-          features,
-          shape: 'geojson-table',
-          type: 'FeatureCollection',
-        };
-        // console.log(ret);
+
         const {
           minX: minLon,
           minY: minLat,
@@ -95,13 +62,19 @@ export default function PreviewLayer() {
         const bbox = {
           minLon, minLat, maxLon, maxLat,
         };
-        // TODO: convert to a utility with bbox and dispatch as params - we've used this thrice by now
+        // TODO: convert to a utility with bbox and dispatch as params - we've done this thrice by now
         const { width, height } = viewState;
         const viewStateParams = bboxToViewStateParams({ bbox, width, height });
         const zoom = Math.max(viewStateParams.zoom, 2);
         // @ts-ignore
         dispatch(setViewState({ ...viewState, ...viewStateParams, zoom }));
-        return ret;
+
+        return {
+          header,
+          features,
+          shape: 'geojson-table',
+          type: 'FeatureCollection',
+        };
       }).catch((e) => {
         dispatch(setFileUrl(null));
         dispatch(setErrorMessage(e.message));
