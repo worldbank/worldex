@@ -7,51 +7,52 @@ import { useDispatch, useSelector } from "react-redux";
 import { RootState } from "store/store";
 import { setFileUrl } from "store/previewSlice";
 
-
+// TODO: will expand as we accomodate other file formats
 const isPreviewable = (file: string) => file.endsWith('.zip');
 
-const FilesTable = ({files}: {files: string[]}) => {
+const PreviewButton = ({ file }: { file: string }) => {
   const { isLoadingPreview, fileUrl } = useSelector((state: RootState) => state.preview);
-  console.log(fileUrl);
   const dispatch = useDispatch();
-  return <>
-    <Typography className="text-sm">
-      <strong>Files:</strong>
-    </Typography>
-    <TableContainer className="max-w-100 overflow-x-scroll">
-      <Table size="small" aria-label="files table">
-        <TableBody>
-          {files.map((file: string, idx: number) => (
-            <TableRow key={idx}>
-              <TableCell className="pl-0 pr-1">
-                  {
-                    isPreviewable(file)
-                    ? (
-                      isLoadingPreview && (file === fileUrl)
-                        ? <CircularProgress className="m-2" size="1em" />
-                        : <IconButton
-                          disabled={isLoadingPreview}
-                          color={ fileUrl === file ? "primary" : "default" }
-                          onClick={() => dispatch(setFileUrl(file === fileUrl ? null : file)) }>
-                            <VisibilityIcon />
-                           </IconButton>
-                    ) : (
-                      <IconButton disabled>
-                        <VisibilityOffIcon />
-                      </IconButton>
-                    )
-                  }
-              </TableCell>
-              <TableCell className="pl-0 whitespace-nowrap">
-                <Link href={file} target="_blank">{file}</Link>
-              </TableCell>
-            </TableRow>
-          ))}
-        </TableBody>
-      </Table>
-    </TableContainer>
-  </>
-};
+  return (
+    isPreviewable(file)
+    ? (
+      isLoadingPreview && (file === fileUrl)
+        ? <CircularProgress className="m-2" size="1em" />
+        : <IconButton
+          disabled={isLoadingPreview}
+          color={ fileUrl === file ? "primary" : "default" }
+          onClick={() => dispatch(setFileUrl(file === fileUrl ? null : file)) }>
+            <VisibilityIcon />
+           </IconButton>
+    ) : (
+      <IconButton disabled>
+        <VisibilityOffIcon />
+      </IconButton>
+    )
+  );
+}
+
+const FilesTable = ({files}: {files: string[]}) => <>
+  <Typography className="text-sm">
+    <strong>Files:</strong>
+  </Typography>
+  <TableContainer className="max-w-100 overflow-x-scroll">
+    <Table size="small" aria-label="files table">
+      <TableBody>
+        {files.map((file: string, idx: number) => (
+          <TableRow key={idx}>
+            <TableCell className="pl-0 pr-1">
+              <PreviewButton file={file} />
+            </TableCell>
+            <TableCell className="pl-0 whitespace-nowrap">
+              <Link href={file} target="_blank">{file}</Link>
+            </TableCell>
+          </TableRow>
+        ))}
+      </TableBody>
+    </Table>
+  </TableContainer>
+</>;
   
 const DatasetPopover = ({ dataset, anchor, setAnchor }: { dataset: Dataset, anchor: any, setAnchor: any }) => {
   const open = Boolean(anchor);
