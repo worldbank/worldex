@@ -24,6 +24,7 @@ export default function PreviewLayer() {
   const [data, setData] = useState(null);
   const dispatch = useDispatch();
   const { viewState } = useSelector((state: RootState) => state.carto);
+  const PURPLE_500 = '#9c27b0';
 
   useEffect(() => {
     if (fileUrl == null) {
@@ -93,8 +94,8 @@ export default function PreviewLayer() {
       stroked: true,
       filled: true,
       lineWidthMinPixels: 2,
-      getLineColor: [...hexToRgb('#9c27b0')],
-      getFillColor: [...hexToRgb('#9c27b0'), 0.5],
+      getLineColor: [...hexToRgb(PURPLE_500)],
+      getFillColor: [...hexToRgb(PURPLE_500), 0.5],
     });
   }
 }
