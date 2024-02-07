@@ -1,15 +1,15 @@
-import { lazy, useState } from 'react';
+import { lazy } from 'react';
 import { BASEMAPS } from '@carto/react-basemaps';
 import ZoomControl from 'components/common/ZoomControl';
 import { getLayers } from 'components/layers';
-import { useDispatch, useSelector } from 'react-redux';
+import { useSelector } from 'react-redux';
 import {
-  Grid, useMediaQuery, Theme, GridProps, Snackbar, Alert,
+  Grid, useMediaQuery, Theme, GridProps,
 } from '@mui/material';
 import { styled } from '@mui/material/styles';
 import LocationSearch from 'components/common/LocationSearch';
 import { RootState } from 'store/store';
-import { setErrorMessage } from 'store/previewSlice';
+import PreviewErrorSnackbar from 'components/common/PreviewErrorSnackbar';
 
 const Map = lazy(
   () => import(/* webpackChunkName: 'map' */ 'components/common/map/Map'),
@@ -61,17 +61,7 @@ export default function MapContainer() {
         : state.carto.basemap.type
     ) === 'gmaps',
   );
-  const { errorMessage } = useSelector((state: RootState) => state.preview);
   const layers = getLayers();
-
-  const dispatch = useDispatch();
-  const handleClose = (event: any, reason: string) => {
-    if (reason === 'clickaway') {
-      return;
-    }
-    dispatch(setErrorMessage(null));
-  };
-
   const hidden = useMediaQuery((theme: Theme) => theme.breakpoints.down('md'));
 
   return (
@@ -79,19 +69,7 @@ export default function MapContainer() {
       <Map layers={layers} />
       {!hidden && <StyledZoomControl showCurrentZoom className="zoomControl" />}
       <LocationSearch className="absolute top-2.5 left-2.5 p-2 w-72" />
-      <Snackbar
-        anchorOrigin={{
-          vertical: 'bottom',
-          horizontal: 'center',
-        }}
-        open={!!errorMessage}
-        onClose={handleClose}
-        autoHideDuration={4000}
-      >
-        <Alert severity="error">
-          {errorMessage}
-        </Alert>
-      </Snackbar>
+      <PreviewErrorSnackbar />
     </GridMapWrapper>
   );
 }
