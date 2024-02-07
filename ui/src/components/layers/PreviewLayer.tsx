@@ -3,9 +3,7 @@ import { GeoJsonLayer } from '@deck.gl/layers/typed';
 import { useDispatch, useSelector } from 'react-redux';
 import { setViewState } from '@carto/react-redux';
 import { load, parse } from '@loaders.gl/core';
-import { binaryToGeometry } from '@loaders.gl/gis';
 import '@loaders.gl/polyfills';
-import type { BinaryGeometry, Geometry } from '@loaders.gl/schema';
 import { SHPLoader } from '@loaders.gl/shapefile';
 import { ZipLoader } from '@loaders.gl/zip';
 import { useEffect, useState } from 'react';
@@ -13,7 +11,7 @@ import { setErrorMessage, setFileUrl, setIsLoadingPreview } from 'store/previewS
 import { RootState } from 'store/store';
 import bboxToViewStateParams from 'utils/bboxToViewStateParams';
 import { hexToRgb } from 'utils/colors';
-import { joinProperties, parseGeometries } from 'utils/shapefile';
+import { joinProperties, loadShapefileSidecarFiles, parseGeometries } from 'utils/shapefile/shapefile';
 
 export const PREVIEW_LAYER_ID = 'previewLayer';
 
@@ -44,15 +42,25 @@ export default function PreviewLayer() {
           },
         },
       // @ts-ignore
-      ).then((d) => {
-        const filename = Object.keys(d).find((k) => k.endsWith('.shp'));
-        return parse(d[filename], [SHPLoader], { shapefile: { shape: 'geojson-table' } });
-      }).then((d: object) => {
+      ).then((zipFileMap) => {
+        const filename = Object.keys(zipFileMap).find((k) => k.endsWith('.shp'));
+        if (!filename) {
+          throw new Error('No shapefile contained in zipfile');
+        }
+        const { shx, cpg, prj } = loadShapefileSidecarFiles(zipFileMap);
+        const shp = parse(zipFileMap[filename], [SHPLoader], { shapefile: { shape: 'geojson-table' } });
+        return Promise.all([shp, shx, cpg, prj]);
+      }).then(([
+        shp,
+        shx,
+        cpg,
+        prj,
+      ]) => {
         // @ts-ignore
-        const geometries = parseGeometries(d.geometries);
+        const geometries = parseGeometries(shp.geometries);
         const features = joinProperties(geometries, []);
         // @ts-ignore
-        const { header } = d;
+        const { header } = shp;
 
         const {
           minX: minLon,
@@ -71,10 +79,13 @@ export default function PreviewLayer() {
         dispatch(setViewState({ ...viewState, ...viewStateParams, zoom }));
 
         return {
-          header,
-          features,
           shape: 'geojson-table',
           type: 'FeatureCollection',
+          encoding: cpg,
+          prj,
+          shx,
+          header,
+          features,
         };
       }).catch((e) => {
         dispatch(setFileUrl(null));
