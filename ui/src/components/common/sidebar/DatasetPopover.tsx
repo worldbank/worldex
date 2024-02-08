@@ -8,7 +8,7 @@ import { RootState } from "store/store";
 import { setFileUrl } from "store/previewSlice";
 
 // TODO: will expand as we accomodate other file formats
-const isPreviewable = (file: string) => file.endsWith('.zip');
+const isPreviewable = (file: string) => ['.zip', 'geojson'].some((ext) => file.endsWith(ext));
 
 const PreviewButton = ({ file }: { file: string }) => {
   const { isLoadingPreview, fileUrl } = useSelector((state: RootState) => state.preview);

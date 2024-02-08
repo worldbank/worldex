@@ -28,6 +28,9 @@ export default function PreviewLayer() {
     if (fileUrl == null) {
       setData(null);
       return;
+    } else if (fileUrl.endsWith('.geojson')) {
+      setData(fileUrl);
+      return;
     }
     dispatch(setIsLoadingPreview(true));
     setData(
