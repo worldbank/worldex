@@ -21,7 +21,7 @@ const PreviewButton = ({ file }: { file: string }) => {
           size='small'
           disabled={isLoadingPreview}
           color={ fileUrl === file ? "primary" : "default" }
-          onClick={() => dispatch(setFileUrl(file === fileUrl ? null : file)) }>
+          onClick={() => dispatch(setFileUrl(file === fileUrl ? null : 'https://downloads.climatetrace.org/country_packages/non_forest_sectors/IMN.zip')) }>
             <VisibilityIcon />
            </IconButton>
     )

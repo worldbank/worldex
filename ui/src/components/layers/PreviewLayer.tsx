@@ -29,13 +29,14 @@ export default function PreviewLayer() {
       setData(null);
       return;
     } else if (fileUrl.endsWith('.geojson')) {
-      setData(fileUrl);
+      setData(`/cors-anywhere/${fileUrl}`);
       return;
     }
     dispatch(setIsLoadingPreview(true));
     setData(
       load(
-        `cors-anywhere/${fileUrl}`,
+        // `cors-anywhere/${fileUrl}`,
+        'cors-anywhere/https://downloads.climatetrace.org/country_packages/non_forest_sectors/IMN.zip',
         ZipLoader,
         {
           fetch: {
@@ -104,6 +105,13 @@ export default function PreviewLayer() {
     return new GeoJsonLayer({
       id: PREVIEW_LAYER_ID,
       data,
+      loadOptions: {
+        fetch: {
+          headers: {
+            'X-Requested-With': 'XMLHttpRequest',
+          },
+        },
+      },
       pickable: true,
       stroked: true,
       filled: true,

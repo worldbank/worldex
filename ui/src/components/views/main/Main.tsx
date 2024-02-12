@@ -7,6 +7,7 @@ import {
 } from '@carto/react-redux';
 import h3CellsSource from 'data/sources/h3CellsSource';
 import { lazy, useEffect } from 'react';
+import { TIF_PREVIEW_LAYER_ID } from 'components/layers/TifPreviewLayer';
 import { PREVIEW_LAYER_ID } from 'components/layers/PreviewLayer';
 import datasetCoverageSource from 'data/sources/datasetCoverageSource';
 import { DATASET_COVERAGE_LAYER_ID } from 'components/layers/DatasetCoverageLayer';
@@ -108,6 +109,12 @@ export default function Main() {
     dispatch(addSource(datasetCoverageSource));
     dispatch(
       addLayer({
+        id: TIF_PREVIEW_LAYER_ID,
+        source: datasetCoverageSource.id,
+      }),
+    );
+    dispatch(
+      addLayer({
         id: PREVIEW_LAYER_ID,
       }),
     );
@@ -122,6 +129,7 @@ export default function Main() {
     return () => {
       dispatch(removeLayer(DATASET_COVERAGE_LAYER_ID));
       dispatch(removeLayer(PREVIEW_LAYER_ID));
+      dispatch(removeLayer(TIF_PREVIEW_LAYER_ID));
       dispatch(removeSource(datasetCoverageSource.id));
     };
   }, [dispatch]);
