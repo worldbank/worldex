@@ -35,8 +35,8 @@ export default function PreviewLayer() {
     dispatch(setIsLoadingPreview(true));
     setData(
       load(
-        // `cors-anywhere/${fileUrl}`,
-        'cors-anywhere/https://downloads.climatetrace.org/country_packages/non_forest_sectors/IMN.zip',
+        `cors-anywhere/${fileUrl}`,
+        // 'cors-anywhere/https://downloads.climatetrace.org/country_packages/non_forest_sectors/IMN.zip',
         ZipLoader,
         {
           fetch: {
