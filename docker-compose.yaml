@@ -2,6 +2,7 @@ version: "3.9"
 
 services:
   web:
+    restart: always
     build:
       context: ./ui/
       dockerfile: nginx.Dockerfile
@@ -35,6 +36,7 @@ services:
     ports:
       - 8088:8080
   api:
+    restart: always
     build:
       context: ./api
     command: poetry run uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
@@ -52,6 +54,7 @@ services:
     healthcheck:
       test: curl --fail localhost:8000/health_check || exit 1
   db:
+    restart: always
     build:
       context: ./postgis-h3
       # comment out the following for better performance on an ARM-based device (e.g. M1/M2 MacBooks)
