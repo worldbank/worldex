@@ -37,8 +37,8 @@ export default function TifPreviewLayer() {
     )
       .then(
         ([image, imageCount]) => {
-          console.log('image', image, image.getBoundingBox());
-          console.log('image count', imageCount);
+          // console.log('image', image, image.getBoundingBox());
+          // console.log('image count', imageCount);
           return Promise.all([
             image.readRasters({ interleave: true, enableAlpha: false }),
             image.getBoundingBox(),
@@ -53,9 +53,9 @@ export default function TifPreviewLayer() {
       .then(
         // @ts-ignore s
         ([rasters, bbox, rgb, width, height, tileWidth, tileHeight]) => {
-          console.log('rasters', rasters);
-          console.log('rgb', rgb);
-          console.log('bbox', bbox);
+          // console.log('rasters', rasters);
+          // console.log('rgb', rgb);
+          // console.log('bbox', bbox);
           const canvas = document.createElement('canvas');
           const ctx = canvas.getContext('2d');
 
@@ -74,7 +74,6 @@ export default function TifPreviewLayer() {
 
           // Convert canvas content to PNG data URL
           const pngDataUrl = canvas.toDataURL('image/png');
-          // console.log(pngDataUrl);
           setTiffData({ dataUrl: pngDataUrl, bbox });
 
           return {
@@ -88,60 +87,16 @@ export default function TifPreviewLayer() {
   useEffect(() => {
     // Load the TIFF file
     setTiffData(loadTiff());
-  //   // setTiffData(
-  //   load(
-  //     `cors-anywhere/${tifUrl}`,
-  //     GeoTIFFLoader,
-  //     {
-  //       fetch: {
-  //         headers: {
-  //           'X-Requested-With': 'XMLHttpRequest',
-  //         },
-  //       },
-  //       enableAlpha: true,
-  //     },
-  //   ).then((d) => {
-  //     console.log(d);
-  //     setTiffData({
-  //       dataUrl: {
-  //         data: d.data,
-  //         width: d.width,
-  //         height: d.height,
-  //         format: GL.RGBA,
-  //         mipmaps: false,
-  //       },
-  //       bbox: d.bounds,
-  //     });
-  //   });
-  //   // );
   }, []);
 
-  // if (tifPreviewLayer && tiffData?.bbox) {
   if (tifPreviewLayer && tiffData?.dataUrl) {
     console.log('tiffData', tiffData);
     return new BitmapLayer({
       id: TIF_PREVIEW_LAYER_ID,
-      // loadOptions: {
-      //   fetch: {
-      //     headers: {
-      //       'X-Requested-With': 'XMLHttpRequest',
-      //     },
-      //   },
-      // },
       image: tiffData.dataUrl,
-      // image: `/cors-anywhere/${tifUrl}`,
-      // image: `cors-anywhere/${tifUrl}`,
       loaders: [GeoTIFFLoader, ImageLoader],
-      // loaders: [GeoTIFFLoader, ImageLoader],
       // @ts-ignore
       bounds: [...tiffData.bbox],
-      // bounds: [
-      //   [-80.425, 37.936],
-      //   [-80.425, 46.437],
-      //   [-71.516, 46.437],
-      //   [-71.516, 37.936],
-      // ],
-      // image: 'https://docs.mapbox.com/mapbox-gl-js/assets/radar.gif',
     });
   }
 }
