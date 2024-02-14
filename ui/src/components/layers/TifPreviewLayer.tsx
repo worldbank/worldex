@@ -1,18 +1,12 @@
 import { useSelector } from 'react-redux';
 // @ts-ignore
-import { CartoLayer } from '@deck.gl/carto';
-import { selectSourceById } from '@carto/react-redux';
-import { useCartoLayerProps } from '@carto/react-api';
-import htmlForFeature from 'utils/htmlForFeature';
 import { RootState } from 'store/store';
 import { BitmapLayer } from '@deck.gl/layers/typed';
 import { useEffect, useState } from 'react';
-import { fromUrl, fromArrayBuffer } from 'geotiff';
+import GeoTIFF, { fromUrl, GeoTIFFImage, ReadRasterResult } from 'geotiff';
 import { GeoTIFFLoader } from '@loaders.gl/geotiff';
 import '@loaders.gl/polyfills'; // only needed if using under Node
 import { ImageLoader } from '@loaders.gl/images';
-import { load } from '@loaders.gl/core';
-import GL from '@luma.gl/constants';
 
 export const TIF_PREVIEW_LAYER_ID = 'tifPreviewLayer';
 
@@ -30,32 +24,19 @@ export default function TifPreviewLayer() {
         },
       },
     ).then(
-      (tiff: any) => {
-        console.log('tiff', tiff);
-        return Promise.all([tiff.getImage(), tiff.getImageCount()]);
-      },
+      // returns the first image
+      (tiff: GeoTIFF) => tiff.getImage(),
     )
       .then(
-        ([image, imageCount]) => {
-          // console.log('image', image, image.getBoundingBox());
-          // console.log('image count', imageCount);
-          return Promise.all([
-            image.readRasters({ interleave: true, enableAlpha: false }),
-            image.getBoundingBox(),
-            image.readRGB({ interleave: true, enableAlpha: false }),
-            image.getWidth(),
-            image.getHeight(),
-            image.getTileWidth(),
-            image.getTileHeight(),
-          ]);
-        },
+        (image: GeoTIFFImage) => Promise.all([
+          image.readRasters({ interleave: true }),
+          image.getBoundingBox(),
+          image.getWidth(),
+          image.getHeight(),
+        ]),
       )
       .then(
-        // @ts-ignore s
-        ([rasters, bbox, rgb, width, height, tileWidth, tileHeight]) => {
-          // console.log('rasters', rasters);
-          // console.log('rgb', rgb);
-          // console.log('bbox', bbox);
+        ([rasters, bbox, width, height]: [ReadRasterResult, Array<number>, number, number]) => {
           const canvas = document.createElement('canvas');
           const ctx = canvas.getContext('2d');
 
@@ -64,22 +45,17 @@ export default function TifPreviewLayer() {
           canvas.height = rasters.height / 4;
 
           // Create ImageData object from raster data
-          // @ts-ignore
           const imageData = ctx.createImageData(width, height);
           ctx.clearRect(0, 0, canvas.width, canvas.height);
+          // @ts-ignore
           imageData.data.set(rasters);
 
           // Draw ImageData onto canvas
           ctx.putImageData(imageData, 0, 0);
 
           // Convert canvas content to PNG data URL
-          const pngDataUrl = canvas.toDataURL('image/png');
-          setTiffData({ dataUrl: pngDataUrl, bbox });
-
-          return {
-            dataUrl: pngDataUrl,
-            bbox,
-          };
+          const dataUrl = canvas.toDataURL('image/png');
+          setTiffData({ dataUrl, bbox });
         },
       );
   };
@@ -94,7 +70,6 @@ export default function TifPreviewLayer() {
     return new BitmapLayer({
       id: TIF_PREVIEW_LAYER_ID,
       image: tiffData.dataUrl,
-      loaders: [GeoTIFFLoader, ImageLoader],
       // @ts-ignore
       bounds: [...tiffData.bbox],
     });
