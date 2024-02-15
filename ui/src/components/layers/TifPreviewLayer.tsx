@@ -1,10 +1,14 @@
 import { useSelector } from 'react-redux';
 // @ts-ignore
-import { RootState } from 'store/store';
 import { BitmapLayer } from '@deck.gl/layers/typed';
-import { useEffect, useState } from 'react';
-import GeoTIFF, { fromUrl, GeoTIFFImage, ReadRasterResult } from 'geotiff';
 import '@loaders.gl/polyfills';
+import GeoTIFF, {
+  GeoTIFFImage,
+  ReadRasterResult,
+  fromUrl,
+} from 'geotiff';
+import { useEffect, useState } from 'react';
+import { RootState } from 'store/store';
 
 export const TIF_PREVIEW_LAYER_ID = 'tifPreviewLayer';
 
@@ -13,8 +17,6 @@ export default function TifPreviewLayer() {
   const { fileUrl } = useSelector((state: RootState) => state.preview);
 
   const [tifData, setTifData] = useState(null);
-  // const tifUrl = 'https://data.worldpop.org/GIS/Population/Global_2000_2020_1km/2020/JPN/jpn_ppp_2020_1km_Aggregated.tif';
-  // const tifUrl = 'https://data.humdata.org/dataset/f468b878-9b9b-4a85-8b38-19d025f960af/resource/31cc3532-e7e3-4c49-82d5-8ff23e679732/download/cagayan_ompong.tif';
 
   useEffect(() => {
     if (fileUrl == null) {
@@ -24,11 +26,12 @@ export default function TifPreviewLayer() {
     } else if (['.tif', '.tiff', '.geotif', '.geotiff'].some((ext) => fileUrl.endsWith(ext))) {
       // TODO: inspect mimetype as well? or copy how GeoTIFFLoader checks the magic numbers
       fromUrl(
-        `/cors-anywhere/${fileUrl}`,
+        `cors-anywhere/${fileUrl}`,
         {
           headers: {
             'X-Requested-With': 'XMLHttpRequest',
           },
+          allowFullFile: true,
         },
       ).then(
         // returns the first image
