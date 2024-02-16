@@ -25,49 +25,68 @@ export default function TifPreviewLayer() {
       }
     } else if (['.tif', '.tiff', '.geotif', '.geotiff'].some((ext) => fileUrl.endsWith(ext))) {
       // TODO: inspect mimetype as well? or copy how GeoTIFFLoader checks the magic numbers
-      fromUrl(
-        `cors-anywhere/${fileUrl}`,
+      fetch(
+        '/api/tif_as_png/',
         {
+          method: 'post',
+          body: JSON.stringify({
+            url: fileUrl,
+          }),
           headers: {
-            'X-Requested-With': 'XMLHttpRequest',
+            'Content-Type': 'application/json',
           },
-          allowFullFile: true,
         },
       ).then(
-        // returns the first image
-        (tiff: GeoTIFF) => tiff.getImage(),
-      )
-        .then(
-          (image: GeoTIFFImage) => Promise.all([
-            image.readRasters({ interleave: true }),
-            image.getBoundingBox(),
-            image.getWidth(),
-            image.getHeight(),
-          ]),
-        )
-        .then(
-          ([rasters, bbox, width, height]: [ReadRasterResult, Array<number>, number, number]) => {
-            const canvas = document.createElement('canvas');
-            const ctx = canvas.getContext('2d');
+        (resp: Response) => resp.json(),
+      ).then(
+        (resp) => {
+          const { data_url, bbox } = resp;
+          setTifData({ dataUrl: data_url, bbox });
+        },
+      );
+      // fromUrl(
+      //   `cors-anywhere/${fileUrl}`,
+      //   {
+      //     headers: {
+      //       'X-Requested-With': 'XMLHttpRequest',
+      //     },
+      //     allowFullFile: true,
+      //   },
+      // ).then(
+      //   // returns the first image
+      //   (tiff: GeoTIFF) => tiff.getImage(),
+      // )
+      //   .then(
+      //     (image: GeoTIFFImage) => Promise.all([
+      //       image.readRasters({ interleave: true }),
+      //       image.getBoundingBox(),
+      //       image.getWidth(),
+      //       image.getHeight(),
+      //     ]),
+      //   )
+      //   .then(
+      //     ([rasters, bbox, width, height]: [ReadRasterResult, Array<number>, number, number]) => {
+      //       const canvas = document.createElement('canvas');
+      //       const ctx = canvas.getContext('2d');
 
-            // Set canvas dimensions to match image size
-            canvas.width = rasters.width / 4;
-            canvas.height = rasters.height / 4;
+      //       // Set canvas dimensions to match image size
+      //       canvas.width = rasters.width / 4;
+      //       canvas.height = rasters.height / 4;
 
-            // Create ImageData object from raster data
-            const imageData = ctx.createImageData(width, height);
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-            // @ts-ignore
-            imageData.data.set(rasters);
+      //       // Create ImageData object from raster data
+      //       const imageData = ctx.createImageData(width, height);
+      //       ctx.clearRect(0, 0, canvas.width, canvas.height);
+      //       // @ts-ignore
+      //       imageData.data.set(rasters);
 
-            // Draw ImageData onto canvas
-            ctx.putImageData(imageData, 0, 0);
+      //       // Draw ImageData onto canvas
+      //       ctx.putImageData(imageData, 0, 0);
 
-            // Convert canvas content to PNG data URL
-            const dataUrl = canvas.toDataURL('image/png');
-            setTifData({ dataUrl, bbox });
-          },
-        );
+      //       // Convert canvas content to PNG data URL
+      //       const dataUrl = canvas.toDataURL('image/png');
+      //       setTifData({ dataUrl, bbox });
+      //     },
+      //   );
     }
   }, [fileUrl]);
 
