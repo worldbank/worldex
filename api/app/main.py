@@ -2,7 +2,7 @@ import h3
 import uvicorn
 from app import settings
 from app.db import get_async_session
-from app.models import DatasetRequest, HealthCheck, H3TileRequest, DatasetsByLocationRequest
+from app.models import DatasetRequest, HealthCheck, H3TileRequest, DatasetsByLocationRequest, TifAsPngRequest
 from fastapi import Depends, FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from shapely import wkt
@@ -13,6 +13,16 @@ from app.sql.datasets_by_location import LOCATION_FILL, LOCATION_FILL_RES2, DATA
 from app.sql.dataset_metadata import DATASET_METADATA
 from app.sql.dataset_counts import DATASET_COUNTS
 from app.sql.dataset_coverage import DATASET_COVERAGE
+import cv2
+import rasterio
+import urllib
+import numpy as np
+from io import BytesIO
+import requests
+import base64
+from app.services import cv2_to_data_url
+from rasterio.warp import calculate_default_transform, reproject, Resampling, transform_bounds
+
 
 app = FastAPI(
     title=settings.project_name,
@@ -151,3 +161,73 @@ async def get_datasets_by_location(
         }
         for row in results.fetchall()
     ]
+
+
+@app.post("/tif_as_png/")
+async def get_tif_as_png(
+    payload: TifAsPngRequest,
+):
+    url = payload.url
+
+    with urllib.request.urlopen(url) as resp:
+    # read image as an numpy array
+        response = resp.read()
+        with rasterio.open(BytesIO(response)) as src:
+            # print(src.meta)
+            # print(src.bounds)
+
+            width = src.width
+            height = src.height
+            extent = src.bounds  # Bounding box of the image
+
+            img = src.read(1)
+
+            alpha = img != src.nodata
+            alpha = np.uint8(alpha)
+            alpha[alpha!=0] = 255
+            # nodata = int(src.nodata) if src.nodata else None
+            # # print(nodata)
+
+            # alpha = img.astype(int) != nodata
+            # alpha = np.uint8(alpha)
+            # alpha[alpha!=0] = 255
+            # print(alpha, alpha.dtype, np.unique(alpha))
+
+            img_clamped = np.uint8(img)
+
+            img_colorized = cv2.applyColorMap(img_clamped, cv2.COLORMAP_JET)
+            b, g, r = cv2.split(img_colorized)
+            img_bgra = cv2.merge((b, g, r, alpha))
+
+            src_transform = src.transform
+            src_crs = src.crs
+            dst_img = np.zeros(
+                (
+                    img_bgra.shape[0],  # number of bands
+                    img_bgra.shape[1],  # height
+                    img_bgra.shape[2],  # width
+                )
+            ) 
+            dst_crs = 'EPSG:4326'
+            dst_transform, dst_width, dst_height = rasterio.warp.calculate_default_transform(
+                src_crs, dst_crs, src.width, src.height, *src.bounds
+            )
+
+            dst_bounds = transform_bounds(src_crs, dst_crs, *extent)
+
+            reproject(
+                source=img_bgra,
+                destination=dst_img,
+                src_transform=src_transform,
+                src_crs=src_crs,
+                dst_transform=dst_transform,
+                dst_crs=dst_crs,
+                resampling=Resampling.nearest
+            )
+
+            # print(dst_img)
+
+            return {
+                "data_url": cv2_to_data_url(dst_img),
+                "bbox": dst_bounds,
+            }

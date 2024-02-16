@@ -47,6 +47,10 @@ class DatasetsByLocationRequest(BaseModel):
     resolution: int
 
 
+class TifAsPngRequest(BaseModel):
+    url: str
+
+
 dataset_keyword_association_table = Table(
     "dataset_keyword_association_table",
     Base.metadata,

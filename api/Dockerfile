@@ -40,6 +40,8 @@ COPY --from=builder-base $POETRY_HOME $POETRY_HOME
 COPY --from=builder-base $PYSETUP_PATH $PYSETUP_PATH
 
 RUN poetry install
+# todo: deduplicate this step
+RUN apt-get update && apt-get install --no-install-recommends -y libgdal-dev gdal-bin
 
 WORKDIR /app
 # no COPY of fastapi codebase - we're volume-mounting instead
