@@ -7,27 +7,30 @@ import { useDispatch, useSelector } from "react-redux";
 import { RootState } from "store/store";
 import { setFileUrl } from "store/previewSlice";
 
-// TODO: will expand as we accomodate other file formats
-const isPreviewable = (file: string) => file.endsWith('.zip');
+// TODO: separate into a util file
+const isPreviewable = (file: string) => [
+  '.zip',
+  '.geojson',
+  '.tif',
+  '.tiff',
+  '.geotif',
+  '.geotiff',
+].some((ext) => file.endsWith(ext));
 
 const PreviewButton = ({ file }: { file: string }) => {
   const { isLoadingPreview, fileUrl } = useSelector((state: RootState) => state.preview);
   const dispatch = useDispatch();
   return (
-    isPreviewable(file)
-    ? (
+    isPreviewable(file) && (
       isLoadingPreview && (file === fileUrl)
-        ? <CircularProgress className="m-2" size="1em" />
+        ? <CircularProgress className="m-1 mb-0" size="1em" />
         : <IconButton
+          size='small'
           disabled={isLoadingPreview}
           color={ fileUrl === file ? "primary" : "default" }
           onClick={() => dispatch(setFileUrl(file === fileUrl ? null : file)) }>
             <VisibilityIcon />
            </IconButton>
-    ) : (
-      <IconButton disabled>
-        <VisibilityOffIcon />
-      </IconButton>
     )
   );
 }

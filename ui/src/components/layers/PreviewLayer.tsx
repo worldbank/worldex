@@ -27,80 +27,89 @@ export default function PreviewLayer() {
   useEffect(() => {
     if (fileUrl == null) {
       setData(null);
-      return;
-    }
-    dispatch(setIsLoadingPreview(true));
-    setData(
-      load(
-        `cors-anywhere/${fileUrl}`,
-        ZipLoader,
-        {
-          fetch: {
-            headers: {
-              'X-Requested-With': 'XMLHttpRequest',
+    } else if (fileUrl.endsWith('.geojson')) {
+      setData(`/cors-anywhere/${fileUrl}`);
+    } else if (fileUrl.endsWith('.zip')) {
+      dispatch(setIsLoadingPreview(true));
+      setData(
+        load(
+          `cors-anywhere/${fileUrl}`,
+          ZipLoader,
+          {
+            fetch: {
+              headers: {
+                'X-Requested-With': 'XMLHttpRequest',
+              },
             },
           },
-        },
-      // @ts-ignore
-      ).then((zipFileMap) => {
-        const filename = Object.keys(zipFileMap).find((k) => k.endsWith('.shp'));
-        if (!filename) {
-          throw new Error('No shapefile contained in zipfile');
-        }
-        const { shx, cpg, prj } = loadShapefileSidecarFiles(zipFileMap);
-        const shp = parse(zipFileMap[filename], [SHPLoader], { shapefile: { shape: 'geojson-table' } });
-        return Promise.all([shp, shx, cpg, prj]);
-      }).then(([
-        shp,
-        shx,
-        cpg,
-        prj,
-      ]) => {
         // @ts-ignore
-        const geometries = parseGeometries(shp.geometries);
-        const features = joinProperties(geometries, []);
-        // @ts-ignore
-        const { header } = shp;
-
-        const {
-          minX: minLon,
-          minY: minLat,
-          maxX: maxLon,
-          maxY: maxLat,
-        } = header.bbox;
-        const bbox = {
-          minLon, minLat, maxLon, maxLat,
-        };
-        // TODO: convert to a utility with bbox and dispatch as params - we've done this thrice by now
-        const { width, height } = viewState;
-        const viewStateParams = bboxToViewStateParams({ bbox, width, height });
-        const zoom = Math.max(viewStateParams.zoom, 2);
-        // @ts-ignore
-        dispatch(setViewState({ ...viewState, ...viewStateParams, zoom }));
-
-        return {
-          shape: 'geojson-table',
-          type: 'FeatureCollection',
-          encoding: cpg,
-          prj,
+        ).then((zipFileMap) => {
+          const filename = Object.keys(zipFileMap).find((k) => k.endsWith('.shp'));
+          if (!filename) {
+            throw new Error('No shapefile contained in zipfile');
+          }
+          const { shx, cpg, prj } = loadShapefileSidecarFiles(zipFileMap);
+          const shp = parse(zipFileMap[filename], [SHPLoader], { shapefile: { shape: 'geojson-table' } });
+          return Promise.all([shp, shx, cpg, prj]);
+        }).then(([
+          shp,
           shx,
-          header,
-          features,
-        };
-      }).catch((e) => {
-        dispatch(setFileUrl(null));
-        dispatch(setErrorMessage(e.message));
-      })
-        .finally(() => {
-          dispatch(setIsLoadingPreview(false));
-        }),
-    );
+          cpg,
+          prj,
+        ]) => {
+          // @ts-ignore
+          const geometries = parseGeometries(shp.geometries);
+          const features = joinProperties(geometries, []);
+          // @ts-ignore
+          const { header } = shp;
+
+          const {
+            minX: minLon,
+            minY: minLat,
+            maxX: maxLon,
+            maxY: maxLat,
+          } = header.bbox;
+          const bbox = {
+            minLon, minLat, maxLon, maxLat,
+          };
+          // TODO: convert to a utility with bbox and dispatch as params - we've done this thrice by now
+          const { width, height } = viewState;
+          const viewStateParams = bboxToViewStateParams({ bbox, width, height });
+          const zoom = Math.max(viewStateParams.zoom, 2);
+          // @ts-ignore
+          dispatch(setViewState({ ...viewState, ...viewStateParams, zoom }));
+
+          return {
+            shape: 'geojson-table',
+            type: 'FeatureCollection',
+            encoding: cpg,
+            prj,
+            shx,
+            header,
+            features,
+          };
+        }).catch((e) => {
+          dispatch(setFileUrl(null));
+          dispatch(setErrorMessage(e.message));
+        })
+          .finally(() => {
+            dispatch(setIsLoadingPreview(false));
+          }),
+      );
+    }
   }, [fileUrl]);
 
   if (previewLayer && data) {
     return new GeoJsonLayer({
       id: PREVIEW_LAYER_ID,
       data,
+      loadOptions: {
+        fetch: {
+          headers: {
+            'X-Requested-With': 'XMLHttpRequest',
+          },
+        },
+      },
       pickable: true,
       stroked: true,
       filled: true,
