@@ -17,7 +17,7 @@ const Overview = () => {
   const datasetsByOrgs = filteredDatasets ? groupBy(filteredDatasets, "source_org") : null;
   
   useEffect(() => {
-    fetch(`/api/dataset_count/`, {
+    fetch('/api/dataset_count/', {
       method: 'post',
     })
     .then(resp => resp.json())

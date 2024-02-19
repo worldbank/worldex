@@ -20,7 +20,7 @@ import numpy as np
 from io import BytesIO
 import requests
 import base64
-from app.services import cv2_to_data_url
+from app.services import img_to_data_url
 from rasterio.warp import calculate_default_transform, reproject, Resampling, transform_bounds
 from rasterio.windows import from_bounds
 
@@ -169,50 +169,42 @@ async def get_tif_as_png(
     payload: TifAsPngRequest,
 ):
     url = payload.url
-
     with urllib.request.urlopen(url) as resp:
-    # read image as an numpy array
         response = resp.read()
+        # rasterio.open() with a url results to the following error message for some files:
+        # Range downloading not supported by this server!
         with rasterio.open(BytesIO(response)) as src:
-            width = src.width
-            height = src.height
-            extent = src.bounds  # Bounding box of the image
-
-            img = src.read(1)
-
+            # assumes a single band
+            _img = src.read(1)
             web_mercator = rasterio.CRS.from_epsg(3857)
 
-            dst_transform, dst_width, dst_height = rasterio.warp.calculate_default_transform(
-                src.crs, web_mercator, src.width, src.height, *src.bounds
-            )
-
-            dst_img = np.zeros(
-                (
-                    dst_height,  # height
-                    dst_width,  # width
+            img = _img.copy()
+            if src.meta['crs'] != web_mercator:
+                dst_transform, dst_width, dst_height = rasterio.warp.calculate_default_transform(
+                    src.crs, web_mercator, src.width, src.height, *src.bounds
                 )
-            )
-            
-            reproject(
-                source=img,
-                destination=dst_img,
-                src_transform=src.transform,
-                src_crs=src.crs,
-                dst_transform=dst_transform,
-                dst_crs=web_mercator,
-                resampling=Resampling.nearest
-            )
+                img = np.zeros((dst_height, dst_width))
+                 
+                reproject(
+                    source=_img,
+                    destination=img,
+                    src_transform=src.transform,
+                    src_crs=src.crs,
+                    dst_transform=dst_transform,
+                    dst_crs=web_mercator,
+                    resampling=Resampling.nearest
+                )
 
-            alpha = dst_img != src.nodata
+            alpha = img != src.nodata
             alpha = np.uint8(alpha)
             alpha[alpha!=0] = 255
 
-            img_clamped = np.uint8(dst_img)
-            img_colorized = cv2.applyColorMap(img_clamped, cv2.COLORMAP_JET)
+            img_clamped = np.uint8(img)
+            img_colorized = cv2.applyColorMap(img_clamped, cv2.COLORMAP_VIRIDIS)
             b, g, r = cv2.split(img_colorized)
             img_bgra = cv2.merge((b, g, r, alpha))
 
             return {
-                "data_url": cv2_to_data_url(img_bgra),
+                "data_url": img_to_data_url(img_bgra),
                 "bbox": src.bounds,
             }
