@@ -22,6 +22,7 @@ import requests
 import base64
 from app.services import cv2_to_data_url
 from rasterio.warp import calculate_default_transform, reproject, Resampling, transform_bounds
+from rasterio.windows import from_bounds
 
 
 app = FastAPI(
@@ -173,61 +174,45 @@ async def get_tif_as_png(
     # read image as an numpy array
         response = resp.read()
         with rasterio.open(BytesIO(response)) as src:
-            # print(src.meta)
-            # print(src.bounds)
-
             width = src.width
             height = src.height
             extent = src.bounds  # Bounding box of the image
 
             img = src.read(1)
 
-            alpha = img != src.nodata
+            web_mercator = rasterio.CRS.from_epsg(3857)
+
+            dst_transform, dst_width, dst_height = rasterio.warp.calculate_default_transform(
+                src.crs, web_mercator, src.width, src.height, *src.bounds
+            )
+
+            dst_img = np.zeros(
+                (
+                    dst_height,  # height
+                    dst_width,  # width
+                )
+            )
+            
+            reproject(
+                source=img,
+                destination=dst_img,
+                src_transform=src.transform,
+                src_crs=src.crs,
+                dst_transform=dst_transform,
+                dst_crs=web_mercator,
+                resampling=Resampling.nearest
+            )
+
+            alpha = dst_img != src.nodata
             alpha = np.uint8(alpha)
             alpha[alpha!=0] = 255
-            # nodata = int(src.nodata) if src.nodata else None
-            # # print(nodata)
 
-            # alpha = img.astype(int) != nodata
-            # alpha = np.uint8(alpha)
-            # alpha[alpha!=0] = 255
-            # print(alpha, alpha.dtype, np.unique(alpha))
-
-            img_clamped = np.uint8(img)
-
+            img_clamped = np.uint8(dst_img)
             img_colorized = cv2.applyColorMap(img_clamped, cv2.COLORMAP_JET)
             b, g, r = cv2.split(img_colorized)
             img_bgra = cv2.merge((b, g, r, alpha))
 
-            src_transform = src.transform
-            src_crs = src.crs
-            dst_img = np.zeros(
-                (
-                    img_bgra.shape[0],  # number of bands
-                    img_bgra.shape[1],  # height
-                    img_bgra.shape[2],  # width
-                )
-            ) 
-            dst_crs = 'EPSG:4326'
-            dst_transform, dst_width, dst_height = rasterio.warp.calculate_default_transform(
-                src_crs, dst_crs, src.width, src.height, *src.bounds
-            )
-
-            dst_bounds = transform_bounds(src_crs, dst_crs, *extent)
-
-            reproject(
-                source=img_bgra,
-                destination=dst_img,
-                src_transform=src_transform,
-                src_crs=src_crs,
-                dst_transform=dst_transform,
-                dst_crs=dst_crs,
-                resampling=Resampling.nearest
-            )
-
-            # print(dst_img)
-
             return {
-                "data_url": cv2_to_data_url(dst_img),
-                "bbox": dst_bounds,
+                "data_url": cv2_to_data_url(img_bgra),
+                "bbox": src.bounds,
             }
