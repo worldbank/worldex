@@ -7,6 +7,9 @@ import {
 } from '@carto/react-redux';
 import h3CellsSource from 'data/sources/h3CellsSource';
 import { lazy, useEffect } from 'react';
+
+import { SLIPPY_TILE_LAYER_ID } from 'components/layers/SlippyTileLayer';
+
 import { TIF_PREVIEW_LAYER_ID } from 'components/layers/TifPreviewLayer';
 import { GEOJSON_PREVIEW_LAYER_ID } from 'components/layers/GeojsonPreviewLayer';
 import datasetCoverageSource from 'data/sources/datasetCoverageSource';
@@ -109,6 +112,12 @@ export default function Main() {
     dispatch(addSource(datasetCoverageSource));
     dispatch(
       addLayer({
+        id: SLIPPY_TILE_LAYER_ID,
+        source: datasetCoverageSource.id,
+      }),
+    );
+    dispatch(
+      addLayer({
         id: TIF_PREVIEW_LAYER_ID,
       }),
     );
@@ -129,6 +138,7 @@ export default function Main() {
       dispatch(removeLayer(DATASET_COVERAGE_LAYER_ID));
       dispatch(removeLayer(GEOJSON_PREVIEW_LAYER_ID));
       dispatch(removeLayer(TIF_PREVIEW_LAYER_ID));
+      dispatch(removeLayer(SLIPPY_TILE_LAYER_ID));
       dispatch(removeSource(datasetCoverageSource.id));
     };
   }, [dispatch]);
