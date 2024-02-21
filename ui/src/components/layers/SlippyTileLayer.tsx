@@ -13,28 +13,9 @@ export default function SlippyTileLayer() {
   const { slippyTileLayer } = useSelector((state: RootState) => state.carto.layers);
   // const source = useSelector((state) => selectSourceById(state, slippyTileLayer?.source));
   // const cartoLayerProps = useCartoLayerProps({ source });
+  const { h3Resolution } = useSelector((state: RootState) => state.app);
 
   if (slippyTileLayer) {
-    const data = [
-      {
-        // Simple polygon (array of coords)
-        contour: [[-122.4, 37.7], [-122.4, 37.8], [-122.5, 37.8], [-122.5, 37.7], [-122.4, 37.7]],
-        zipcode: 94107,
-        population: 26599,
-        area: 6.11,
-      },
-      {
-        // Complex polygon with holes (array of rings)
-        contour: [
-          [[-122.4, 37.7], [-122.4, 37.8], [-122.5, 37.8], [-122.5, 37.7], [-122.4, 37.7]],
-          [[-122.45, 37.73], [-122.47, 37.76], [-122.47, 37.71], [-122.45, 37.73]],
-        ],
-        zipcode: 94107,
-        population: 26599,
-        area: 6.11,
-      },
-    ];
-
     return new TileLayer({
       id: SLIPPY_TILE_LAYER_ID,
       data: null,
@@ -67,14 +48,14 @@ export default function SlippyTileLayer() {
           new TextLayer({
             id: `${props.id}-text`,
             // dummy data otherwise the layer doesn't render
-            data,
+            data: [{}],
             getPosition: (object) => {
               const [[w, s], [e, n]] = props.tile.boundingBox;
               return [(w + e) / 2, (s + n) / 2];
             },
             getText: (object) => {
               const { z, x, y } = props.tile.index;
-              return `z:${z}, x:${x}, y:${y}`;
+              return `z:${z} x:${x} y:${y}\nres: ${h3Resolution}`;
             },
             getSize: 16,
             getAngle: 0,

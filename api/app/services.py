@@ -8,4 +8,3 @@ def img_to_data_url(img: np.ndarray):
     if not retval:
         raise Exception("Error encoding image")
     base64_str = base64.b64encode(buffer).decode('utf-8')
-    return f"data:image/png;base64,{base64_str}"

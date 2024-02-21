@@ -1,7 +1,7 @@
 import { OR_YEL, SELECTED_OUTLINE } from 'constants/colors';
 import { useDispatch, useSelector } from 'react-redux';
 // @ts-ignore
-import { TileLayer, H3HexagonLayer } from '@deck.gl/geo-layers';
+import { TileLayer, Tile2DHeader, H3HexagonLayer } from '@deck.gl/geo-layers';
 import { selectSourceById } from '@carto/react-redux';
 import { RootState } from 'store/store';
 import { Typography } from '@mui/material';
@@ -9,6 +9,14 @@ import { renderToStaticMarkup } from 'react-dom/server';
 import { setDatasets, setH3Index as setSelectedH3Index } from 'store/selectedSlice';
 import { colorBins, hexToRgb } from 'utils/colors';
 import { DatasetCount } from 'components/common/types';
+import {
+  TILE_STATE_VISIBLE,
+  TILE_STATE_VISITED,
+  getPlaceholderInAncestors,
+  getPlaceholderInChildren,
+} from 'utils/tileRefinement';
+import getClosestZoomResolutionPair from 'utils/getClosestZoomResolutionPair';
+import groupBy from 'utils/groupBy';
 
 export const DATASET_COUNT_LAYER_ID = 'datasetCountLayer';
 
@@ -41,7 +49,43 @@ export default function DatasetCountLayer() {
       ),
       data: source.data,
       maxZoom: closestZoom,
-      // refinementStrategy: 'no-overlap',
+      refinementStrategy: (allTiles: Tile2DHeader[]) => {
+        const done = allTiles.some((tile) => {
+          const done = (closestZoom === getClosestZoomResolutionPair(tile.index.z)[0]) && tile.isSelected && tile.isVisible && tile.isLoaded && tile.content;
+          if (done) {
+            const { z, x, y } = tile.index;
+            console.log(z, x, y, tile);
+          }
+          return done;
+        });
+        if (done) {
+          return;
+        }
+        // copy of 'no-overlap' strategy from
+        // https://github.com/visgl/deck.gl/blob/master/modules/geo-layers/src/tileset-2d/tileset-2d.ts
+        for (const tile of allTiles) {
+          tile.state = 0;
+        }
+        for (const tile of allTiles) {
+          if (tile.isSelected) {
+            getPlaceholderInAncestors(tile);
+          }
+        }
+        // Always process parents first
+        const sortedTiles = Array.from(allTiles).sort((t1, t2) => t1.zoom - t2.zoom);
+        for (const tile of sortedTiles) {
+          tile.isVisible = Boolean(tile.state! & TILE_STATE_VISIBLE);
+
+          if (tile.children && (tile.isVisible || tile.state! & TILE_STATE_VISITED)) {
+            for (const child of tile.children) {
+              // If the tile is rendered, or if the tile has been explicitly hidden, hide all of its children
+              child.state = TILE_STATE_VISITED;
+            }
+          } else if (tile.isSelected) {
+            getPlaceholderInChildren(tile);
+          }
+        }
+      },
       loadOptions: {
         fetch: {
           method: 'POST',
