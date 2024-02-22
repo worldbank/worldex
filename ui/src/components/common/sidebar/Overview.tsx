@@ -7,12 +7,14 @@ import DeselectDatasetButton from "./DeselectDatasetButton";
 import groupBy from "utils/groupBy";
 import Datasets from "./Datasets";
 import { Dataset } from "../types";
+import HidePreviewButton from "./HidePreviewButton";
 
 const Overview = () => {
   const { datasetCount }: { datasetCount: number } = useSelector((state: RootState) => state.selected);
   const dispatch = useDispatch();
   const h3Resolution = useSelector((state: RootState) => state.app.h3Resolution);
   const { selectedDataset } = useSelector((state: RootState) => state.selected);
+  const { fileUrl: previewFileUrl, isLoadingPreview } = useSelector((state: RootState) => state.preview);
   const { location, filteredDatasets }: { location: any, filteredDatasets: Dataset[] } = useSelector((state: RootState) => state.location);
   const datasetsByOrgs = filteredDatasets ? groupBy(filteredDatasets, "source_org") : null;
   
@@ -25,7 +27,7 @@ const Overview = () => {
       dispatch(setDatasetCount(data["dataset_count"]))
     });
   }, []);
-  
+
   return (
     <>
       <div className="p-4">
@@ -37,6 +39,7 @@ const Overview = () => {
           Current H3 resolution: {h3Resolution}
         </Typography>
         { selectedDataset && <DeselectDatasetButton /> }
+        { (previewFileUrl && !isLoadingPreview) && <HidePreviewButton /> }
       </div>
       <Divider />
       { datasetsByOrgs && <Datasets header={`${location.name} Datasets`} datasetsByOrgs={datasetsByOrgs} /> }

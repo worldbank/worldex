@@ -2,7 +2,6 @@ import { CircularProgress, IconButton, Link, Popover, Table, TableBody, TableCel
 import { format } from "date-fns";
 import { Dataset } from "../types";
 import VisibilityIcon from '@mui/icons-material/Visibility';
-import VisibilityOffIcon from '@mui/icons-material/VisibilityOff';
 import { useDispatch, useSelector } from "react-redux";
 import { RootState } from "store/store";
 import { setFileUrl } from "store/previewSlice";

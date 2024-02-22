@@ -1,7 +1,7 @@
 import SearchLayer from './SearchLayer';
 import DatasetCountLayer from './DatasetCountLayer';
 import DatasetCoverageLayer from './DatasetCoverageLayer';
-import PreviewLayer from './PreviewLayer';
+import GeojsonPreviewLayer from './GeojsonPreviewLayer';
 import TifPreviewLayer from './TifPreviewLayer';
 // [hygen] Import layers
 
@@ -9,7 +9,7 @@ export const getLayers = () => [
   DatasetCountLayer(),
   SearchLayer(),
   DatasetCoverageLayer(),
-  PreviewLayer(),
+  GeojsonPreviewLayer(),
   TifPreviewLayer(),
   // [hygen] Add layer
 ];

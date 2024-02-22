@@ -199,12 +199,17 @@ async def get_tif_as_png(
             alpha = np.uint8(alpha)
             alpha[alpha!=0] = 255
 
-            img_clamped = np.uint8(img)
-            img_colorized = cv2.applyColorMap(img_clamped, cv2.COLORMAP_VIRIDIS)
+            # assumes float, should handle otherwise
+            info = np.finfo(img.dtype)
+            # normalize then scale to preserve dynamic range
+            img_normalized = img.astype(np.float64) / info.max
+            img_normalized = 255 * img
+            img_normalized = img.astype(np.uint8)
+            img_colorized = cv2.applyColorMap(img_normalized, cv2.COLORMAP_VIRIDIS)
             b, g, r = cv2.split(img_colorized)
             img_bgra = cv2.merge((b, g, r, alpha))
 
             return {
                 "data_url": img_to_data_url(img_bgra),
-                "bbox": src.bounds,
+                "bbox": src.bounds,  # [west, south, east, north]
             }

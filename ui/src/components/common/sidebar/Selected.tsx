@@ -7,10 +7,12 @@ import groupBy from "utils/groupBy";
 import { Dataset } from "../types";
 import Datasets from "./Datasets";
 import DeselectDatasetButton from "./DeselectDatasetButton";
+import HidePreviewButton from "./HidePreviewButton";
 
 const Selected = () => {
   const { h3Index, datasets }: { h3Index: string, datasets: Dataset[] } = useSelector((state: RootState) => state.selected);
   const { selectedDataset } = useSelector((state: RootState) => state.selected);
+  const { fileUrl: previewFileUrl, isLoadingPreview } = useSelector((state: RootState) => state.preview);
   const dispatch = useDispatch();
   const datasetsByOrgs = datasets ? groupBy(datasets, "source_org") : null;
   const handleDeselectClick = () => {
@@ -29,6 +31,7 @@ const Selected = () => {
           <Typography className="text-sm">Cell area: {cellArea(h3Index, UNITS.km2).toFixed(2)} km<sup className="sups">2</sup></Typography>
           <Typography className="text-sm">Dataset count: {datasets?.length} datasets</Typography>
           { selectedDataset && <DeselectDatasetButton /> }
+          { (previewFileUrl && !isLoadingPreview) && <HidePreviewButton /> }
       </div>
       <Divider />
       { datasets && <Datasets header="Tile Datasets" datasetsByOrgs={datasetsByOrgs} />}

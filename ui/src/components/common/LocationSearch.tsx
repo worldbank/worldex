@@ -1,4 +1,3 @@
-import { setViewState } from '@carto/react-redux';
 import ClearIcon from '@mui/icons-material/Clear';
 import SearchIcon from '@mui/icons-material/Search';
 import { Autocomplete, CircularProgress, IconButton, Paper, TextField } from "@mui/material";
@@ -10,11 +9,11 @@ import { useDispatch, useSelector } from "react-redux";
 import { setFilteredDatasets, setLocation, setPendingLocationCheck } from 'store/locationSlice';
 import { setH3Index as setSelectedH3Index } from 'store/selectedSlice';
 import { RootState } from "store/store";
-import bboxToViewStateParams from 'utils/bboxToViewStateParams';
 import getClosestZoomResolutionPair from 'utils/getClosestZoomResolutionPair';
 import isEqual from 'lodash.isequal';
 import uniqWith from 'lodash.uniqwith';
 import isEqualWith from 'lodash.isequalwith';
+import moveViewportToBbox from 'utils/moveViewportToBbox';
 
 const SearchButton = ({isLoading}: {isLoading: boolean}) =>
   <div className="flex justify-center items-center w-[2em] mr-[-8px]">
@@ -101,11 +100,7 @@ const LocationSearch = ({ className }: { className?: string }) => {
     const [ minLat, maxLat, minLon, maxLon ] = location.boundingbox.map(parseFloat);
     const bbox = { minLat, maxLat, minLon, maxLon };
     dispatch(setLocation(location));
-    const { width, height } = viewState;
-    const viewStateParams = bboxToViewStateParams({ bbox, width, height });
-    const { zoom } = viewStateParams;
-    // @ts-ignore
-    dispatch(setViewState({...viewState, ...viewStateParams }));
+    const { zoom } = moveViewportToBbox(bbox, viewState, dispatch);
     if (['Polygon', 'MultiPolygon'].includes(location.geojson.type)) {
       getDatasets({ location, zoom });
     }
