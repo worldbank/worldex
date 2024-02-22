@@ -12,6 +12,7 @@ import { RootState } from 'store/store';
 import { setErrorMessage, setFileUrl, setIsLoadingPreview } from 'store/previewSlice';
 import bboxToViewStateParams from 'utils/bboxToViewStateParams';
 import { setViewState } from '@carto/react-redux';
+import moveViewportToBbox from 'utils/moveViewportToBbox';
 
 export const TIF_PREVIEW_LAYER_ID = 'tifPreviewLayer';
 
@@ -54,11 +55,7 @@ export default function TifPreviewLayer() {
           const bboxRenamed = {
             minLat: s, maxLat: n, minLon: w, maxLon: e,
           };
-          const { width, height } = viewState;
-          const viewStateParams = bboxToViewStateParams({ bbox: bboxRenamed, width, height });
-          const zoom = Math.max(viewStateParams.zoom, 2);
-          // @ts-ignore
-          dispatch(setViewState({ ...viewState, ...viewStateParams, zoom }));
+          moveViewportToBbox(bboxRenamed, viewState, dispatch);
         },
       ).catch((e) => {
         console.error(e);
