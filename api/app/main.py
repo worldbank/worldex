@@ -199,9 +199,11 @@ async def get_tif_as_png(
             alpha = np.uint8(alpha)
             alpha[alpha!=0] = 255
 
-            info = np.finfo(img.dtype) # Get the information of the incoming image type
-            img_normalized = img.astype(np.float64) / info.max # normalize the data to 0 - 1
-            img_normalized = 255 * img # Now scale by 255
+            # assumes float, should handle otherwise
+            info = np.finfo(img.dtype)
+            # normalize then scale to preserve dynamic range
+            img_normalized = img.astype(np.float64) / info.max
+            img_normalized = 255 * img
             img_normalized = img.astype(np.uint8)
             img_colorized = cv2.applyColorMap(img_normalized, cv2.COLORMAP_VIRIDIS)
             b, g, r = cv2.split(img_colorized)
