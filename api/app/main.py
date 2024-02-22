@@ -209,5 +209,5 @@ async def get_tif_as_png(
 
             return {
                 "data_url": img_to_data_url(img_bgra),
-                "bbox": src.bounds,
+                "bbox": src.bounds,  # [west, south, east, north]
             }

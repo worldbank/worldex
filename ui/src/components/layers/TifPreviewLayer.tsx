@@ -10,6 +10,8 @@ import GeoTIFF, {
 import { useEffect, useState } from 'react';
 import { RootState } from 'store/store';
 import { setErrorMessage, setFileUrl, setIsLoadingPreview } from 'store/previewSlice';
+import bboxToViewStateParams from 'utils/bboxToViewStateParams';
+import { setViewState } from '@carto/react-redux';
 
 export const TIF_PREVIEW_LAYER_ID = 'tifPreviewLayer';
 
@@ -19,6 +21,7 @@ export default function TifPreviewLayer() {
 
   const [tifData, setTifData] = useState(null);
   const dispatch = useDispatch();
+  const { viewState } = useSelector((state: RootState) => state.carto);
 
   useEffect(() => {
     if (fileUrl == null) {
@@ -45,8 +48,20 @@ export default function TifPreviewLayer() {
         (resp) => {
           const { data_url, bbox } = resp;
           setTifData({ dataUrl: data_url, bbox });
+          const [
+            w, s, e, n,
+          ] = bbox;
+          const bboxRenamed = {
+            minLat: s, maxLat: n, minLon: w, maxLon: e,
+          };
+          const { width, height } = viewState;
+          const viewStateParams = bboxToViewStateParams({ bbox: bboxRenamed, width, height });
+          const zoom = Math.max(viewStateParams.zoom, 2);
+          // @ts-ignore
+          dispatch(setViewState({ ...viewState, ...viewStateParams, zoom }));
         },
       ).catch((e) => {
+        console.error(e);
         dispatch(setFileUrl(null));
         dispatch(setErrorMessage(e.message));
       })
