@@ -2,16 +2,9 @@ import { useDispatch, useSelector } from 'react-redux';
 // @ts-ignore
 import { BitmapLayer } from '@deck.gl/layers/typed';
 import '@loaders.gl/polyfills';
-import GeoTIFF, {
-  GeoTIFFImage,
-  ReadRasterResult,
-  fromUrl,
-} from 'geotiff';
 import { useEffect, useState } from 'react';
 import { RootState } from 'store/store';
 import { setErrorMessage, setFileUrl, setIsLoadingPreview } from 'store/previewSlice';
-import bboxToViewStateParams from 'utils/bboxToViewStateParams';
-import { setViewState } from '@carto/react-redux';
 import moveViewportToBbox from 'utils/moveViewportToBbox';
 
 export const TIF_PREVIEW_LAYER_ID = 'tifPreviewLayer';

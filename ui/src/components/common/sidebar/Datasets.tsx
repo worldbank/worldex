@@ -2,13 +2,12 @@ import ChevronRight from "@mui/icons-material/ChevronRight";
 import { Accordion, AccordionDetails, AccordionSummary, Box, Divider, IconButton, List, ListItem, Stack, Typography } from "@mui/material";
 import React, { useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { setViewState } from '@carto/react-redux';
 import { setSelectedDataset } from "store/selectedSlice";
 import { RootState } from "store/store";
 import { BoundingBox, Dataset } from "../types";
 import classNames from "classnames";
-import bboxToViewStateParams from 'utils/bboxToViewStateParams';
 import DatasetPopover from "./DatasetPopover";
+import moveViewportToBbox from "utils/moveViewportToBbox";
 
 
 const DatasetItem = ({idx, dataset}: {idx: number, dataset: Dataset}) => {
@@ -29,8 +28,7 @@ const DatasetItem = ({idx, dataset}: {idx: number, dataset: Dataset}) => {
     }
     // do not zoom/pan to dataset's bbox if a location feature is currently active
     if (!['Polygon', 'MultiPolygon'].includes(location?.geojson.type)) {
-      // @ts-ignore
-      dispatch(setViewState({ ...viewState, ...bboxToViewStateParams({ bbox, width, height })}));
+      moveViewportToBbox(bbox, viewState, dispatch);
     }
     dispatch(setSelectedDataset(datasetId));
   }

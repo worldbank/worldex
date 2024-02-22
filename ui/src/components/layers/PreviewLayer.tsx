@@ -1,7 +1,6 @@
 /* eslint-disable class-methods-use-this */
 import { GeoJsonLayer } from '@deck.gl/layers/typed';
 import { useDispatch, useSelector } from 'react-redux';
-import { setViewState } from '@carto/react-redux';
 import { load, parse } from '@loaders.gl/core';
 import '@loaders.gl/polyfills';
 import { SHPLoader } from '@loaders.gl/shapefile';
@@ -9,9 +8,9 @@ import { ZipLoader } from '@loaders.gl/zip';
 import { useEffect, useState } from 'react';
 import { setErrorMessage, setFileUrl, setIsLoadingPreview } from 'store/previewSlice';
 import { RootState } from 'store/store';
-import bboxToViewStateParams from 'utils/bboxToViewStateParams';
 import { hexToRgb } from 'utils/colors';
 import { joinProperties, loadShapefileSidecarFiles, parseGeometries } from 'utils/shapefile/shapefile';
+import moveViewportToBbox from 'utils/moveViewportToBbox';
 
 export const PREVIEW_LAYER_ID = 'previewLayer';
 
@@ -72,12 +71,7 @@ export default function PreviewLayer() {
           const bbox = {
             minLon, minLat, maxLon, maxLat,
           };
-          // TODO: convert to a utility with bbox and dispatch as params - we've done this thrice by now
-          const { width, height } = viewState;
-          const viewStateParams = bboxToViewStateParams({ bbox, width, height });
-          const zoom = Math.max(viewStateParams.zoom, 2);
-          // @ts-ignore
-          dispatch(setViewState({ ...viewState, ...viewStateParams, zoom }));
+          moveViewportToBbox(bbox, viewState, dispatch);
 
           return {
             shape: 'geojson-table',
