@@ -12,10 +12,10 @@ import { hexToRgb } from 'utils/colors';
 import { joinProperties, loadShapefileSidecarFiles, parseGeometries } from 'utils/shapefile/shapefile';
 import moveViewportToBbox from 'utils/moveViewportToBbox';
 
-export const PREVIEW_LAYER_ID = 'previewLayer';
+export const GEOJSON_PREVIEW_LAYER_ID = 'geojsonPreviewLayer';
 
-export default function PreviewLayer() {
-  const { previewLayer } = useSelector((state: RootState) => state.carto.layers);
+export default function GeojsonPreviewLayer() {
+  const { geojsonPreviewLayer } = useSelector((state: RootState) => state.carto.layers);
   const { fileUrl } = useSelector((state: RootState) => state.preview);
   // @ts-ignore
   const [data, setData] = useState(null);
@@ -93,9 +93,9 @@ export default function PreviewLayer() {
     }
   }, [fileUrl]);
 
-  if (previewLayer && data) {
+  if (geojsonPreviewLayer && data) {
     return new GeoJsonLayer({
-      id: PREVIEW_LAYER_ID,
+      id: GEOJSON_PREVIEW_LAYER_ID,
       data,
       loadOptions: {
         fetch: {
