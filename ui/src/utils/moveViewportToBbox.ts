@@ -2,7 +2,6 @@ import { setViewState, ViewState } from '@carto/react-redux';
 import { BoundingBox } from 'components/common/types';
 import bboxToViewStateParams from './bboxToViewStateParams';
 
-// should this utility function be a reducer?
 // @ts-ignore
 const moveViewportToBbox = (bbox: BoundingBox, viewState: ViewState, dispatch: any): ViewState => {
   const { width, height } = viewState;
