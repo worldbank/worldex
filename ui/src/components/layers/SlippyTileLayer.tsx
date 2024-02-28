@@ -15,7 +15,7 @@ export default function SlippyTileLayer() {
   // const cartoLayerProps = useCartoLayerProps({ source });
   const { h3Resolution } = useSelector((state: RootState) => state.app);
 
-  if (slippyTileLayer) {
+  if (false && slippyTileLayer) {
     return new TileLayer({
       id: SLIPPY_TILE_LAYER_ID,
       data: null,

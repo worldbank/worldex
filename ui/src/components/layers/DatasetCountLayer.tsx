@@ -1,22 +1,23 @@
 import { OR_YEL, SELECTED_OUTLINE } from 'constants/colors';
 import { useDispatch, useSelector } from 'react-redux';
-// @ts-ignore
-import { TileLayer, Tile2DHeader, H3HexagonLayer } from '@deck.gl/geo-layers';
 import { selectSourceById } from '@carto/react-redux';
-import { RootState } from 'store/store';
+// @ts-ignore
+import { H3HexagonLayer, Tile2DHeader, TileLayer } from '@deck.gl/geo-layers';
+import { PolygonLayer, TextLayer } from '@deck.gl/layers/typed';
 import { Typography } from '@mui/material';
+import { DatasetCount } from 'components/common/types';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { setDatasets, setH3Index as setSelectedH3Index } from 'store/selectedSlice';
+import { RootState } from 'store/store';
 import { colorBins, hexToRgb } from 'utils/colors';
-import { DatasetCount } from 'components/common/types';
+import getClosestZoomResolutionPair from 'utils/getClosestZoomResolutionPair';
+import groupBy from 'utils/groupBy';
 import {
   TILE_STATE_VISIBLE,
   TILE_STATE_VISITED,
   getPlaceholderInAncestors,
   getPlaceholderInChildren,
 } from 'utils/tileRefinement';
-import getClosestZoomResolutionPair from 'utils/getClosestZoomResolutionPair';
-import groupBy from 'utils/groupBy';
 
 export const DATASET_COUNT_LAYER_ID = 'datasetCountLayer';
 
@@ -50,17 +51,38 @@ export default function DatasetCountLayer() {
       data: source.data,
       maxZoom: closestZoom,
       refinementStrategy: (allTiles: Tile2DHeader[]) => {
-        const done = allTiles.some((tile) => {
-          const done = (closestZoom === getClosestZoomResolutionPair(tile.index.z)[0]) && tile.isSelected && tile.isVisible && tile.isLoaded && tile.content;
-          if (done) {
-            const { z, x, y } = tile.index;
-            console.log(z, x, y, tile);
+        const selectedTiles = allTiles.filter((tile) => tile.isSelected);
+        const nonSelectedTiles = allTiles.filter((tile) => !tile.isSelected);
+        const xs = selectedTiles.map((tile) => tile.index.x);
+        const ys = selectedTiles.map((tile) => tile.index.y);
+        const minX = Math.min(...xs);
+        const maxX = Math.max(...xs);
+        const minY = Math.min(...ys);
+        const maxY = Math.max(...ys);
+
+        const centerTiles = selectedTiles.filter((tile) => {
+          if ((maxX - minX > 1) && [maxX, minX].includes(tile.index.x)) {
+            return false;
           }
-          return done;
+          if ((maxY - minY > 1) && [maxY, minY].includes(tile.index.y)) {
+            return false;
+          }
+          return true;
         });
-        if (done) {
+
+        console.log(
+          'center tiles\n',
+          centerTiles.map((tile) => `${tile.index.z}, ${tile.index.x}, ${tile.index.y}`).join('\n'),
+          '\nselected tiles\n',
+          selectedTiles.map((tile) => `${tile.index.z}, ${tile.index.x}, ${tile.index.y}`).join('\n'),
+          '\nnon-selected tiles\n',
+          nonSelectedTiles.map((tile) => `${tile.index.z}, ${tile.index.x}, ${tile.index.y}`).join('\n'),
+        );
+
+        if (centerTiles.some((tile) => tile.isVisible && tile.isLoaded && tile.content)) {
           return;
         }
+
         // copy of 'no-overlap' strategy from
         // https://github.com/visgl/deck.gl/blob/master/modules/geo-layers/src/tileset-2d/tileset-2d.ts
         for (const tile of allTiles) {
@@ -146,28 +168,80 @@ export default function DatasetCountLayer() {
           }
         }
       },
-      renderSubLayers: (props: object) => new H3HexagonLayer(props, {
-        getHexagon: ((d: DatasetCount) => d.index),
-        pickable: true,
-        stroked: true,
-        lineWidthMinPixels: 1,
-        // @ts-ignore
-        getLineColor: (d: DatasetCount) => (
-          d.index === selectedH3Index
-            ? [...SELECTED_OUTLINE, 255]
-            : [...getColor(d), shouldDim ? 12 : 160]
-        ),
-        // @ts-ignore
-        getFillColor: (d: DatasetCount) => [...getColor(d), shouldDim ? 60 : 200],
-        filled: true,
-        getLineWidth: (d: DatasetCount) => {
-          if (selectedDataset) {
-            return 1;
-          }
-          return d.index === selectedH3Index ? 3 : 2;
-        },
-        extruded: false,
-      }),
+      renderSubLayers: (props: any) => {
+        const countLayer = new H3HexagonLayer(
+          props,
+          {
+            getHexagon: ((d: DatasetCount) => d.index),
+            pickable: true,
+            stroked: true,
+            lineWidthMinPixels: 1,
+            // @ts-ignore
+            getLineColor: (d: DatasetCount) => (
+              d.index === selectedH3Index
+                ? [...SELECTED_OUTLINE, 255]
+                : [...getColor(d), shouldDim ? 12 : 160]
+            ),
+            // @ts-ignore
+            getFillColor: (d: DatasetCount) => [...getColor(d), shouldDim ? 60 : 200],
+            filled: true,
+            getLineWidth: (d: DatasetCount) => {
+              if (selectedDataset) {
+                return 1;
+              }
+              return d.index === selectedH3Index ? 3 : 2;
+            },
+            extruded: false,
+          },
+        );
+        if ((import.meta.env.VITE_OSM_TILE_DEBUG_OVERLAY) !== 'true') {
+          return countLayer;
+        }
+        const slippyLayer = new PolygonLayer(props, {
+          id: `${props.id}-bounds`,
+          // dummy data otherwise the layer doesn't render
+          data: [{}],
+          pickable: false,
+          stroked: true,
+          filled: false,
+          getPolygon: (object) => {
+            const [[w, s], [e, n]] = props.tile.boundingBox;
+            const polygon = [[
+              [w, s],
+              [e, s],
+              [e, n],
+              [w, n],
+              [w, s],
+            ]];
+            return polygon;
+          },
+          getLineColor: [255, 255, 102],
+          getLineWidth: 1,
+          lineWidthMinPixels: 2,
+        });
+        const zxyLabelLayer = new TextLayer({
+          id: `${props.id}-text`,
+          // dummy data otherwise the layer doesn't render
+          data: [{}],
+          getPosition: (object) => {
+            const [[w, s], [e, n]] = props.tile.boundingBox;
+            return [(w + e) / 2, (s + n) / 2];
+          },
+          getText: (object) => {
+            const { z, x, y } = props.tile.index;
+            return `z:${z} x:${x} y:${y}\nres: ${getClosestZoomResolutionPair(z)[1]}`;
+          },
+          getSize: 16,
+          getAngle: 0,
+          getTextAnchor: 'middle',
+          getAlignmentBaseline: 'center',
+        });
+        return [
+          countLayer,
+          slippyLayer,
+          zxyLabelLayer,
+        ];
+      },
       updateTriggers: {
         id: [selectedDataset, location?.place_id],
         minZoom: [closestZoom],
