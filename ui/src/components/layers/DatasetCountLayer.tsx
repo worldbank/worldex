@@ -50,6 +50,7 @@ export default function DatasetCountLayer() {
       ),
       data: source.data,
       maxZoom: closestZoom,
+      // @ts-ignore
       refinementStrategy: (allTiles: Tile2DHeader[]) => {
         const selectedTiles = allTiles.filter((tile) => tile.isSelected);
         const nonSelectedTiles = allTiles.filter((tile) => !tile.isSelected);
@@ -168,6 +169,7 @@ export default function DatasetCountLayer() {
           }
         }
       },
+      // @ts-ignore
       renderSubLayers: (props: any) => {
         const countLayer = new H3HexagonLayer(
           props,

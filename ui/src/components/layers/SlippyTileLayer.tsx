@@ -20,6 +20,7 @@ export default function SlippyTileLayer() {
       id: SLIPPY_TILE_LAYER_ID,
       data: null,
       pickable: false,
+      // @ts-ignore
       renderSubLayers: (props: any) => {
         const foo = 'bar';
         return [
