@@ -1,6 +1,6 @@
 import { OR_YEL, SELECTED_OUTLINE } from 'constants/colors';
-import { useDispatch, useSelector } from 'react-redux';
 import { selectSourceById } from '@carto/react-redux';
+import { useDispatch, useSelector } from 'react-redux';
 // @ts-ignore
 import { H3HexagonLayer, Tile2DHeader, TileLayer } from '@deck.gl/geo-layers';
 import { PolygonLayer, TextLayer } from '@deck.gl/layers/typed';
@@ -11,7 +11,6 @@ import { setDatasets, setH3Index as setSelectedH3Index } from 'store/selectedSli
 import { RootState } from 'store/store';
 import { colorBins, hexToRgb } from 'utils/colors';
 import getClosestZoomResolutionPair from 'utils/getClosestZoomResolutionPair';
-import groupBy from 'utils/groupBy';
 import {
   TILE_STATE_VISIBLE,
   TILE_STATE_VISITED,
@@ -20,6 +19,57 @@ import {
 } from 'utils/tileRefinement';
 
 export const DATASET_COUNT_LAYER_ID = 'datasetCountLayer';
+
+const refinementStrategy = (allTiles: Tile2DHeader[]) => {
+  const selectedTiles = allTiles.filter((tile) => tile.isSelected);
+  const xs = selectedTiles.map((tile) => tile.index.x);
+  const ys = selectedTiles.map((tile) => tile.index.y);
+  const minX = Math.min(...xs);
+  const maxX = Math.max(...xs);
+  const minY = Math.min(...ys);
+  const maxY = Math.max(...ys);
+
+  const centerTiles = selectedTiles.filter((tile) => {
+    if ((maxX - minX > 1) && [maxX, minX].includes(tile.index.x)) {
+      return false;
+    }
+    if ((maxY - minY > 1) && [maxY, minY].includes(tile.index.y)) {
+      return false;
+    }
+    return true;
+  });
+
+  if (centerTiles.some((tile) => tile.isVisible && tile.isLoaded && tile.content)) {
+    // do not display cached tiles (of a different resolution) if
+    // at least one tile of the correct resolution is already visible
+    return;
+  }
+
+  // copy of 'no-overlap' strategy from
+  // https://github.com/visgl/deck.gl/blob/master/modules/geo-layers/src/tileset-2d/tileset-2d.ts
+  for (const tile of allTiles) {
+    tile.state = 0;
+  }
+  for (const tile of allTiles) {
+    if (tile.isSelected) {
+      getPlaceholderInAncestors(tile);
+    }
+  }
+  // Always process parents first
+  const sortedTiles = Array.from(allTiles).sort((t1, t2) => t1.zoom - t2.zoom);
+  for (const tile of sortedTiles) {
+    tile.isVisible = Boolean(tile.state! & TILE_STATE_VISIBLE);
+
+    if (tile.children && (tile.isVisible || tile.state! & TILE_STATE_VISITED)) {
+      for (const child of tile.children) {
+        // If the tile is rendered, or if the tile has been explicitly hidden, hide all of its children
+        child.state = TILE_STATE_VISITED;
+      }
+    } else if (tile.isSelected) {
+      getPlaceholderInChildren(tile);
+    }
+  }
+};
 
 export default function DatasetCountLayer() {
   const datasetH3Layer = useSelector((state: RootState) => state.carto.layers[DATASET_COUNT_LAYER_ID]);
@@ -51,64 +101,7 @@ export default function DatasetCountLayer() {
       data: source.data,
       maxZoom: closestZoom,
       // @ts-ignore
-      refinementStrategy: (allTiles: Tile2DHeader[]) => {
-        const selectedTiles = allTiles.filter((tile) => tile.isSelected);
-        const nonSelectedTiles = allTiles.filter((tile) => !tile.isSelected);
-        const xs = selectedTiles.map((tile) => tile.index.x);
-        const ys = selectedTiles.map((tile) => tile.index.y);
-        const minX = Math.min(...xs);
-        const maxX = Math.max(...xs);
-        const minY = Math.min(...ys);
-        const maxY = Math.max(...ys);
-
-        const centerTiles = selectedTiles.filter((tile) => {
-          if ((maxX - minX > 1) && [maxX, minX].includes(tile.index.x)) {
-            return false;
-          }
-          if ((maxY - minY > 1) && [maxY, minY].includes(tile.index.y)) {
-            return false;
-          }
-          return true;
-        });
-
-        console.log(
-          'center tiles\n',
-          centerTiles.map((tile) => `${tile.index.z}, ${tile.index.x}, ${tile.index.y}`).join('\n'),
-          '\nselected tiles\n',
-          selectedTiles.map((tile) => `${tile.index.z}, ${tile.index.x}, ${tile.index.y}`).join('\n'),
-          '\nnon-selected tiles\n',
-          nonSelectedTiles.map((tile) => `${tile.index.z}, ${tile.index.x}, ${tile.index.y}`).join('\n'),
-        );
-
-        if (centerTiles.some((tile) => tile.isVisible && tile.isLoaded && tile.content)) {
-          return;
-        }
-
-        // copy of 'no-overlap' strategy from
-        // https://github.com/visgl/deck.gl/blob/master/modules/geo-layers/src/tileset-2d/tileset-2d.ts
-        for (const tile of allTiles) {
-          tile.state = 0;
-        }
-        for (const tile of allTiles) {
-          if (tile.isSelected) {
-            getPlaceholderInAncestors(tile);
-          }
-        }
-        // Always process parents first
-        const sortedTiles = Array.from(allTiles).sort((t1, t2) => t1.zoom - t2.zoom);
-        for (const tile of sortedTiles) {
-          tile.isVisible = Boolean(tile.state! & TILE_STATE_VISIBLE);
-
-          if (tile.children && (tile.isVisible || tile.state! & TILE_STATE_VISITED)) {
-            for (const child of tile.children) {
-              // If the tile is rendered, or if the tile has been explicitly hidden, hide all of its children
-              child.state = TILE_STATE_VISITED;
-            }
-          } else if (tile.isSelected) {
-            getPlaceholderInChildren(tile);
-          }
-        }
-      },
+      refinementStrategy,
       loadOptions: {
         fetch: {
           method: 'POST',
@@ -245,8 +238,8 @@ export default function DatasetCountLayer() {
         ];
       },
       updateTriggers: {
+        // TODO: create a separate location-filtered layer?
         id: [selectedDataset, location?.place_id],
-        minZoom: [closestZoom],
         maxZoom: [closestZoom],
         getLineColor: [selectedH3Index, shouldDim],
         getFillColor: [selectedH3Index, shouldDim],
