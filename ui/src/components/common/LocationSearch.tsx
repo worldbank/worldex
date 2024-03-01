@@ -9,7 +9,7 @@ import { useDispatch, useSelector } from "react-redux";
 import { setFilteredDatasets, setLocation, setPendingLocationCheck } from 'store/locationSlice';
 import { setH3Index as setSelectedH3Index } from 'store/selectedSlice';
 import { RootState } from "store/store";
-import getClosestZoomResolutionPair from 'utils/getClosestZoomResolutionPair';
+import getSteppedZoomResolutionPair from 'utils/getSteppedZoomResolutionPair';
 import isEqual from 'lodash.isequal';
 import uniqWith from 'lodash.uniqwith';
 import isEqualWith from 'lodash.isequalwith';
@@ -45,7 +45,7 @@ const LocationSearch = ({ className }: { className?: string }) => {
   const viewState = useSelector((state: RootState) => state.carto.viewState);
 
   const getDatasets = async ({ location, zoom }: { location: any, zoom: number }) => {
-    const [_, resolution] = getClosestZoomResolutionPair(zoom);
+    const [_, resolution] = getSteppedZoomResolutionPair(zoom);
     const datasetsResp = await fetch('/api/datasets_by_location/', {
       method: 'post',
       headers: {

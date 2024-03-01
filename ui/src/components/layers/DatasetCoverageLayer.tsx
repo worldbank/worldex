@@ -9,7 +9,7 @@ import { hexToRgb } from 'utils/colors';
 import { setSelectedDataset } from 'store/selectedSlice';
 import { setPendingLocationCheck } from 'store/locationSlice';
 import { load } from '@loaders.gl/core';
-import getClosestZoomResolutionPair from 'utils/getClosestZoomResolutionPair';
+import getSteppedZoomResolutionPair from 'utils/getSteppedZoomResolutionPair';
 
 export const DATASET_COVERAGE_LAYER_ID = 'datasetCoverageLayer';
 
@@ -17,7 +17,7 @@ export default function DatasetCoverageLayer() {
   const { datasetCoverageLayer } = useSelector((state: RootState) => state.carto.layers);
   const source = useSelector((state) => selectSourceById(state, datasetCoverageLayer?.source));
   const { selectedDataset } = useSelector((state: RootState) => state.selected);
-  const { closestZoom } = useSelector((state: RootState) => state.app);
+  const { steppedZoom } = useSelector((state: RootState) => state.app);
   const { location, pendingLocationCheck } = useSelector((state: RootState) => state.location);
   const BLUE_600 = hexToRgb(blue['600']); // #1e88e5
   const dispatch = useDispatch();
@@ -33,12 +33,12 @@ export default function DatasetCoverageLayer() {
           : `dataset-${selectedDataset}-coverage-tile-layer`
       ),
       data: source.data,
-      maxZoom: closestZoom,
+      maxZoom: steppedZoom,
       getTileData: ((tile: TileLoadProps) => load(tile.url, {
         fetch: {
           method: 'POST',
           body: JSON.stringify({
-            resolution: getClosestZoomResolutionPair(tile.index.z)[1],
+            resolution: getSteppedZoomResolutionPair(tile.index.z)[1],
             dataset_id: selectedDataset,
             location: (
               location && ['Polygon', 'MultiPolygon'].includes(location.geojson.type)
@@ -71,8 +71,8 @@ export default function DatasetCoverageLayer() {
       }),
       updateTriggers: {
         id: [selectedDataset, location?.place_id],
-        minZoom: [closestZoom],
-        maxZoom: [closestZoom],
+        minZoom: [steppedZoom],
+        maxZoom: [steppedZoom],
       },
     });
   }

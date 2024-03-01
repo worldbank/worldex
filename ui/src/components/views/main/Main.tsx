@@ -22,9 +22,9 @@ import { debounce, Grid } from '@mui/material';
 import { styled } from '@mui/material/styles';
 import { useMapHooks } from 'components/common/map/useMapHooks';
 import { useSearchParams } from 'react-router-dom';
-import { setClosestZoom } from 'store/appSlice';
+import { setSteppedZoom } from 'store/appSlice';
 import { RootState } from 'store/store';
-import getClosestZoomResolutionPair from 'utils/getClosestZoomResolutionPair';
+import getSteppedZoomResolutionPair from 'utils/getSteppedZoomResolutionPair';
 import LazyLoadComponent from 'components/common/LazyLoadComponent';
 
 const MapContainer = lazy(
@@ -153,8 +153,8 @@ export default function Main() {
   }, [setSearchParams, latitude, longitude, zoom]);
 
   useEffect(() => {
-    const [closestZoom, _] = getClosestZoomResolutionPair(zoom);
-    dispatch(setClosestZoom(closestZoom));
+    const [steppedZoom, _] = getSteppedZoomResolutionPair(zoom);
+    dispatch(setSteppedZoom(steppedZoom));
   }, [dispatch, latitude, longitude, zoom]);
   return (
     <GridMain container item xs>

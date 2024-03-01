@@ -16,7 +16,7 @@ import {
   getPlaceholderInChildren,
 } from 'utils/tileRefinement';
 import { load } from '@loaders.gl/core';
-import getClosestZoomResolutionPair from 'utils/getClosestZoomResolutionPair';
+import getSteppedZoomResolutionPair from 'utils/getSteppedZoomResolutionPair';
 
 export const DATASET_COUNT_LAYER_ID = 'datasetCountLayer';
 
@@ -80,7 +80,7 @@ export default function DatasetCountLayer() {
   const datasetH3Layer = useSelector((state: RootState) => state.carto.layers[DATASET_COUNT_LAYER_ID]);
   const source = useSelector((state: RootState) => selectSourceById(state, datasetH3Layer?.source));
   const { selectedDataset, h3Index: selectedH3Index } = useSelector((state: RootState) => state.selected);
-  const { closestZoom, h3Resolution } = useSelector((state: RootState) => state.app);
+  const { steppedZoom } = useSelector((state: RootState) => state.app);
   const { location } = useSelector((state: RootState) => state.location);
   const { fileUrl } = useSelector((state: RootState) => state.preview);
   const dispatch = useDispatch();
@@ -109,7 +109,7 @@ export default function DatasetCountLayer() {
         fetch: {
           method: 'POST',
           body: JSON.stringify({
-            resolution: getClosestZoomResolutionPair(tile.index.z)[1],
+            resolution: getSteppedZoomResolutionPair(tile.index.z)[1],
             location: (
               location && ['Polygon', 'MultiPolygon'].includes(location.geojson.type)
                 ? JSON.stringify(location.geojson)
@@ -121,8 +121,7 @@ export default function DatasetCountLayer() {
           },
         },
       })),
-      // should be closest z-index instead of zoom?
-      maxZoom: closestZoom,
+      maxZoom: steppedZoom,
       // @ts-ignore
       refinementStrategy,
       // eslint-disable-next-line @typescript-eslint/no-unused-vars
