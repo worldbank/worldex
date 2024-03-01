@@ -10,7 +10,6 @@ import { renderToStaticMarkup } from 'react-dom/server';
 import { setDatasets, setH3Index as setSelectedH3Index } from 'store/selectedSlice';
 import { RootState } from 'store/store';
 import { colorBins, hexToRgb } from 'utils/colors';
-import getClosestZoomResolutionPair from 'utils/getClosestZoomResolutionPair';
 import {
   TILE_STATE_VISIBLE,
   TILE_STATE_VISITED,
@@ -75,7 +74,7 @@ export default function DatasetCountLayer() {
   const datasetH3Layer = useSelector((state: RootState) => state.carto.layers[DATASET_COUNT_LAYER_ID]);
   const source = useSelector((state: RootState) => selectSourceById(state, datasetH3Layer?.source));
   const { selectedDataset, h3Index: selectedH3Index } = useSelector((state: RootState) => state.selected);
-  const { h3Resolution: resolution, closestZoom } = useSelector((state: RootState) => state.app);
+  const { closestZoom, h3Resolution: resolution } = useSelector((state: RootState) => state.app);
   const { location } = useSelector((state: RootState) => state.location);
   const { fileUrl } = useSelector((state: RootState) => state.preview);
   const dispatch = useDispatch();
@@ -99,6 +98,9 @@ export default function DatasetCountLayer() {
           : 'dataset-h3-tile-layer'
       ),
       data: source.data,
+      // should be closest z-index instead of zoom?
+      // minZoom is necessary to skip tiles that aren't in ZOOM_H3_RESOLUTION_PAIRS
+      minZoom: closestZoom,
       maxZoom: closestZoom,
       // @ts-ignore
       refinementStrategy,
@@ -162,81 +164,31 @@ export default function DatasetCountLayer() {
           }
         }
       },
-      // @ts-ignore
-      renderSubLayers: (props: any) => {
-        const countLayer = new H3HexagonLayer(
-          props,
-          {
-            getHexagon: ((d: DatasetCount) => d.index),
-            pickable: true,
-            stroked: true,
-            lineWidthMinPixels: 1,
-            // @ts-ignore
-            getLineColor: (d: DatasetCount) => (
-              d.index === selectedH3Index
-                ? [...SELECTED_OUTLINE, 255]
-                : [...getColor(d), shouldDim ? 12 : 160]
-            ),
-            // @ts-ignore
-            getFillColor: (d: DatasetCount) => [...getColor(d), shouldDim ? 60 : 200],
-            filled: true,
-            getLineWidth: (d: DatasetCount) => {
-              if (selectedDataset) {
-                return 1;
-              }
-              return d.index === selectedH3Index ? 3 : 2;
-            },
-            extruded: false,
-          },
-        );
-        if ((import.meta.env.VITE_OSM_TILE_DEBUG_OVERLAY) !== 'true') {
-          return countLayer;
-        }
-        const slippyLayer = new PolygonLayer(props, {
-          id: `${props.id}-bounds`,
-          // dummy data otherwise the layer doesn't render
-          data: [{}],
-          pickable: false,
+      renderSubLayers: (props: any) => new H3HexagonLayer(
+        props,
+        {
+          getHexagon: ((d: DatasetCount) => d.index),
+          pickable: true,
           stroked: true,
-          filled: false,
-          getPolygon: (object) => {
-            const [[w, s], [e, n]] = props.tile.boundingBox;
-            const polygon = [[
-              [w, s],
-              [e, s],
-              [e, n],
-              [w, n],
-              [w, s],
-            ]];
-            return polygon;
+          lineWidthMinPixels: 1,
+          // @ts-ignore
+          getLineColor: (d: DatasetCount) => (
+            d.index === selectedH3Index
+              ? [...SELECTED_OUTLINE, 255]
+              : [...getColor(d), shouldDim ? 12 : 160]
+          ),
+          // @ts-ignore
+          getFillColor: (d: DatasetCount) => [...getColor(d), shouldDim ? 60 : 200],
+          filled: true,
+          getLineWidth: (d: DatasetCount) => {
+            if (selectedDataset) {
+              return 1;
+            }
+            return d.index === selectedH3Index ? 3 : 2;
           },
-          getLineColor: [255, 255, 102],
-          getLineWidth: 1,
-          lineWidthMinPixels: 2,
-        });
-        const zxyLabelLayer = new TextLayer({
-          id: `${props.id}-text`,
-          // dummy data otherwise the layer doesn't render
-          data: [{}],
-          getPosition: (object) => {
-            const [[w, s], [e, n]] = props.tile.boundingBox;
-            return [(w + e) / 2, (s + n) / 2];
-          },
-          getText: (object) => {
-            const { z, x, y } = props.tile.index;
-            return `z:${z} x:${x} y:${y}\nres: ${getClosestZoomResolutionPair(z)[1]}`;
-          },
-          getSize: 16,
-          getAngle: 0,
-          getTextAnchor: 'middle',
-          getAlignmentBaseline: 'center',
-        });
-        return [
-          countLayer,
-          slippyLayer,
-          zxyLabelLayer,
-        ];
-      },
+          extruded: false,
+        },
+      ),
       updateTriggers: {
         // TODO: create a separate location-filtered layer?
         id: [selectedDataset, location?.place_id],
