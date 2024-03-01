@@ -22,7 +22,6 @@ export default function SlippyTileLayer() {
       id: SLIPPY_TILE_LAYER_ID,
       data: null,
       pickable: false,
-      minZoom: closestZoom,
       maxZoom: closestZoom,
       onViewportLoad: (tiles: Tile2DHeader[]) => {
         if (Array.isArray(tiles) && tiles.length > 0) {

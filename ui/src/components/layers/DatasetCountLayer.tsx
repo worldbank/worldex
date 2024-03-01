@@ -100,6 +100,7 @@ export default function DatasetCountLayer() {
           : 'dataset-h3-tile-layer'
       ),
       data: source.data,
+      // @ts-ignore
       getTileData: ((tile: Tile2DHeader) => load(tile.url, {
         fetch: {
           method: 'POST',
@@ -117,8 +118,6 @@ export default function DatasetCountLayer() {
         },
       })),
       // should be closest z-index instead of zoom?
-      // minZoom is necessary to skip tiles that aren't in ZOOM_H3_RESOLUTION_PAIRS
-      minZoom: closestZoom,
       maxZoom: closestZoom,
       // @ts-ignore
       refinementStrategy,
@@ -194,8 +193,6 @@ export default function DatasetCountLayer() {
       updateTriggers: {
         // TODO: create a separate location-filtered layer?
         id: [selectedDataset, location?.place_id],
-        minZoom: [closestZoom],
-        maxZoom: [closestZoom],
         getLineColor: [selectedH3Index, shouldDim],
         getFillColor: [selectedH3Index, shouldDim],
         getLineWidth: [selectedH3Index, shouldDim],
