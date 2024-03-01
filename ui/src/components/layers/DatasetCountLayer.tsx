@@ -3,7 +3,6 @@ import { selectSourceById } from '@carto/react-redux';
 import { useDispatch, useSelector } from 'react-redux';
 // @ts-ignore
 import { H3HexagonLayer, Tile2DHeader, TileLayer } from '@deck.gl/geo-layers';
-import { PolygonLayer, TextLayer } from '@deck.gl/layers/typed';
 import { Typography } from '@mui/material';
 import { DatasetCount } from 'components/common/types';
 import { renderToStaticMarkup } from 'react-dom/server';
