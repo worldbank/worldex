@@ -20,6 +20,7 @@ const slice = createSlice({
     setH3Resolution: (state, action) => {
       state.h3Resolution = action.payload;
     },
+    // TODO: rename closest to stepped?
     setClosestZoom: (state, action) => {
       state.closestZoom = action.payload;
     },
