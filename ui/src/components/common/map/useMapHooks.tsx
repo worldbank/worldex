@@ -44,7 +44,7 @@ export function useMapHooks() {
     }
     // @ts-ignore
     dispatch(setViewState(newViewState));
-  }, 100)
+  }, 0);
 
   const handleViewStateChange = ({ viewState }: { viewState: ViewState }) => {
     if (pendingLocationCheck) {
