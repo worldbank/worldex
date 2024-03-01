@@ -6,26 +6,26 @@ import {
   removeSource,
 } from '@carto/react-redux';
 import h3CellsSource from 'data/sources/h3CellsSource';
-import { lazy, useEffect } from 'react';
+import { lazy, useCallback, useEffect } from 'react';
 
 import { SLIPPY_TILE_LAYER_ID } from 'components/layers/SlippyTileLayer';
 
-import { TIF_PREVIEW_LAYER_ID } from 'components/layers/TifPreviewLayer';
-import { GEOJSON_PREVIEW_LAYER_ID } from 'components/layers/GeojsonPreviewLayer';
-import datasetCoverageSource from 'data/sources/datasetCoverageSource';
-import { DATASET_COVERAGE_LAYER_ID } from 'components/layers/DatasetCoverageLayer';
 import { DATASET_COUNT_LAYER_ID } from 'components/layers/DatasetCountLayer';
+import { DATASET_COVERAGE_LAYER_ID } from 'components/layers/DatasetCoverageLayer';
+import { GEOJSON_PREVIEW_LAYER_ID } from 'components/layers/GeojsonPreviewLayer';
 import { SEARCH_LAYER_ID } from 'components/layers/SearchLayer';
+import { TIF_PREVIEW_LAYER_ID } from 'components/layers/TifPreviewLayer';
+import datasetCoverageSource from 'data/sources/datasetCoverageSource';
 import { useDispatch, useSelector } from 'react-redux';
 
-import { Grid } from '@mui/material';
+import { debounce, Grid } from '@mui/material';
 import { styled } from '@mui/material/styles';
-import LazyLoadComponent from 'components/common/LazyLoadComponent';
 import { useMapHooks } from 'components/common/map/useMapHooks';
 import { useSearchParams } from 'react-router-dom';
+import { setClosestZoom } from 'store/appSlice';
 import { RootState } from 'store/store';
 import getClosestZoomResolutionPair from 'utils/getClosestZoomResolutionPair';
-import { setClosestZoom } from 'store/appSlice';
+import LazyLoadComponent from 'components/common/LazyLoadComponent';
 
 const MapContainer = lazy(
   () => import(
@@ -64,6 +64,7 @@ export default function Main() {
   const { latitude, longitude, zoom } = viewState;
 
   const [searchParams, setSearchParams] = useSearchParams();
+  const debouncedSetSearchParams = useCallback(debounce(setSearchParams, 300), []);
 
   useEffect(() => {
     const at = searchParams.get('at');
@@ -146,7 +147,9 @@ export default function Main() {
   // [hygen] Add useEffect
 
   useEffect(() => {
-    setSearchParams({ at: `${latitude.toFixed(5)},${longitude.toFixed(5)},${zoom.toFixed(2)}z` });
+    debouncedSetSearchParams({
+      at: `${latitude.toFixed(5)},${longitude.toFixed(5)},${zoom.toFixed(2)}z`,
+    });
   }, [setSearchParams, latitude, longitude, zoom]);
 
   useEffect(() => {
