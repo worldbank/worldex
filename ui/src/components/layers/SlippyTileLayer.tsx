@@ -13,7 +13,7 @@ const hide = (import.meta.env.VITE_OSM_TILE_DEBUG_OVERLAY !== 'true');
 export default function SlippyTileLayer() {
   const { slippyTileLayer } = useSelector((state: RootState) => state.carto.layers);
   const { zoom } = useSelector((state: RootState) => state.carto.viewState);
-  const { closestZoom } = useSelector((state: RootState) => state.app);
+  const { closestZoom, h3Resolution } = useSelector((state: RootState) => state.app);
 
   const dispatch = useDispatch();
 
@@ -22,22 +22,20 @@ export default function SlippyTileLayer() {
       id: SLIPPY_TILE_LAYER_ID,
       data: null,
       pickable: false,
-      // minZoom: closestZoom,
+      minZoom: closestZoom,
       maxZoom: closestZoom,
-      // refinementStrategy: 'never',
-      // onViewportLoad: (tiles: Tile2DHeader[]) => {
-      //   console.log('viewport load', tiles.map((tile) => tile.index.z));
-      //   if (Array.isArray(tiles) && tiles.length > 0) {
-      //     const { z } = tiles[0].index;
-      //     const [closestZoom, _] = getClosestZoomResolutionPair(zoom);
-      //     const [closestZ, res] = getClosestZoomResolutionPair(z);
-      //     dispatch(setClosestZoom(closestZoom));
-      //     dispatch(setZIndex(closestZ));
-      //     dispatch(setH3Resolution(res));
-      //   }
-      // },
+      onViewportLoad: (tiles: Tile2DHeader[]) => {
+        if (Array.isArray(tiles) && tiles.length > 0) {
+          const { z } = tiles[0].index;
+          const [closestZ, res] = getClosestZoomResolutionPair(z);
+          if (res !== h3Resolution) {
+            dispatch(setZIndex(closestZ));
+            dispatch(setH3Resolution(res));
+          }
+        }
+      },
       // @ts-ignore
-      renderSubLayers: (props: any) => [
+      renderSubLayers: (props: any) => (hide ? null : [
         new PolygonLayer(props, {
           id: `${props.id}-bounds`,
           // dummy data otherwise the layer doesn't render
@@ -77,7 +75,7 @@ export default function SlippyTileLayer() {
           getTextAnchor: 'middle',
           getAlignmentBaseline: 'center',
         }),
-      ],
+      ]),
     });
   }
 }

@@ -24,6 +24,8 @@ import LazyLoadComponent from 'components/common/LazyLoadComponent';
 import { useMapHooks } from 'components/common/map/useMapHooks';
 import { useSearchParams } from 'react-router-dom';
 import { RootState } from 'store/store';
+import getClosestZoomResolutionPair from 'utils/getClosestZoomResolutionPair';
+import { setClosestZoom } from 'store/appSlice';
 
 const MapContainer = lazy(
   () => import(
@@ -147,6 +149,10 @@ export default function Main() {
     setSearchParams({ at: `${latitude.toFixed(5)},${longitude.toFixed(5)},${zoom.toFixed(2)}z` });
   }, [setSearchParams, latitude, longitude, zoom]);
 
+  useEffect(() => {
+    const [closestZoom, _] = getClosestZoomResolutionPair(zoom);
+    dispatch(setClosestZoom(closestZoom));
+  }, [dispatch, latitude, longitude, zoom]);
   return (
     <GridMain container item xs>
       <LazyLoadComponent>
