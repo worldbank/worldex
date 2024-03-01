@@ -4,35 +4,40 @@ import { TileLayer, Tile2DHeader } from '@deck.gl/geo-layers';
 import { RootState } from 'store/store';
 import { PolygonLayer, TextLayer } from '@deck.gl/layers/typed';
 import getClosestZoomResolutionPair from 'utils/getClosestZoomResolutionPair';
-import { setH3Resolution, setZIndex } from 'store/appSlice';
+import { setClosestZoom, setH3Resolution, setZIndex } from 'store/appSlice';
 
 export const SLIPPY_TILE_LAYER_ID = 'slippyTileLayer';
 
+const hide = (import.meta.env.VITE_OSM_TILE_DEBUG_OVERLAY !== 'true');
+
 export default function SlippyTileLayer() {
   const { slippyTileLayer } = useSelector((state: RootState) => state.carto.layers);
+  const { zoom } = useSelector((state: RootState) => state.carto.viewState);
   const { closestZoom } = useSelector((state: RootState) => state.app);
 
   const dispatch = useDispatch();
-  // console.log('closest zoom', closestZoom);
 
   if (slippyTileLayer) {
     return new TileLayer({
       id: SLIPPY_TILE_LAYER_ID,
       data: null,
       pickable: false,
-      minZoom: closestZoom,
+      // minZoom: closestZoom,
       maxZoom: closestZoom,
-      refinementStrategy: 'never',
-      onViewportLoad: (tiles: Tile2DHeader[]) => {
-        if (Array.isArray(tiles) && tiles.length > 0) {
-          const { z } = tiles[0].index;
-          const [closestZ, res] = getClosestZoomResolutionPair(z);
-          dispatch(setZIndex(closestZ));
-          dispatch(setH3Resolution(res));
-        }
-      },
+      // refinementStrategy: 'never',
+      // onViewportLoad: (tiles: Tile2DHeader[]) => {
+      //   console.log('viewport load', tiles.map((tile) => tile.index.z));
+      //   if (Array.isArray(tiles) && tiles.length > 0) {
+      //     const { z } = tiles[0].index;
+      //     const [closestZoom, _] = getClosestZoomResolutionPair(zoom);
+      //     const [closestZ, res] = getClosestZoomResolutionPair(z);
+      //     dispatch(setClosestZoom(closestZoom));
+      //     dispatch(setZIndex(closestZ));
+      //     dispatch(setH3Resolution(res));
+      //   }
+      // },
       // @ts-ignore
-      renderSubLayers: (props: any) => ((import.meta.env.VITE_OSM_TILE_DEBUG_OVERLAY !== 'true') ? [] : [
+      renderSubLayers: (props: any) => [
         new PolygonLayer(props, {
           id: `${props.id}-bounds`,
           // dummy data otherwise the layer doesn't render
@@ -52,7 +57,7 @@ export default function SlippyTileLayer() {
             return polygon;
           },
           getLineColor: [255, 255, 102],
-          getLineWidth: 1,
+          getLineWidth: 2,
           lineWidthMinPixels: 2,
         }),
         new TextLayer({
@@ -72,7 +77,7 @@ export default function SlippyTileLayer() {
           getTextAnchor: 'middle',
           getAlignmentBaseline: 'center',
         }),
-      ]),
+      ],
     });
   }
 }

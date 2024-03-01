@@ -16,6 +16,8 @@ import {
   getPlaceholderInAncestors,
   getPlaceholderInChildren,
 } from 'utils/tileRefinement';
+import { load } from '@loaders.gl/core';
+import getClosestZoomResolutionPair from 'utils/getClosestZoomResolutionPair';
 
 export const DATASET_COUNT_LAYER_ID = 'datasetCountLayer';
 
@@ -74,7 +76,7 @@ export default function DatasetCountLayer() {
   const datasetH3Layer = useSelector((state: RootState) => state.carto.layers[DATASET_COUNT_LAYER_ID]);
   const source = useSelector((state: RootState) => selectSourceById(state, datasetH3Layer?.source));
   const { selectedDataset, h3Index: selectedH3Index } = useSelector((state: RootState) => state.selected);
-  const { closestZoom, h3Resolution: resolution } = useSelector((state: RootState) => state.app);
+  const { closestZoom, h3Resolution } = useSelector((state: RootState) => state.app);
   const { location } = useSelector((state: RootState) => state.location);
   const { fileUrl } = useSelector((state: RootState) => state.preview);
   const dispatch = useDispatch();
@@ -98,17 +100,11 @@ export default function DatasetCountLayer() {
           : 'dataset-h3-tile-layer'
       ),
       data: source.data,
-      // should be closest z-index instead of zoom?
-      // minZoom is necessary to skip tiles that aren't in ZOOM_H3_RESOLUTION_PAIRS
-      minZoom: closestZoom,
-      maxZoom: closestZoom,
-      // @ts-ignore
-      refinementStrategy,
-      loadOptions: {
+      getTileData: ((tile: Tile2DHeader) => load(tile.url, {
         fetch: {
           method: 'POST',
           body: JSON.stringify({
-            resolution,
+            resolution: getClosestZoomResolutionPair(tile.index.z)[1],
             location: (
               location && ['Polygon', 'MultiPolygon'].includes(location.geojson.type)
                 ? JSON.stringify(location.geojson)
@@ -119,7 +115,13 @@ export default function DatasetCountLayer() {
             'Content-Type': 'application/json',
           },
         },
-      },
+      })),
+      // should be closest z-index instead of zoom?
+      // minZoom is necessary to skip tiles that aren't in ZOOM_H3_RESOLUTION_PAIRS
+      minZoom: closestZoom,
+      maxZoom: closestZoom,
+      // @ts-ignore
+      refinementStrategy,
       // eslint-disable-next-line @typescript-eslint/no-unused-vars
       onClick: async (info: any, event: object) => {
         const targetIndex = info.object.index;
@@ -192,6 +194,7 @@ export default function DatasetCountLayer() {
       updateTriggers: {
         // TODO: create a separate location-filtered layer?
         id: [selectedDataset, location?.place_id],
+        minZoom: [closestZoom],
         maxZoom: [closestZoom],
         getLineColor: [selectedH3Index, shouldDim],
         getFillColor: [selectedH3Index, shouldDim],
