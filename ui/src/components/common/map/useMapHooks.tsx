@@ -1,3 +1,4 @@
+import { useCallback } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { styled } from '@mui/material/styles';
 import { setViewState, ViewState } from '@carto/react-redux';
@@ -36,14 +37,20 @@ export function useMapHooks() {
   let isHovering = false;
   const { pendingLocationCheck } = useSelector((state: RootState) => state.location);
 
-  const debouncedSetViewState = debounce((viewState: ViewState) => {
-    const newViewState = { ...viewState };
-    if (newViewState.zoom != null) {
-      newViewState.zoom = Math.min(Math.max(newViewState.zoom, MINIMUM_ZOOM), MAXIMUM_ZOOM);
-    }
-    // @ts-ignore
-    dispatch(setViewState(newViewState));
-  }, 0);
+  const debouncedSetViewState = useCallback(
+    debounce(
+      (viewState: ViewState) => {
+        const newViewState = { ...viewState };
+        if (newViewState.zoom != null) {
+          newViewState.zoom = Math.min(Math.max(newViewState.zoom, MINIMUM_ZOOM), MAXIMUM_ZOOM);
+        }
+        // @ts-ignore
+        dispatch(setViewState(newViewState));
+      },
+      300
+    ),
+    []
+  );
 
   const handleViewStateChange = ({ viewState }: { viewState: ViewState }) => {
     if (pendingLocationCheck) {
