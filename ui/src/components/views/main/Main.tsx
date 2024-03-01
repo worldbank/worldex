@@ -7,6 +7,9 @@ import {
 } from '@carto/react-redux';
 import h3CellsSource from 'data/sources/h3CellsSource';
 import { lazy, useEffect } from 'react';
+
+import { SLIPPY_TILE_LAYER_ID } from 'components/layers/SlippyTileLayer';
+
 import { TIF_PREVIEW_LAYER_ID } from 'components/layers/TifPreviewLayer';
 import { GEOJSON_PREVIEW_LAYER_ID } from 'components/layers/GeojsonPreviewLayer';
 import datasetCoverageSource from 'data/sources/datasetCoverageSource';
@@ -21,8 +24,8 @@ import LazyLoadComponent from 'components/common/LazyLoadComponent';
 import { useMapHooks } from 'components/common/map/useMapHooks';
 import { useSearchParams } from 'react-router-dom';
 import { RootState } from 'store/store';
-import { setClosestZoom, setH3Resolution } from 'store/appSlice';
 import getClosestZoomResolutionPair from 'utils/getClosestZoomResolutionPair';
+import { setClosestZoom } from 'store/appSlice';
 
 const MapContainer = lazy(
   () => import(
@@ -109,6 +112,12 @@ export default function Main() {
     dispatch(addSource(datasetCoverageSource));
     dispatch(
       addLayer({
+        id: SLIPPY_TILE_LAYER_ID,
+        source: datasetCoverageSource.id,
+      }),
+    );
+    dispatch(
+      addLayer({
         id: TIF_PREVIEW_LAYER_ID,
       }),
     );
@@ -129,6 +138,7 @@ export default function Main() {
       dispatch(removeLayer(DATASET_COVERAGE_LAYER_ID));
       dispatch(removeLayer(GEOJSON_PREVIEW_LAYER_ID));
       dispatch(removeLayer(TIF_PREVIEW_LAYER_ID));
+      dispatch(removeLayer(SLIPPY_TILE_LAYER_ID));
       dispatch(removeSource(datasetCoverageSource.id));
     };
   }, [dispatch]);
@@ -140,11 +150,9 @@ export default function Main() {
   }, [setSearchParams, latitude, longitude, zoom]);
 
   useEffect(() => {
-    const [closestZoom, resolution] = getClosestZoomResolutionPair(zoom);
+    const [closestZoom, _] = getClosestZoomResolutionPair(zoom);
     dispatch(setClosestZoom(closestZoom));
-    dispatch(setH3Resolution(resolution));
   }, [dispatch, latitude, longitude, zoom]);
-
   return (
     <GridMain container item xs>
       <LazyLoadComponent>

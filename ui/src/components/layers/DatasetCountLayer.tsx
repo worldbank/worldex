@@ -1,22 +1,81 @@
 import { OR_YEL, SELECTED_OUTLINE } from 'constants/colors';
+import { selectSourceById } from '@carto/react-redux';
 import { useDispatch, useSelector } from 'react-redux';
 // @ts-ignore
-import { TileLayer, H3HexagonLayer } from '@deck.gl/geo-layers';
-import { selectSourceById } from '@carto/react-redux';
-import { RootState } from 'store/store';
+import { H3HexagonLayer, Tile2DHeader, TileLayer } from '@deck.gl/geo-layers';
 import { Typography } from '@mui/material';
+import { DatasetCount } from 'components/common/types';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { setDatasets, setH3Index as setSelectedH3Index } from 'store/selectedSlice';
+import { RootState } from 'store/store';
 import { colorBins, hexToRgb } from 'utils/colors';
-import { DatasetCount } from 'components/common/types';
+import {
+  TILE_STATE_VISIBLE,
+  TILE_STATE_VISITED,
+  getPlaceholderInAncestors,
+  getPlaceholderInChildren,
+} from 'utils/tileRefinement';
+import { load } from '@loaders.gl/core';
+import getClosestZoomResolutionPair from 'utils/getClosestZoomResolutionPair';
 
 export const DATASET_COUNT_LAYER_ID = 'datasetCountLayer';
+
+const refinementStrategy = (allTiles: Tile2DHeader[]) => {
+  const selectedTiles = allTiles.filter((tile) => tile.isSelected);
+  const xs = selectedTiles.map((tile) => tile.index.x);
+  const ys = selectedTiles.map((tile) => tile.index.y);
+  const minX = Math.min(...xs);
+  const maxX = Math.max(...xs);
+  const minY = Math.min(...ys);
+  const maxY = Math.max(...ys);
+
+  const centerTiles = selectedTiles.filter((tile) => {
+    if ((maxX - minX > 1) && [maxX, minX].includes(tile.index.x)) {
+      return false;
+    }
+    if ((maxY - minY > 1) && [maxY, minY].includes(tile.index.y)) {
+      return false;
+    }
+    return true;
+  });
+
+  if (centerTiles.some((tile) => tile.isVisible && tile.isLoaded && tile.content)) {
+    // do not display cached tiles (of a different resolution) if
+    // at least one tile of the correct resolution is already visible
+    return;
+  }
+
+  // copy of 'no-overlap' strategy from
+  // https://github.com/visgl/deck.gl/blob/master/modules/geo-layers/src/tileset-2d/tileset-2d.ts
+  for (const tile of allTiles) {
+    tile.state = 0;
+  }
+  for (const tile of allTiles) {
+    if (tile.isSelected) {
+      getPlaceholderInAncestors(tile);
+    }
+  }
+  // Always process parents first
+  const sortedTiles = Array.from(allTiles).sort((t1, t2) => t1.zoom - t2.zoom);
+  for (const tile of sortedTiles) {
+    tile.isVisible = Boolean(tile.state! & TILE_STATE_VISIBLE);
+
+    if (tile.children && (tile.isVisible || tile.state! & TILE_STATE_VISITED)) {
+      for (const child of tile.children) {
+        // If the tile is rendered, or if the tile has been explicitly hidden, hide all of its children
+        child.state = TILE_STATE_VISITED;
+      }
+    } else if (tile.isSelected) {
+      getPlaceholderInChildren(tile);
+    }
+  }
+};
 
 export default function DatasetCountLayer() {
   const datasetH3Layer = useSelector((state: RootState) => state.carto.layers[DATASET_COUNT_LAYER_ID]);
   const source = useSelector((state: RootState) => selectSourceById(state, datasetH3Layer?.source));
   const { selectedDataset, h3Index: selectedH3Index } = useSelector((state: RootState) => state.selected);
-  const { h3Resolution: resolution, closestZoom } = useSelector((state: RootState) => state.app);
+  const { closestZoom, h3Resolution } = useSelector((state: RootState) => state.app);
   const { location } = useSelector((state: RootState) => state.location);
   const { fileUrl } = useSelector((state: RootState) => state.preview);
   const dispatch = useDispatch();
@@ -40,13 +99,12 @@ export default function DatasetCountLayer() {
           : 'dataset-h3-tile-layer'
       ),
       data: source.data,
-      maxZoom: closestZoom,
-      // refinementStrategy: 'no-overlap',
-      loadOptions: {
+      // @ts-ignore
+      getTileData: ((tile: Tile2DHeader) => load(tile.url, {
         fetch: {
           method: 'POST',
           body: JSON.stringify({
-            resolution,
+            resolution: getClosestZoomResolutionPair(tile.index.z)[1],
             location: (
               location && ['Polygon', 'MultiPolygon'].includes(location.geojson.type)
                 ? JSON.stringify(location.geojson)
@@ -57,7 +115,11 @@ export default function DatasetCountLayer() {
             'Content-Type': 'application/json',
           },
         },
-      },
+      })),
+      // should be closest z-index instead of zoom?
+      maxZoom: closestZoom,
+      // @ts-ignore
+      refinementStrategy,
       // eslint-disable-next-line @typescript-eslint/no-unused-vars
       onClick: async (info: any, event: object) => {
         const targetIndex = info.object.index;
@@ -102,32 +164,34 @@ export default function DatasetCountLayer() {
           }
         }
       },
-      renderSubLayers: (props: object) => new H3HexagonLayer(props, {
-        getHexagon: ((d: DatasetCount) => d.index),
-        pickable: true,
-        stroked: true,
-        lineWidthMinPixels: 1,
-        // @ts-ignore
-        getLineColor: (d: DatasetCount) => (
-          d.index === selectedH3Index
-            ? [...SELECTED_OUTLINE, 255]
-            : [...getColor(d), shouldDim ? 12 : 160]
-        ),
-        // @ts-ignore
-        getFillColor: (d: DatasetCount) => [...getColor(d), shouldDim ? 60 : 200],
-        filled: true,
-        getLineWidth: (d: DatasetCount) => {
-          if (selectedDataset) {
-            return 1;
-          }
-          return d.index === selectedH3Index ? 3 : 2;
+      renderSubLayers: (props: any) => new H3HexagonLayer(
+        props,
+        {
+          getHexagon: ((d: DatasetCount) => d.index),
+          pickable: true,
+          stroked: true,
+          lineWidthMinPixels: 1,
+          // @ts-ignore
+          getLineColor: (d: DatasetCount) => (
+            d.index === selectedH3Index
+              ? [...SELECTED_OUTLINE, 255]
+              : [...getColor(d), shouldDim ? 12 : 160]
+          ),
+          // @ts-ignore
+          getFillColor: (d: DatasetCount) => [...getColor(d), shouldDim ? 60 : 200],
+          filled: true,
+          getLineWidth: (d: DatasetCount) => {
+            if (selectedDataset) {
+              return 1;
+            }
+            return d.index === selectedH3Index ? 3 : 2;
+          },
+          extruded: false,
         },
-        extruded: false,
-      }),
+      ),
       updateTriggers: {
+        // TODO: create a separate location-filtered layer?
         id: [selectedDataset, location?.place_id],
-        minZoom: [closestZoom],
-        maxZoom: [closestZoom],
         getLineColor: [selectedH3Index, shouldDim],
         getFillColor: [selectedH3Index, shouldDim],
         getLineWidth: [selectedH3Index, shouldDim],
