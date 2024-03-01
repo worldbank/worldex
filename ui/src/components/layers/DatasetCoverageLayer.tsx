@@ -3,10 +3,13 @@ import { useDispatch, useSelector } from 'react-redux';
 // @ts-ignore
 import { selectSourceById } from '@carto/react-redux';
 import { H3HexagonLayer, TileLayer } from '@deck.gl/geo-layers/typed';
+import { TileLoadProps } from '@deck.gl/geo-layers/typed/tileset-2d';
 import { RootState } from 'store/store';
 import { hexToRgb } from 'utils/colors';
 import { setSelectedDataset } from 'store/selectedSlice';
 import { setPendingLocationCheck } from 'store/locationSlice';
+import { load } from '@loaders.gl/core';
+import getClosestZoomResolutionPair from 'utils/getClosestZoomResolutionPair';
 
 export const DATASET_COVERAGE_LAYER_ID = 'datasetCoverageLayer';
 
@@ -14,7 +17,7 @@ export default function DatasetCoverageLayer() {
   const { datasetCoverageLayer } = useSelector((state: RootState) => state.carto.layers);
   const source = useSelector((state) => selectSourceById(state, datasetCoverageLayer?.source));
   const { selectedDataset } = useSelector((state: RootState) => state.selected);
-  const { h3Resolution: resolution, closestZoom } = useSelector((state: RootState) => state.app);
+  const { closestZoom } = useSelector((state: RootState) => state.app);
   const { location, pendingLocationCheck } = useSelector((state: RootState) => state.location);
   const BLUE_600 = hexToRgb(blue['600']); // #1e88e5
   const dispatch = useDispatch();
@@ -31,11 +34,11 @@ export default function DatasetCoverageLayer() {
       ),
       data: source.data,
       maxZoom: closestZoom,
-      loadOptions: {
+      getTileData: ((tile: TileLoadProps) => load(tile.url, {
         fetch: {
           method: 'POST',
           body: JSON.stringify({
-            resolution,
+            resolution: getClosestZoomResolutionPair(tile.index.z)[1],
             dataset_id: selectedDataset,
             location: (
               location && ['Polygon', 'MultiPolygon'].includes(location.geojson.type)
@@ -47,8 +50,8 @@ export default function DatasetCoverageLayer() {
             'Content-Type': 'application/json',
           },
         },
-      },
-      refinementStrategy: 'never',
+      })),
+      refinementStrategy: 'no-overlap',
       onViewportLoad: (data) => {
         if (pendingLocationCheck && data.every((tile) => tile.content.length === 0)) {
           // if location search result filters out all tiles of
