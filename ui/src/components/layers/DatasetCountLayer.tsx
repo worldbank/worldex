@@ -1,8 +1,8 @@
 import { OR_YEL, SELECTED_OUTLINE } from 'constants/colors';
 import { selectSourceById } from '@carto/react-redux';
 import { useDispatch, useSelector } from 'react-redux';
-// @ts-ignore
-import { H3HexagonLayer, Tile2DHeader, TileLayer } from '@deck.gl/geo-layers';
+import { H3HexagonLayer, TileLayer } from '@deck.gl/geo-layers/typed';
+import { TileLoadProps, Tile2DHeader } from '@deck.gl/geo-layers/typed/tileset-2d';
 import { Typography } from '@mui/material';
 import { DatasetCount } from 'components/common/types';
 import { renderToStaticMarkup } from 'react-dom/server';
@@ -22,12 +22,17 @@ export const DATASET_COUNT_LAYER_ID = 'datasetCountLayer';
 
 const refinementStrategy = (allTiles: Tile2DHeader[]) => {
   const selectedTiles = allTiles.filter((tile) => tile.isSelected);
-  const xs = selectedTiles.map((tile) => tile.index.x);
-  const ys = selectedTiles.map((tile) => tile.index.y);
-  const minX = Math.min(...xs);
-  const maxX = Math.max(...xs);
-  const minY = Math.min(...ys);
-  const maxY = Math.max(...ys);
+  // get minmax of x, y coordinates in one pass
+  const {
+    minX, maxX, minY, maxY,
+  } = selectedTiles.reduce((acc, val) => ({
+    minX: acc.minX === null || val.index.x < acc.minX ? val.index.x : acc.minX,
+    maxX: acc.maxX === null || val.index.x > acc.maxX ? val.index.x : acc.maxX,
+    minY: acc.minY === null || val.index.y < acc.minY ? val.index.y : acc.minY,
+    maxY: acc.maxY == null || val.index.y > acc.maxY ? val.index.y : acc.maxY,
+  }), {
+    minX: null, maxX: null, minY: null, maxY: null,
+  });
 
   const centerTiles = selectedTiles.filter((tile) => {
     if ((maxX - minX > 1) && [maxX, minX].includes(tile.index.x)) {
@@ -100,7 +105,7 @@ export default function DatasetCountLayer() {
       ),
       data: source.data,
       // @ts-ignore
-      getTileData: ((tile: Tile2DHeader) => load(tile.url, {
+      getTileData: ((tile: TileLoadProps) => load(tile.url, {
         fetch: {
           method: 'POST',
           body: JSON.stringify({
@@ -121,6 +126,7 @@ export default function DatasetCountLayer() {
       // @ts-ignore
       refinementStrategy,
       // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      // @ts-ignore
       onClick: async (info: any, event: object) => {
         const targetIndex = info.object.index;
         if (selectedH3Index === targetIndex) {

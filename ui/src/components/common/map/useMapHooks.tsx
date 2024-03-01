@@ -3,7 +3,6 @@ import { styled } from '@mui/material/styles';
 import { setViewState, ViewState } from '@carto/react-redux';
 import { Typography } from '@carto/react-ui';
 import { renderToStaticMarkup } from 'react-dom/server';
-import { useMemo } from 'react';
 import { debounce } from '@mui/material';
 import { MAXIMUM_ZOOM, MINIMUM_ZOOM } from 'constants/h3';
 import { setPendingLocationCheck } from 'store/locationSlice';
