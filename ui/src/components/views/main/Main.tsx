@@ -58,7 +58,6 @@ interface AtArgs {
 }
 
 export default function Main() {
-  const { handleViewStateChange } = useMapHooks();
   const viewState = useSelector((state: RootState) => state.carto.viewState);
   const { latitude, longitude, zoom } = viewState;
 
@@ -144,9 +143,12 @@ export default function Main() {
   // [hygen] Add useEffect
 
   useEffect(() => {
-    debouncedSetSearchParams({
-      at: `${latitude.toFixed(5)},${longitude.toFixed(5)},${zoom.toFixed(2)}z`,
-    });
+    const at = `${latitude.toFixed(5)},${longitude.toFixed(5)},${zoom.toFixed(2)}z`;
+    if (searchParams.get('at')) {
+      debouncedSetSearchParams({ at });
+    } else {
+      setSearchParams({ at });
+    }
   }, [setSearchParams, latitude, longitude, zoom]);
 
   return (
