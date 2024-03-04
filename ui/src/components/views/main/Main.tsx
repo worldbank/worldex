@@ -4,6 +4,7 @@ import {
   addSource,
   removeLayer,
   removeSource,
+  setViewState,
 } from '@carto/react-redux';
 import h3CellsSource from 'data/sources/h3CellsSource';
 import { lazy, useCallback, useEffect } from 'react';
@@ -22,9 +23,7 @@ import { debounce, Grid } from '@mui/material';
 import { styled } from '@mui/material/styles';
 import { useMapHooks } from 'components/common/map/useMapHooks';
 import { useSearchParams } from 'react-router-dom';
-import { setSteppedZoom } from 'store/appSlice';
 import { RootState } from 'store/store';
-import getSteppedZoomResolutionPair from 'utils/getSteppedZoomResolutionPair';
 import LazyLoadComponent from 'components/common/LazyLoadComponent';
 
 const MapContainer = lazy(
@@ -59,12 +58,13 @@ interface AtArgs {
 }
 
 export default function Main() {
-  const { debouncedSetViewState } = useMapHooks();
+  const { handleViewStateChange } = useMapHooks();
   const viewState = useSelector((state: RootState) => state.carto.viewState);
   const { latitude, longitude, zoom } = viewState;
 
   const [searchParams, setSearchParams] = useSearchParams();
   const debouncedSetSearchParams = useCallback(debounce(setSearchParams, 300), []);
+  const dispatch = useDispatch();
 
   useEffect(() => {
     const at = searchParams.get('at');
@@ -78,16 +78,13 @@ export default function Main() {
         if (results.groups.zoom) {
           atArgs.zoom = parseFloat(results.groups.zoom);
         }
-        debouncedSetViewState({
-          ...viewState,
-          ...atArgs,
-        });
+        // @ts-ignore
+        dispatch(setViewState({ ...atArgs }));
       }
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const dispatch = useDispatch();
   useEffect(() => {
     dispatch(addSource(h3CellsSource));
     dispatch(
@@ -152,10 +149,6 @@ export default function Main() {
     });
   }, [setSearchParams, latitude, longitude, zoom]);
 
-  useEffect(() => {
-    const [steppedZoom, _] = getSteppedZoomResolutionPair(zoom);
-    dispatch(setSteppedZoom(steppedZoom));
-  }, [dispatch, latitude, longitude, zoom]);
   return (
     <GridMain container item xs>
       <LazyLoadComponent>

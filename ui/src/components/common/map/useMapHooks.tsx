@@ -8,6 +8,8 @@ import { debounce } from '@mui/material';
 import { MAXIMUM_ZOOM, MINIMUM_ZOOM } from 'constants/h3';
 import { setPendingLocationCheck } from 'store/locationSlice';
 import { RootState } from 'store/store';
+import getSteppedZoomResolutionPair from 'utils/getSteppedZoomResolutionPair';
+import { setSteppedZoom } from 'store/appSlice';
 
 const TooltipContent = styled('div')(({ theme }) => ({
   color: theme.palette.common.white,
@@ -37,26 +39,19 @@ export function useMapHooks() {
   let isHovering = false;
   const { pendingLocationCheck } = useSelector((state: RootState) => state.location);
 
-  const debouncedSetViewState = useCallback(
-    debounce(
-      (viewState: ViewState) => {
-        const newViewState = { ...viewState };
-        if (newViewState.zoom != null) {
-          newViewState.zoom = Math.min(Math.max(newViewState.zoom, MINIMUM_ZOOM), MAXIMUM_ZOOM);
-        }
-        // @ts-ignore
-        dispatch(setViewState(newViewState));
-      },
-      300
-    ),
-    []
-  );
-
   const handleViewStateChange = ({ viewState }: { viewState: ViewState }) => {
+    if (viewState.zoom != null) {
+      viewState.zoom = Math.min(Math.max(viewState.zoom, MINIMUM_ZOOM), MAXIMUM_ZOOM);
+    }
+    // @ts-ignore
+    dispatch(setViewState(viewState));
+
+    if (viewState.zoom != null) {
+      dispatch(setSteppedZoom(getSteppedZoomResolutionPair(viewState.zoom)[0]));
+    }
     if (pendingLocationCheck) {
       dispatch(setPendingLocationCheck(false));
     }
-    debouncedSetViewState(viewState);
   };
 
   const handleSizeChange = ({
@@ -67,7 +62,7 @@ export function useMapHooks() {
     height: number;
   }) => {
     // @ts-ignore
-    debouncedSetViewState({ width, height });
+    dispatch(setViewState({ width, height }));
   };
 
   const handleHover = ({ object }: any) => (isHovering = !!object);
@@ -103,7 +98,6 @@ export function useMapHooks() {
   };
 
   return {
-    debouncedSetViewState,
     handleViewStateChange,
     handleSizeChange,
     handleHover,
