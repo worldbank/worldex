@@ -1,7 +1,7 @@
 /* eslint-disable no-else-return, no-restricted-syntax */
 import { ZOOM_H3_RESOLUTION_PAIRS } from 'constants/h3';
 
-const getClosestZoomResolutionPair = (currentZoom: number): [number, number] => {
+const getSteppedZoomResolutionPair = (currentZoom: number): [number, number] => {
   for (const [idx, [z]] of ZOOM_H3_RESOLUTION_PAIRS.entries()) {
     if (z === currentZoom) {
       return ZOOM_H3_RESOLUTION_PAIRS[idx];
@@ -12,4 +12,4 @@ const getClosestZoomResolutionPair = (currentZoom: number): [number, number] => 
   return ZOOM_H3_RESOLUTION_PAIRS.at(-1);
 };
 
-export default getClosestZoomResolutionPair;
+export default getSteppedZoomResolutionPair;

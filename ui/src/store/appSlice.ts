@@ -7,7 +7,7 @@ const slice = createSlice({
     error: null,
     bottomSheetOpen: false,
     h3Resolution: null,
-    closestZoom: null,
+    steppedZoom: null,
     zIndex: null,
   },
   reducers: {
@@ -20,9 +20,8 @@ const slice = createSlice({
     setH3Resolution: (state, action) => {
       state.h3Resolution = action.payload;
     },
-    // TODO: rename closest to stepped?
-    setClosestZoom: (state, action) => {
-      state.closestZoom = action.payload;
+    setSteppedZoom: (state, action) => {
+      state.steppedZoom = action.payload;
     },
     setZIndex: (state, action) => {
       state.zIndex = action.payload;
@@ -44,8 +43,8 @@ export const setH3Resolution = (payload: number) => ({
   type: 'app/setH3Resolution',
   payload,
 });
-export const setClosestZoom = (payload: number) => ({
-  type: 'app/setClosestZoom',
+export const setSteppedZoom = (payload: number) => ({
+  type: 'app/setSteppedZoom',
   payload,
 });
 export const setZIndex = (payload: number) => ({

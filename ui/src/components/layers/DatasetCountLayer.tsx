@@ -1,8 +1,8 @@
 import { OR_YEL, SELECTED_OUTLINE } from 'constants/colors';
 import { selectSourceById } from '@carto/react-redux';
 import { useDispatch, useSelector } from 'react-redux';
-// @ts-ignore
-import { H3HexagonLayer, Tile2DHeader, TileLayer } from '@deck.gl/geo-layers';
+import { H3HexagonLayer, TileLayer } from '@deck.gl/geo-layers/typed';
+import { TileLoadProps, Tile2DHeader } from '@deck.gl/geo-layers/typed/tileset-2d';
 import { Typography } from '@mui/material';
 import { DatasetCount } from 'components/common/types';
 import { renderToStaticMarkup } from 'react-dom/server';
@@ -16,18 +16,23 @@ import {
   getPlaceholderInChildren,
 } from 'utils/tileRefinement';
 import { load } from '@loaders.gl/core';
-import getClosestZoomResolutionPair from 'utils/getClosestZoomResolutionPair';
+import getSteppedZoomResolutionPair from 'utils/getSteppedZoomResolutionPair';
 
 export const DATASET_COUNT_LAYER_ID = 'datasetCountLayer';
 
 const refinementStrategy = (allTiles: Tile2DHeader[]) => {
   const selectedTiles = allTiles.filter((tile) => tile.isSelected);
-  const xs = selectedTiles.map((tile) => tile.index.x);
-  const ys = selectedTiles.map((tile) => tile.index.y);
-  const minX = Math.min(...xs);
-  const maxX = Math.max(...xs);
-  const minY = Math.min(...ys);
-  const maxY = Math.max(...ys);
+  // get minmax of x, y coordinates in one pass
+  const {
+    minX, maxX, minY, maxY,
+  } = selectedTiles.reduce((acc, val) => ({
+    minX: acc.minX === null || val.index.x < acc.minX ? val.index.x : acc.minX,
+    maxX: acc.maxX === null || val.index.x > acc.maxX ? val.index.x : acc.maxX,
+    minY: acc.minY === null || val.index.y < acc.minY ? val.index.y : acc.minY,
+    maxY: acc.maxY == null || val.index.y > acc.maxY ? val.index.y : acc.maxY,
+  }), {
+    minX: null, maxX: null, minY: null, maxY: null,
+  });
 
   const centerTiles = selectedTiles.filter((tile) => {
     if ((maxX - minX > 1) && [maxX, minX].includes(tile.index.x)) {
@@ -75,7 +80,7 @@ export default function DatasetCountLayer() {
   const datasetH3Layer = useSelector((state: RootState) => state.carto.layers[DATASET_COUNT_LAYER_ID]);
   const source = useSelector((state: RootState) => selectSourceById(state, datasetH3Layer?.source));
   const { selectedDataset, h3Index: selectedH3Index } = useSelector((state: RootState) => state.selected);
-  const { closestZoom, h3Resolution } = useSelector((state: RootState) => state.app);
+  const { steppedZoom } = useSelector((state: RootState) => state.app);
   const { location } = useSelector((state: RootState) => state.location);
   const { fileUrl } = useSelector((state: RootState) => state.preview);
   const dispatch = useDispatch();
@@ -100,11 +105,11 @@ export default function DatasetCountLayer() {
       ),
       data: source.data,
       // @ts-ignore
-      getTileData: ((tile: Tile2DHeader) => load(tile.url, {
+      getTileData: ((tile: TileLoadProps) => load(tile.url, {
         fetch: {
           method: 'POST',
           body: JSON.stringify({
-            resolution: getClosestZoomResolutionPair(tile.index.z)[1],
+            resolution: getSteppedZoomResolutionPair(tile.index.z)[1],
             location: (
               location && ['Polygon', 'MultiPolygon'].includes(location.geojson.type)
                 ? JSON.stringify(location.geojson)
@@ -116,11 +121,11 @@ export default function DatasetCountLayer() {
           },
         },
       })),
-      // should be closest z-index instead of zoom?
-      maxZoom: closestZoom,
+      maxZoom: steppedZoom,
       // @ts-ignore
       refinementStrategy,
       // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      // @ts-ignore
       onClick: async (info: any, event: object) => {
         const targetIndex = info.object.index;
         if (selectedH3Index === targetIndex) {

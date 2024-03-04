@@ -10,8 +10,8 @@ const STAMEN_TONER = {
 
 export const initialState: InitialCarto3State = {
   viewState: {
-    latitude: 31.802892,
-    longitude: -103.007813,
+    latitude: 0,
+    longitude: 0,
     zoom: 2,
     pitch: 0,
     bearing: 0,

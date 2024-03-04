@@ -4,28 +4,27 @@ import {
   addSource,
   removeLayer,
   removeSource,
+  setViewState,
 } from '@carto/react-redux';
 import h3CellsSource from 'data/sources/h3CellsSource';
-import { lazy, useEffect } from 'react';
+import { lazy, useCallback, useEffect } from 'react';
 
 import { SLIPPY_TILE_LAYER_ID } from 'components/layers/SlippyTileLayer';
 
-import { TIF_PREVIEW_LAYER_ID } from 'components/layers/TifPreviewLayer';
-import { GEOJSON_PREVIEW_LAYER_ID } from 'components/layers/GeojsonPreviewLayer';
-import datasetCoverageSource from 'data/sources/datasetCoverageSource';
-import { DATASET_COVERAGE_LAYER_ID } from 'components/layers/DatasetCoverageLayer';
 import { DATASET_COUNT_LAYER_ID } from 'components/layers/DatasetCountLayer';
+import { DATASET_COVERAGE_LAYER_ID } from 'components/layers/DatasetCoverageLayer';
+import { GEOJSON_PREVIEW_LAYER_ID } from 'components/layers/GeojsonPreviewLayer';
 import { SEARCH_LAYER_ID } from 'components/layers/SearchLayer';
+import { TIF_PREVIEW_LAYER_ID } from 'components/layers/TifPreviewLayer';
+import datasetCoverageSource from 'data/sources/datasetCoverageSource';
 import { useDispatch, useSelector } from 'react-redux';
 
-import { Grid } from '@mui/material';
+import { debounce, Grid } from '@mui/material';
 import { styled } from '@mui/material/styles';
-import LazyLoadComponent from 'components/common/LazyLoadComponent';
 import { useMapHooks } from 'components/common/map/useMapHooks';
 import { useSearchParams } from 'react-router-dom';
 import { RootState } from 'store/store';
-import getClosestZoomResolutionPair from 'utils/getClosestZoomResolutionPair';
-import { setClosestZoom } from 'store/appSlice';
+import LazyLoadComponent from 'components/common/LazyLoadComponent';
 
 const MapContainer = lazy(
   () => import(
@@ -59,11 +58,12 @@ interface AtArgs {
 }
 
 export default function Main() {
-  const { debouncedSetViewState } = useMapHooks();
   const viewState = useSelector((state: RootState) => state.carto.viewState);
   const { latitude, longitude, zoom } = viewState;
 
   const [searchParams, setSearchParams] = useSearchParams();
+  const debouncedSetSearchParams = useCallback(debounce(setSearchParams, 300), []);
+  const dispatch = useDispatch();
 
   useEffect(() => {
     const at = searchParams.get('at');
@@ -77,16 +77,13 @@ export default function Main() {
         if (results.groups.zoom) {
           atArgs.zoom = parseFloat(results.groups.zoom);
         }
-        debouncedSetViewState({
-          ...viewState,
-          ...atArgs,
-        });
+        // @ts-ignore
+        dispatch(setViewState({ ...atArgs }));
       }
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const dispatch = useDispatch();
   useEffect(() => {
     dispatch(addSource(h3CellsSource));
     dispatch(
@@ -146,13 +143,14 @@ export default function Main() {
   // [hygen] Add useEffect
 
   useEffect(() => {
-    setSearchParams({ at: `${latitude.toFixed(5)},${longitude.toFixed(5)},${zoom.toFixed(2)}z` });
+    const at = `${latitude.toFixed(5)},${longitude.toFixed(5)},${zoom.toFixed(2)}z`;
+    if (searchParams.get('at')) {
+      debouncedSetSearchParams({ at });
+    } else {
+      setSearchParams({ at });
+    }
   }, [setSearchParams, latitude, longitude, zoom]);
 
-  useEffect(() => {
-    const [closestZoom, _] = getClosestZoomResolutionPair(zoom);
-    dispatch(setClosestZoom(closestZoom));
-  }, [dispatch, latitude, longitude, zoom]);
   return (
     <GridMain container item xs>
       <LazyLoadComponent>
