@@ -143,13 +143,8 @@ export default function Main() {
   // [hygen] Add useEffect
 
   useEffect(() => {
-    const at = `${latitude.toFixed(5)},${longitude.toFixed(5)},${zoom.toFixed(2)}z`;
-    if (searchParams.get('at')) {
-      debouncedSetSearchParams({ at });
-    } else {
-      setSearchParams({ at });
-    }
-  }, [setSearchParams, latitude, longitude, zoom]);
+    debouncedSetSearchParams({ at: `${latitude.toFixed(5)},${longitude.toFixed(5)},${zoom.toFixed(2)}z` });
+  }, [debouncedSetSearchParams, latitude, longitude, zoom]);
 
   return (
     <GridMain container item xs>
