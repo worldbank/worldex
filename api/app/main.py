@@ -84,22 +84,24 @@ async def get_h3_tiles(
     y: int,
     session: AsyncSession = Depends(get_async_session),
 ):
-    cached_tile = await session.execute(
-        text(
-            """
-            SELECT dataset_counts FROM dataset_count_tiles
-            WHERE z = :z AND x = :x AND y = :y;
-            """
-        ).bindparams(z=z, x=x, y=y)
-    )
-    cached_tile = cached_tile.first()
+    location = payload.location
+    cached_tile = None
+    if not location:
+        cached_tile = await session.execute(
+            text(
+                """
+                SELECT dataset_counts FROM dataset_count_tiles
+                WHERE z = :z AND x = :x AND y = :y;
+                """
+            ).bindparams(z=z, x=x, y=y)
+        )
+        cached_tile = cached_tile.first()
     header_kwargs = {}
     if cached_tile:
         dataset_count_bytes = cached_tile.dataset_counts
         header_kwargs = {"headers": {"X-Tile-Cache-Hit": "true"}}
     else:
         resolution = payload.resolution
-        location = payload.location
         # dynamically constructing this expression is faster than deriving from
         # generate_series(0, :resolution) despite the latter resulting to more readable code
         parents_array = ["fill_index"] + [
@@ -129,15 +131,16 @@ async def get_h3_tiles(
             writer.write_table(table)
         serialized_data = sink.getvalue()
         dataset_count_bytes = serialized_data.to_pybytes()
-        async with session:
-            dataset_count_tile = DatasetCountTile(
-                z=z,
-                x=x,
-                y=y,
-                dataset_counts=dataset_count_bytes,
-            )
-            session.add(dataset_count_tile)
-            await session.commit()
+        if not location:
+            async with session:
+                dataset_count_tile = DatasetCountTile(
+                    z=z,
+                    x=x,
+                    y=y,
+                    dataset_counts=dataset_count_bytes,
+                )
+                session.add(dataset_count_tile)
+                await session.commit()
     return Response(
         content=dataset_count_bytes, media_type="application/octet-stream", **header_kwargs
     )
