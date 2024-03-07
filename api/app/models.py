@@ -164,3 +164,25 @@ class H3ChildrenIndicator(Base):
     __table_args__ = (
         UniqueConstraint("dataset_id", "h3_index"),
     )
+
+
+class DatasetCountTile(Base):
+    """
+    Caches dataset counts for all h3 tiles contained
+    in the corresponding OSM tile (indexed z/x/y)
+    """
+    __tablename__ = "dataset_count_tiles"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    cached_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), nullable=False
+    )
+    z: Mapped[int] = mapped_column(Integer, nullable=False)
+    x: Mapped[int] = mapped_column(Integer, nullable=False)
+    y: Mapped[int] = mapped_column(Integer, nullable=False)
+    dataset_counts = mapped_column(JSONB)
+
+    __table_args__ = (
+        UniqueConstraint("z", "x", "y"),
+        Index("ix_dataset_count_tiles_zxy", "z", "x", "y")
+    )
