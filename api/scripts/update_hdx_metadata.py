@@ -52,16 +52,6 @@ def update_dataset_metadata(
     return None
 
 
-def create_h3_indices(file: s3fs.core.S3File, dataset_id: int) -> List[H3Data]:
-    indices = pd.read_parquet(file)["h3_index"]
-    indices = list(indices)
-    df_pop = pd.DataFrame({"h3_index": indices}).astype({"h3_index": str})
-    return [
-        H3Data(h3_index=row["h3_index"], dataset_id=dataset_id)
-        for _, row in df_pop.iterrows()
-    ]
-
-
 def main():
     engine = create_engine(DATABASE_CONNECION)
 
