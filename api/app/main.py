@@ -4,7 +4,7 @@ import uvicorn
 from app import settings
 from app.db import get_async_session
 from app.models import DatasetRequest, DatasetCountTile, HealthCheck, H3TileRequest, DatasetsByLocationRequest, TifAsPngRequest
-from fastapi import Depends, FastAPI
+from fastapi import Depends, FastAPI, Response
 from fastapi.middleware.cors import CORSMiddleware
 from shapely import wkt
 from sqlalchemy import text
@@ -24,6 +24,7 @@ import base64
 from app.services import img_to_data_url
 from rasterio.warp import calculate_default_transform, reproject, Resampling, transform_bounds
 from rasterio.windows import from_bounds
+import pyarrow as pa
 
 
 app = FastAPI(
@@ -92,7 +93,7 @@ async def get_h3_tiles(
         ).bindparams(z=z, x=x, y=y)
     )
     cached_tile = cached_tile.first()
-    if cached_tile:
+    if False and cached_tile:
         dataset_counts = cached_tile.dataset_counts
     else:
         resolution = payload.resolution
@@ -109,11 +110,47 @@ async def get_h3_tiles(
         )
         query = text(query).bindparams(z=z, x=x, y=y, resolution=resolution, location=location)
         results = await session.execute(query)
-        dataset_counts = [{"index": row[0], "dataset_count": row[1]} for row in results.fetchall()]
-        async with session:
-            dataset_count_tile = DatasetCountTile(z=z, x=x, y=y, dataset_counts=dataset_counts)
-            session.add(dataset_count_tile)
-            await session.commit()
+        # print("description", vars(results))
+        # dataset_counts = [{"index": row[0], "dataset_count": row[1]} for row in results.fetchall()]
+        data = {'index': [], 'dataset_count': []}
+        for row in results.fetchall():
+            data['index'].append(row[0])
+            data['dataset_count'].append(row[1])
+        table = pa.Table.from_pydict(
+            data,
+            schema=pa.schema([
+                ('index', pa.string()),
+                ('dataset_count', pa.int32()),
+            ])
+        )
+
+        sink = pa.BufferOutputStream()
+        writer = pa.RecordBatchStreamWriter(sink, table.schema)
+        writer.write_table(table)
+        writer.close()
+        serialized_data = sink.getvalue()
+        return Response(
+            content=serialized_data.to_pybytes(), media_type="application/octet-stream"
+        )
+
+        # async with session:
+        #     dataset_count_tile = DatasetCountTile(z=z, x=x, y=y, dataset_counts=dataset_counts)
+        #     session.add(dataset_count_tile)
+        #     await session.commit()
+
+        # data = {'col1': [1, 2, 3], 'col2': [4, 5, 6]}
+        # table = pa.Table.from_pydict(data)
+
+        # # Serialize the PyArrow table to a binary format
+        # sink = pa.BufferOutputStream()
+        # writer = pa.RecordBatchStreamWriter(sink, table.schema)
+        # writer.write_table(table)
+        # writer.close()
+        # serialized_data = sink.getvalue()
+
+        # # Return the serialized data as the response
+        # return Response(content=serialized_data.to_pybytes(), media_type="application/octet-stream")
+
     return dataset_counts
 
 

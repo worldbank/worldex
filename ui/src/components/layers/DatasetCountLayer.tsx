@@ -17,6 +17,7 @@ import {
 } from 'utils/tileRefinement';
 import { load } from '@loaders.gl/core';
 import getSteppedZoomResolutionPair from 'utils/getSteppedZoomResolutionPair';
+import { ArrowLoader } from '@loaders.gl/arrow';
 
 export const DATASET_COUNT_LAYER_ID = 'datasetCountLayer';
 
@@ -105,22 +106,29 @@ export default function DatasetCountLayer() {
       ),
       data: source.data,
       // @ts-ignore
-      getTileData: ((tile: TileLoadProps) => load(tile.url, {
-        fetch: {
-          method: 'POST',
-          body: JSON.stringify({
-            resolution: getSteppedZoomResolutionPair(tile.index.z)[1],
-            location: (
-              location && ['Polygon', 'MultiPolygon'].includes(location.geojson.type)
-                ? JSON.stringify(location.geojson)
-                : null
-            ),
-          }),
-          headers: {
-            'Content-Type': 'application/json',
+      getTileData: ((tile: TileLoadProps) => load(
+        tile.url,
+        ArrowLoader,
+        {
+          arrow: {
+            shape: 'object-row-table',
+          },
+          fetch: {
+            method: 'POST',
+            body: JSON.stringify({
+              resolution: getSteppedZoomResolutionPair(tile.index.z)[1],
+              location: (
+                location && ['Polygon', 'MultiPolygon'].includes(location.geojson.type)
+                  ? JSON.stringify(location.geojson)
+                  : null
+              ),
+            }),
+            headers: {
+              'Content-Type': 'application/json',
+            },
           },
         },
-      })),
+      )),
       maxZoom: steppedZoom,
       // @ts-ignore
       refinementStrategy,
@@ -170,7 +178,7 @@ export default function DatasetCountLayer() {
         }
       },
       renderSubLayers: (props: any) => new H3HexagonLayer(
-        props,
+        { ...props, data: props.data.data },
         {
           getHexagon: ((d: DatasetCount) => d.index),
           pickable: true,
