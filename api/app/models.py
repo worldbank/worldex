@@ -8,6 +8,7 @@ from sqlalchemy import (
     Column,
     DateTime,
     Integer,
+    LargeBinary,
     String,
     ForeignKey,
     UniqueConstraint,
@@ -180,7 +181,7 @@ class DatasetCountTile(Base):
     z: Mapped[int] = mapped_column(Integer, nullable=False)
     x: Mapped[int] = mapped_column(Integer, nullable=False)
     y: Mapped[int] = mapped_column(Integer, nullable=False)
-    dataset_counts = mapped_column(JSONB)
+    dataset_counts = mapped_column(LargeBinary)
 
     __table_args__ = (
         UniqueConstraint("z", "x", "y"),

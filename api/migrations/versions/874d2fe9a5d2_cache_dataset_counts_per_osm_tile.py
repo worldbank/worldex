@@ -1,18 +1,18 @@
 """Cache dataset counts per osm tile
 
-Revision ID: 7bf546720f4b
+Revision ID: 874d2fe9a5d2
 Revises: dfd7ba969b8b
-Create Date: 2024-03-07 11:04:25.571596
+Create Date: 2024-03-07 14:09:11.550857
 
 """
 from typing import Sequence, Union
 
 from alembic import op
 import sqlalchemy as sa
-from sqlalchemy.dialects import postgresql
+
 
 # revision identifiers, used by Alembic.
-revision: str = '7bf546720f4b'
+revision: str = '874d2fe9a5d2'
 down_revision: Union[str, None] = 'dfd7ba969b8b'
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
@@ -26,7 +26,7 @@ def upgrade() -> None:
     sa.Column('z', sa.Integer(), nullable=False),
     sa.Column('x', sa.Integer(), nullable=False),
     sa.Column('y', sa.Integer(), nullable=False),
-    sa.Column('dataset_counts', postgresql.JSONB(astext_type=sa.Text()), nullable=True),
+    sa.Column('dataset_counts', sa.LargeBinary(), nullable=True),
     sa.PrimaryKeyConstraint('id'),
     sa.UniqueConstraint('z', 'x', 'y')
     )

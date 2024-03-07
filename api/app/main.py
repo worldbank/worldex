@@ -93,8 +93,10 @@ async def get_h3_tiles(
         ).bindparams(z=z, x=x, y=y)
     )
     cached_tile = cached_tile.first()
-    if False and cached_tile:
-        dataset_counts = cached_tile.dataset_counts
+    header_kwargs = {}
+    if cached_tile:
+        dataset_count_bytes = cached_tile.dataset_counts
+        header_kwargs = {"headers": {"X-Tile-Cache-Hit": "true"}}
     else:
         resolution = payload.resolution
         location = payload.location
@@ -110,8 +112,6 @@ async def get_h3_tiles(
         )
         query = text(query).bindparams(z=z, x=x, y=y, resolution=resolution, location=location)
         results = await session.execute(query)
-        # print("description", vars(results))
-        # dataset_counts = [{"index": row[0], "dataset_count": row[1]} for row in results.fetchall()]
         data = {'index': [], 'dataset_count': []}
         for row in results.fetchall():
             data['index'].append(row[0])
@@ -121,37 +121,26 @@ async def get_h3_tiles(
             schema=pa.schema([
                 ('index', pa.string()),
                 ('dataset_count', pa.int32()),
-            ])
+            ]),
         )
 
         sink = pa.BufferOutputStream()
-        writer = pa.RecordBatchStreamWriter(sink, table.schema)
-        writer.write_table(table)
-        writer.close()
+        with pa.RecordBatchStreamWriter(sink, table.schema) as writer:
+            writer.write_table(table)
         serialized_data = sink.getvalue()
-        return Response(
-            content=serialized_data.to_pybytes(), media_type="application/octet-stream"
-        )
-
-        # async with session:
-        #     dataset_count_tile = DatasetCountTile(z=z, x=x, y=y, dataset_counts=dataset_counts)
-        #     session.add(dataset_count_tile)
-        #     await session.commit()
-
-        # data = {'col1': [1, 2, 3], 'col2': [4, 5, 6]}
-        # table = pa.Table.from_pydict(data)
-
-        # # Serialize the PyArrow table to a binary format
-        # sink = pa.BufferOutputStream()
-        # writer = pa.RecordBatchStreamWriter(sink, table.schema)
-        # writer.write_table(table)
-        # writer.close()
-        # serialized_data = sink.getvalue()
-
-        # # Return the serialized data as the response
-        # return Response(content=serialized_data.to_pybytes(), media_type="application/octet-stream")
-
-    return dataset_counts
+        dataset_count_bytes = serialized_data.to_pybytes()
+        async with session:
+            dataset_count_tile = DatasetCountTile(
+                z=z,
+                x=x,
+                y=y,
+                dataset_counts=dataset_count_bytes,
+            )
+            session.add(dataset_count_tile)
+            await session.commit()
+    return Response(
+        content=dataset_count_bytes, media_type="application/octet-stream", **header_kwargs
+    )
 
 
 @app.post("/dataset_coverage/{z}/{x}/{y}")
