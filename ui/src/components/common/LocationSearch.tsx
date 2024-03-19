@@ -46,7 +46,7 @@ const LocationSearch = ({ className }: { className?: string }) => {
 
   const getDatasets = async ({ location, zoom }: { location: any, zoom: number }) => {
     const [_, resolution] = getSteppedZoomResolutionPair(zoom);
-    const datasetsResp = await fetch('/api/datasets_by_location/', {
+    const datasetsResp = await fetch(`/${import.meta.env.VITE_API_URL}/datasets_by_location/`, {
       method: 'post',
       headers: {
         'Accept': 'application/json',

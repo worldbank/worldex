@@ -18,7 +18,7 @@ store.injectReducer('carto', createCartoSlice(initialState));
 
 const AppProvider = (
   <Provider store={store}>
-    <BrowserRouter basename="/worldex">
+    <BrowserRouter>
       <App />
     </BrowserRouter>
   </Provider>
