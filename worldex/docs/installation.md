@@ -10,10 +10,6 @@ pip install worldex
 
 If you need data providers parsers you can install the optional dependencies
 
-```bash
-pip install 'worldex[hdx,worldpop]'
-```
-
 ## Development and contribution
 
 For development, we use poetry to manage our python dependencies.
