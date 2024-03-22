@@ -20,7 +20,7 @@ const Overview = () => {
   const datasetsByOrgs = filteredDatasets ? groupBy(filteredDatasets, "source_org") : null;
 
   useEffect(() => {
-    fetch(`/${import.meta.env.VITE_API_URL}/dataset_count/`, {
+    fetch(`${import.meta.env.VITE_API_URL}/dataset_count/`, {
       method: 'post',
     })
     .then(resp => resp.json())
