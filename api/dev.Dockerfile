@@ -44,7 +44,7 @@ RUN poetry install
 RUN apt-get update && apt-get install --no-install-recommends -y libgdal-dev gdal-bin
 
 WORKDIR /app
-COPY . .
+# no COPY of fastapi codebase - we're volume-mounting instead
 
-EXPOSE 8000 
-CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
+EXPOSE 8000
+CMD ["uvicorn", "main:app"]

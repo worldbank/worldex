@@ -32,11 +32,7 @@ app = FastAPI(
 
 app.add_middleware(
     CORSMiddleware,
-    # TODO: configure instead of hardcoding
-    allow_origins=[
-        "http://localhost:4173",
-        "http://w1lxscirender01.worldbank.org:4173",
-    ],
+    allow_origins=settings.allow_origins.split(","),
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -184,7 +180,7 @@ async def get_tif_as_png(
                     src.crs, web_mercator, src.width, src.height, *src.bounds
                 )
                 img = np.zeros((dst_height, dst_width))
-                 
+
                 reproject(
                     source=_img,
                     destination=img,

@@ -7,3 +7,4 @@ class Settings(BaseSettings):
     version: str
     database_url: str
     database_echo_query: bool = False
+    allow_origins: str

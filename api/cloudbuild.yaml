@@ -1,0 +1,7 @@
+steps:
+- name: 'gcr.io/cloud-builders/docker'
+  script: |
+    docker build -t us-central1-docker.pkg.dev/$PROJECT_ID/worldex-repo/worldex-api:0.1.0 .
+  automapSubstitutions: true
+images:
+- 'us-central1-docker.pkg.dev/$PROJECT_ID/worldex-repo/worldex-api:0.1.0'
