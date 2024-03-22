@@ -1,12 +1,7 @@
-import requests
-import geopandas as gpd
+import contextily as cx
 import pandas as pd
-from pathlib import Path
 from h3ronpy.arrow import cells_parse
 from h3ronpy.pandas.vector import cells_dataframe_to_geodataframe
-import contextily as cx
-import json
-import pandas as pd
 
 
 def viz(file):

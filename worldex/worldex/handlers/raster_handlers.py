@@ -48,14 +48,19 @@ class RasterHandler(BaseHandler):
             h3ids = []
             for x in x_range:
                 for y in y_range:
-                    # logger.info("Indexing window: left: %s, bottom:%s, right:%s, top:%s", x, y, x + x_step, y + y_step)
                     rio_window = self.src.window(x, y, x + x_step, y + y_step)
                     win_transform = self.src.window_transform(rio_window)
+                    window = self.src.read(1, window=rio_window)
+                    nodata = (
+                        np.array(self.src.nodata, dtype=window.dtype)
+                        if self.src.nodata is not None
+                        else self.src.nodata
+                    )
                     h3_df = raster_to_dataframe(
-                        self.src.read(1, window=rio_window),
+                        window,
                         win_transform,
                         self.get_resolution(),
-                        nodata_value=self.src.nodata,
+                        nodata_value=nodata,
                         compact=False,
                     )
                     h3ids.append(cells_to_string(h3_df.cell).tolist())

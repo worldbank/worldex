@@ -46,6 +46,7 @@ class WorldPopDataset(BaseDataset):
     """
 
     source_org: str = "WorldPop"
+    _home_url: str = "https://worldpop.org"
 
     @classmethod
     def from_url(cls, url: str):
@@ -136,3 +137,30 @@ class WorldPopDataset(BaseDataset):
         df = pd.concat(indices).drop_duplicates()
         self.write(df)
         return df
+
+    def get_specific_metadata_schema(self):
+        return {
+            "description": {
+                "dateStamp": self.date_start.year if self.date_start else None,
+                "identificationInfo": {
+                    "resourceFormat": [
+                        dict(name="image/tiff", specification="GeoTiff"),
+                    ],
+                    "extent": {
+                        "temporalElementExtent": [
+                            dict(
+                                beginPosition=self.date_start.year
+                                if self.date_start
+                                else None,
+                            )
+                        ]
+                    },
+                },
+                "spatialRepresentationType": "grid (raster geographic data)",
+                "spatialResolution": dict(value=3, uom="arc_second"),
+                "distributionInfo": [
+                    dict(name="image/tiff", specification="GeoTiff"),
+                ],
+                "topicCategory": ["society", "population"],
+            }
+        }

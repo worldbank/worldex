@@ -1,16 +1,17 @@
 """
 Automates indexing of hdx datasets
 """
+
 import os
 from datetime import datetime
 from pathlib import Path
 
 import pandas as pd
+from dateutil import parser
+from pyunpack import Archive
 from shapely import wkt
 from shapely.geometry import box
-from pyunpack import Archive
 from shapely.ops import unary_union
-
 
 from ..handlers.vector_handlers import VectorHandler
 from ..utils.filemanager import download_file
@@ -27,7 +28,7 @@ PRIORITY = [
 ]
 
 
-class EnergyInfoDataset(BaseDataset):
+class EnergyDataDataset(BaseDataset):
     source_org: str = "EnergyInfo"
 
     @staticmethod
