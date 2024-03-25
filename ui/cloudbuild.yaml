@@ -1,6 +1,12 @@
 steps:
+# Install vite and typescript
+- name: 'gcr.io/cloud-builders/npm:node-18.12.0'
+  entrypoint: 'yarn'
+  args: ['install']
+  dir: 'ui/'
 # Bundle application
-- name: 'gcr.io/cloud-builders/yarn'
+- name: 'gcr.io/cloud-builders/npm:node-18.12.0'
+  entrypoint: 'yarn'
   args: ['build']
   dir: 'ui/'
 # - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
