@@ -1,10 +1,12 @@
 steps:
 # Build the container image
 - name: 'gcr.io/cloud-builders/docker'
-  args: ['build', '-t', 'gcr.io/$PROJECT_ID/worldex-api:$COMMIT_SHA', '.']
+  args: ['build', '-t', 'us-central1-docker.pkg.dev/$PROJECT_ID/worldex-repo/worldex-api:$COMMIT_SHA', '.']
+  dir: 'api/'
 # Push the container image to Container Registry
 - name: 'gcr.io/cloud-builders/docker'
-  args: ['push', 'us-central1-docker.pkg.dev/$PROJECT_ID/worldex-api:$COMMIT_SHA']
+  args: ['push', 'us-central1-docker.pkg.dev/$PROJECT_ID/worldex-repo/worldex-api:$COMMIT_SHA']
+  dir: 'api/'
 # Deploy container to Cloud Run
 - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
   entrypoint: gcloud
@@ -13,8 +15,8 @@ steps:
   - 'deploy'
   - 'worldex-api'
   - '--image'
-  - 'gcr.io/$PROJECT_ID/worldex-api:$COMMIT_SHA'
+  - 'us-central1-docker.pkg.dev/$PROJECT_ID/worldex-repo/worldex-api:$COMMIT_SHA'
   - '--region'
   - 'us-central1'
 images:
-- gcr.io/$PROJECT_ID/worldex-api:$COMMIT_SHA
+- us-central1-docker.pkg.dev/$PROJECT_ID/worldex-repo/worldex-api:$COMMIT_SHA
