@@ -26,7 +26,7 @@ export default function TifPreviewLayer() {
       // TODO: inspect mimetype as well? or copy how GeoTIFFLoader checks the magic numbers
       dispatch(setIsLoadingPreview(true));
       fetch(
-        '/api/tif_as_png/',
+        `${import.meta.env.VITE_API_URL}/tif_as_png/`,
         {
           method: 'post',
           body: JSON.stringify({

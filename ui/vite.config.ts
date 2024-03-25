@@ -40,7 +40,7 @@ export default defineConfig({
     assetsDir: 'assets',
     emptyOutDir: true,
   },
-  base: '/worldex',
+  // base: '/worldex',
   resolve: {
     alias: {
       '@': path.resolve(__dirname, './src'),

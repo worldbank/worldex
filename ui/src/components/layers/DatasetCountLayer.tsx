@@ -134,7 +134,7 @@ export default function DatasetCountLayer() {
           return;
         }
         dispatch(setSelectedH3Index(targetIndex));
-        const resp = await fetch(`/api/h3_tile/${targetIndex}`, {
+        const resp = await fetch(`${import.meta.env.VITE_API_URL}/h3_tile/${targetIndex}`, {
           method: 'post',
         });
         const results = await resp.json();

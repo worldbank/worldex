@@ -27,12 +27,12 @@ export default function GeojsonPreviewLayer() {
     if (fileUrl == null) {
       setData(null);
     } else if (fileUrl.endsWith('.geojson')) {
-      setData(`/cors-anywhere/${fileUrl}`);
+      setData(`${import.meta.env.VITE_API_URL}/${fileUrl}`);
     } else if (fileUrl.endsWith('.zip')) {
       dispatch(setIsLoadingPreview(true));
       setData(
         load(
-          `cors-anywhere/${fileUrl}`,
+          `${import.meta.env.VITE_API_URL}/${fileUrl}`,
           ZipLoader,
           {
             fetch: {
