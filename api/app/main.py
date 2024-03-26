@@ -1,9 +1,10 @@
 import h3
+import time
 import uvicorn
 from app import settings
 from app.db import get_async_session
-from app.models import DatasetRequest, HealthCheck, H3TileRequest, DatasetsByLocationRequest, TifAsPngRequest
-from fastapi import Depends, FastAPI
+from app.models import DatasetRequest, DatasetCountTile, HealthCheck, H3TileRequest, DatasetsByLocationRequest, TifAsPngRequest
+from fastapi import Depends, FastAPI, Response
 from fastapi.middleware.cors import CORSMiddleware
 from shapely import wkt
 from sqlalchemy import text
@@ -23,6 +24,7 @@ import base64
 from app.services import img_to_data_url
 from rasterio.warp import calculate_default_transform, reproject, Resampling, transform_bounds
 from rasterio.windows import from_bounds
+import pyarrow as pa
 
 
 app = FastAPI(
@@ -82,21 +84,66 @@ async def get_h3_tiles(
     y: int,
     session: AsyncSession = Depends(get_async_session),
 ):
-    resolution = payload.resolution
     location = payload.location
-    # dynamically constructing this expression is faster than deriving from
-    # generate_series(0, :resolution) despite the latter resulting to more readable code
-    parents_array = ["fill_index"] + [
-        f"h3_cell_to_parent(fill_index, {res})" for res in range(0, resolution)
-    ]
-    parents_comma_delimited = ", ".join(parents_array)
-    query = DATASET_COUNTS.format(
-        parents_array=parents_comma_delimited,
-        fill_query=FILL_RES2 if resolution == 2 else FILL
+    cached_tile = None
+    if not location:
+        cached_tile = await session.execute(
+            text(
+                """
+                SELECT dataset_counts FROM dataset_count_tiles
+                WHERE z = :z AND x = :x AND y = :y;
+                """
+            ).bindparams(z=z, x=x, y=y)
+        )
+        cached_tile = cached_tile.first()
+    header_kwargs = {}
+    if cached_tile:
+        dataset_count_bytes = cached_tile.dataset_counts
+        header_kwargs = {"headers": {"X-Tile-Cache-Hit": "true"}}
+    else:
+        resolution = payload.resolution
+        # dynamically constructing this expression is faster than deriving from
+        # generate_series(0, :resolution) despite the latter resulting to more readable code
+        parents_array = ["fill_index"] + [
+            f"h3_cell_to_parent(fill_index, {res})" for res in range(0, resolution)
+        ]
+        parents_comma_delimited = ", ".join(parents_array)
+        query = DATASET_COUNTS.format(
+            parents_array=parents_comma_delimited,
+            fill_query=FILL_RES2 if resolution == 2 else FILL
+        )
+        query = text(query).bindparams(z=z, x=x, y=y, resolution=resolution, location=location)
+        results = await session.execute(query)
+        data = {'index': [], 'dataset_count': []}
+        for row in results.fetchall():
+            data['index'].append(row[0])
+            data['dataset_count'].append(row[1])
+        table = pa.Table.from_pydict(
+            data,
+            schema=pa.schema([
+                ('index', pa.string()),
+                ('dataset_count', pa.int32()),
+            ]),
+        )
+
+        sink = pa.BufferOutputStream()
+        with pa.RecordBatchStreamWriter(sink, table.schema) as writer:
+            writer.write_table(table)
+        serialized_data = sink.getvalue()
+        dataset_count_bytes = serialized_data.to_pybytes()
+        if not location:
+            async with session:
+                dataset_count_tile = DatasetCountTile(
+                    z=z,
+                    x=x,
+                    y=y,
+                    dataset_counts=dataset_count_bytes,
+                )
+                session.add(dataset_count_tile)
+                await session.commit()
+    return Response(
+        content=dataset_count_bytes, media_type="application/octet-stream", **header_kwargs
     )
-    query = text(query).bindparams(z=z, x=x, y=y, resolution=resolution, location=location)
-    results = await session.execute(query)
-    return [{"index": row[0], "dataset_count": row[1]} for row in results.fetchall()]
 
 
 @app.post("/dataset_coverage/{z}/{x}/{y}")
@@ -121,9 +168,6 @@ async def get_dataset_count(
 ):
     results = await session.execute(text("SELECT COUNT(*) FROM datasets;"))
     return {"dataset_count": results.one()[0]}
-
-if __name__ == "__main__":
-    uvicorn.run(app, port=8000, host="0.0.0.0")
 
 
 @app.post("/datasets_by_location/")
@@ -209,3 +253,6 @@ async def get_tif_as_png(
                 "data_url": img_to_data_url(img_bgra),
                 "bbox": src.bounds,  # [west, south, east, north]
             }
+
+if __name__ == "__main__":
+    uvicorn.run(app, port=8000, host="0.0.0.0")
