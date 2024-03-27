@@ -176,7 +176,7 @@ class DatasetCountTile(Base):
 
     id: Mapped[int] = mapped_column(primary_key=True)
     cached_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True), server_default=func.now(), nullable=False
+        DateTime(timezone=True), server_default=func.now(), nullable=False, onupdate=func.now()
     )
     z: Mapped[int] = mapped_column(Integer, nullable=False)
     x: Mapped[int] = mapped_column(Integer, nullable=False)

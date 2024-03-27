@@ -21,7 +21,7 @@ import numpy as np
 from io import BytesIO
 import requests
 import base64
-from app.services import dataset_count_to_bytes, get_dataset_count_tiles, img_to_data_url
+from app.services import dataset_count_to_bytes, get_dataset_count_tiles_async, img_to_data_url
 from rasterio.warp import calculate_default_transform, reproject, Resampling, transform_bounds
 from rasterio.windows import from_bounds
 import pyarrow as pa
@@ -103,7 +103,7 @@ async def get_h3_tiles(
         header_kwargs = {"headers": {"X-Tile-Cache-Hit": "true"}}
     else:
         resolution = payload.resolution
-        results = await get_dataset_count_tiles(session, z, x, y, resolution, location)
+        results = await get_dataset_count_tiles_async(session, z, x, y, resolution, location)
         dataset_counts = {'index': [], 'dataset_count': []}
         for row in results:
             dataset_counts['index'].append(row[0])

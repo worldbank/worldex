@@ -7,6 +7,7 @@ from app.sql.bounds_fill import FILL, FILL_RES2
 from app.sql.dataset_counts import DATASET_COUNTS
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import text
+from sqlalchemy.orm import Session
 
 
 def img_to_data_url(img: np.ndarray):
@@ -17,7 +18,7 @@ def img_to_data_url(img: np.ndarray):
     return f"data:image/png;base64,{base64_str}"
 
 
-async def get_dataset_count_tiles(session: AsyncSession, z: int, x: int, y: int, resolution: int, location: str):
+def build_dataset_count_tiles_query(z: int, x: int, y: int, resolution: int, location: str):
     # dynamically constructing this expression is faster than deriving from
     # generate_series(0, :resolution) despite the latter resulting to more readable code
     parents_array = ["fill_index"] + [
@@ -28,8 +29,18 @@ async def get_dataset_count_tiles(session: AsyncSession, z: int, x: int, y: int,
         parents_array=parents_comma_delimited,
         fill_query=FILL_RES2 if resolution == 2 else FILL
     )
-    query = text(query).bindparams(z=z, x=x, y=y, resolution=resolution, location=location)
+    return text(query).bindparams(z=z, x=x, y=y, resolution=resolution, location=location)
+
+
+async def get_dataset_count_tiles_async(session: AsyncSession, z: int, x: int, y: int, resolution: int, location: str):
+    query = build_dataset_count_tiles_query(z, x, y, resolution, location)
     results = await session.execute(query)
+    return results.fetchall()
+
+
+def get_dataset_count_tiles(session: Session, z: int, x: int, y: int, resolution: int, location: str):
+    query = build_dataset_count_tiles_query(z, x, y, resolution, location)
+    results = session.execute(query)
     return results.fetchall()
 
 
