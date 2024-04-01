@@ -6,7 +6,7 @@ const DATASET_COVERAGE_SOURCE_ID = 'datasetCoverageSource';
 const source = {
   id: DATASET_COVERAGE_SOURCE_ID,
   type: MAP_TYPES.TILESET,
-  data: 'api/dataset_coverage/{z}/{x}/{y}',
+  data: `${import.meta.env.VITE_API_URL}/dataset_coverage/{z}/{x}/{y}`,
 };
 
 export default source;
