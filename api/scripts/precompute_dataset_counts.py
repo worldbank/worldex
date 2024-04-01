@@ -12,13 +12,14 @@ from sqlalchemy import create_engine, text
 from sqlalchemy.orm import sessionmaker, load_only
 from sqlalchemy.orm.session import Session
 from sqlalchemy.dialects.postgresql import insert
+from sqlalchemy.sql import func
 import pyarrow as pa
 
 from app.models import DatasetCountTile
 from app.sql.bounds_fill import FILL, FILL_RES2
 from app.sql.datasets_by_location import LOCATION_FILL, LOCATION_FILL_RES2, DATASETS_BY_LOCATION
 from app.sql.dataset_counts import DATASET_COUNTS
-from app.services import dataset_count_to_bytes, get_dataset_count_tiles
+from app.services import dataset_count_to_bytes, get_dataset_count_tiles, get_cached_dataset_count_tile
 from sqlalchemy.dialects.postgresql import insert
 
 
@@ -53,7 +54,7 @@ def main():
             _, resolution = get_stepped_z_resolution_pair(z)
             for x in range(0, 2**z):
                 for y in range(0, 2**z):
-                    print(z, x, y, f"{resolution}r")
+                    print(f"{z}, {x}, {y}, res {resolution}")
                     results = get_dataset_count_tiles(sess, z, x, y, resolution, location=None)
                     dataset_counts = {'index': [], 'dataset_count': []}
                     for row in results:
@@ -68,11 +69,12 @@ def main():
                     )
                     do_update_stmt = insert_stmt.on_conflict_do_update(
                         constraint="dataset_count_tiles_z_x_y_key",
-                        set_=dict(dataset_counts=dataset_count_bytes)
+                        set_=dict(dataset_counts=dataset_count_bytes, cached_at=func.now())
                     )
                     sess.execute(do_update_stmt)
+                    sess.commit()
     duration = datetime.now() - start
-    print(f"{duration.seconds} seconds to finish")
+    print(f"Finished in {duration.seconds} seconds")
 
 
 if __name__ == "__main__":

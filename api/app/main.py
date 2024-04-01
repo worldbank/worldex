@@ -30,6 +30,8 @@ import pyarrow as pa
 app = FastAPI(
     title=settings.project_name,
     version=settings.version,
+    # disable for prod
+    # openapi_url=None,
 )
 
 app.add_middleware(
