@@ -1,25 +1,14 @@
-import json
 import os
 import sys
-from typing import Dict, List
 
-import h3
-import h3pandas
-import pandas as pd
 from datetime import datetime
-from app.models import Dataset, H3Data
-from sqlalchemy import create_engine, text
-from sqlalchemy.orm import sessionmaker, load_only
-from sqlalchemy.orm.session import Session
+from sqlalchemy import create_engine
+from sqlalchemy.orm import sessionmaker
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.sql import func
-import pyarrow as pa
 
 from app.models import DatasetCountTile
-from app.sql.bounds_fill import FILL, FILL_RES2
-from app.sql.datasets_by_location import LOCATION_FILL, LOCATION_FILL_RES2, DATASETS_BY_LOCATION
-from app.sql.dataset_counts import DATASET_COUNTS
-from app.services import dataset_count_to_bytes, get_dataset_count_tiles, get_cached_dataset_count_tile
+from app.services import dataset_count_to_bytes, get_dataset_count_tiles
 from sqlalchemy.dialects.postgresql import insert
 
 
