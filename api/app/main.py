@@ -21,7 +21,7 @@ import numpy as np
 from io import BytesIO
 import requests
 import base64
-from app.services import img_to_data_url
+from app.services import dataset_count_to_bytes, get_dataset_count_tiles_async, img_to_data_url
 from rasterio.warp import calculate_default_transform, reproject, Resampling, transform_bounds
 from rasterio.windows import from_bounds
 import pyarrow as pa
@@ -30,6 +30,8 @@ import pyarrow as pa
 app = FastAPI(
     title=settings.project_name,
     version=settings.version,
+    # disable for prod
+    # openapi_url=None,
 )
 
 app.add_middleware(
@@ -85,8 +87,9 @@ async def get_h3_tiles(
     session: AsyncSession = Depends(get_async_session),
 ):
     location = payload.location
+    should_hit_cache = not location
     cached_tile = None
-    if not location:
+    if should_hit_cache:
         cached_tile = await session.execute(
             text(
                 """
@@ -102,36 +105,13 @@ async def get_h3_tiles(
         header_kwargs = {"headers": {"X-Tile-Cache-Hit": "true"}}
     else:
         resolution = payload.resolution
-        # dynamically constructing this expression is faster than deriving from
-        # generate_series(0, :resolution) despite the latter resulting to more readable code
-        parents_array = ["fill_index"] + [
-            f"h3_cell_to_parent(fill_index, {res})" for res in range(0, resolution)
-        ]
-        parents_comma_delimited = ", ".join(parents_array)
-        query = DATASET_COUNTS.format(
-            parents_array=parents_comma_delimited,
-            fill_query=FILL_RES2 if resolution == 2 else FILL
-        )
-        query = text(query).bindparams(z=z, x=x, y=y, resolution=resolution, location=location)
-        results = await session.execute(query)
-        data = {'index': [], 'dataset_count': []}
-        for row in results.fetchall():
-            data['index'].append(row[0])
-            data['dataset_count'].append(row[1])
-        table = pa.Table.from_pydict(
-            data,
-            schema=pa.schema([
-                ('index', pa.string()),
-                ('dataset_count', pa.int32()),
-            ]),
-        )
-
-        sink = pa.BufferOutputStream()
-        with pa.RecordBatchStreamWriter(sink, table.schema) as writer:
-            writer.write_table(table)
-        serialized_data = sink.getvalue()
-        dataset_count_bytes = serialized_data.to_pybytes()
-        if not location:
+        results = await get_dataset_count_tiles_async(session, z, x, y, resolution, location)
+        dataset_counts = {'index': [], 'dataset_count': []}
+        for row in results:
+            dataset_counts['index'].append(row[0])
+            dataset_counts['dataset_count'].append(row[1])
+        dataset_count_bytes = dataset_count_to_bytes(dataset_counts)
+        if should_hit_cache:
             async with session:
                 dataset_count_tile = DatasetCountTile(
                     z=z,
