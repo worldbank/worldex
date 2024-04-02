@@ -25,7 +25,7 @@ Z_H3_RESOLUTION_PAIRS = (
 )
 
 
-def get_stepped_z_resolution_pair(current_z: int) -> (int, int):
+def get_stepped_z_resolution_pair(current_z: int) -> tuple[int, int]:
     for idx, (z, h3_res) in enumerate(Z_H3_RESOLUTION_PAIRS):
         if (z == current_z):
             return Z_H3_RESOLUTION_PAIRS[idx]
@@ -39,7 +39,7 @@ def main():
     Session = sessionmaker(bind=engine)
     start = datetime.now()
     with Session() as sess:
-        for z in range(1, 7):
+        for z in range(1, 8):
             _, resolution = get_stepped_z_resolution_pair(z)
             for x in range(0, 2**z):
                 for y in range(0, 2**z):
