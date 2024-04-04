@@ -1,31 +1,54 @@
-import h3
+import base64
 import time
+import urllib
+from collections import namedtuple
+from io import BytesIO
+
+import cv2
+import h3
+import numpy as np
+import pyarrow as pa
+import rasterio
+import requests
 import uvicorn
 from app import settings
 from app.db import get_async_session
-from app.models import DatasetRequest, DatasetCountTile, HealthCheck, DatasetCountRequest, DatasetsByLocationRequest, TifAsPngRequest
-from fastapi import Depends, FastAPI, Response
-from fastapi.middleware.cors import CORSMiddleware
-from shapely import wkt
-from sqlalchemy import text
-from sqlalchemy.ext.asyncio import AsyncSession
+from app.models import (
+    Dataset,
+    DatasetCountRequest,
+    DatasetCountTile,
+    DatasetRequest,
+    DatasetsByLocationRequest,
+    HealthCheck,
+    TifAsPngRequest,
+)
+from app.services import (
+    dataset_count_to_bytes,
+    get_dataset_count_tiles_async,
+    img_to_data_url,
+)
 from app.sql.bounds_fill import FILL, FILL_RES2
-from app.sql.datasets_by_location import LOCATION_FILL, LOCATION_FILL_RES2, DATASETS_BY_LOCATION
-from app.sql.dataset_metadata import DATASET_METADATA
 from app.sql.dataset_counts import DATASET_COUNTS
 from app.sql.dataset_coverage import DATASET_COVERAGE
-import cv2
-import rasterio
-import urllib
-import numpy as np
-from io import BytesIO
-import requests
-import base64
-from app.services import dataset_count_to_bytes, get_dataset_count_tiles_async, img_to_data_url
-from rasterio.warp import calculate_default_transform, reproject, Resampling, transform_bounds
+from app.sql.dataset_metadata import DATASET_METADATA
+from app.sql.datasets_by_location import (
+    DATASETS_BY_LOCATION,
+    LOCATION_FILL,
+    LOCATION_FILL_RES2,
+)
+from fastapi import Depends, FastAPI, Response
+from fastapi.middleware.cors import CORSMiddleware
+from rasterio.warp import (
+    Resampling,
+    calculate_default_transform,
+    reproject,
+    transform_bounds,
+)
 from rasterio.windows import from_bounds
-import pyarrow as pa
-
+from shapely import wkt
+from sqlalchemy import String, text
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.sql import column
 
 app = FastAPI(
     title=settings.project_name,
@@ -56,26 +79,9 @@ async def get_h3_tile_data(
     index: str,
     session: AsyncSession = Depends(get_async_session),
 ):
-    resolution = h3.h3_get_resolution(index)
-    query = text(DATASET_METADATA).bindparams(target=index, resolution=resolution)
-    # TODO: rewrite this to use select(Dataset).where(target...resolution...)
+    query = text(DATASET_METADATA).bindparams(target=index)
     results = await session.execute(query)
-    return [
-        {
-            "id": row[0],
-            "name": row[1],
-            # TODO: decide whether to defer this conversion to frontend, but currently there doesn't seem to be a convenient library
-            "bbox": wkt.loads(row[2]).bounds,
-            "source_org": row[3],
-            "description": row[4],
-            "files": row[5],
-            "url": row[6],
-            "accessibility": row[7],
-            "date_start": row[8],
-            "date_end": row[9],
-        }
-        for row in results.fetchall()
-    ]
+    return [row._mapping for row in results.fetchall()]
 
 
 # TODO: rename endpoint as it is already ambiguous compared to other endpoints'
