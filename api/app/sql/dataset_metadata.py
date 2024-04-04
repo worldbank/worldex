@@ -1,6 +1,11 @@
 DATASET_METADATA = """
 WITH with_parents AS (
-    SELECT :target target_index, h3_cell_to_parent(CAST(:target AS H3INDEX), generate_series(0, :resolution)) parent
+    SELECT
+        CAST(:target AS H3INDEX),
+        h3_cell_to_parent(
+            CAST(:target AS H3INDEX),
+            generate_series(0, h3_get_resolution(CAST(:target AS H3INDEX)))
+        ) parent
 ),
 parent_datasets AS (
     SELECT DISTINCT(dataset_id) dataset_id FROM h3_data
@@ -14,7 +19,7 @@ dataset_ids AS (
     SELECT dataset_id FROM parent_datasets UNION
     SELECT dataset_id FROM children_datasets
 )
-SELECT 
+SELECT
     id,
     name,
     ST_AsEWKT(bbox) bbox,

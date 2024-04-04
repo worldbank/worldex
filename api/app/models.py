@@ -1,25 +1,26 @@
 from datetime import datetime
-from pydantic import BaseModel
 from typing import List, Optional
-from sqlalchemy.types import UserDefinedType
+
 from app.db import Base
+from geoalchemy2.types import Geometry
+from pydantic import BaseModel
 from sqlalchemy import (
     CheckConstraint,
     Column,
     DateTime,
+    ForeignKey,
+    Index,
     Integer,
     LargeBinary,
     String,
-    ForeignKey,
-    UniqueConstraint,
     Table,
-    Index,
+    UniqueConstraint,
     text,
 )
-from sqlalchemy.sql import func, expression
-from sqlalchemy.orm import relationship, Mapped, mapped_column
-from sqlalchemy.dialects.postgresql import JSONB, ARRAY
-from geoalchemy2.types import Geometry
+from sqlalchemy.dialects.postgresql import ARRAY, JSONB
+from sqlalchemy.orm import Mapped, mapped_column, relationship
+from sqlalchemy.sql import expression, func
+from sqlalchemy.types import UserDefinedType
 
 
 class H3Index(UserDefinedType):
@@ -32,9 +33,12 @@ class HealthCheck(BaseModel):
     version: str
 
 
-class H3TileRequest(BaseModel):
+class DatasetCountRequest(BaseModel):
     resolution: int
     location: str | None = None
+    source_org: List[str] = []
+    debug_json_response: bool = False
+    ignore_cache: bool = False
 
 
 class DatasetRequest(BaseModel):

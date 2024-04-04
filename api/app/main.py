@@ -1,31 +1,41 @@
-import h3
-import time
+import urllib
+from io import BytesIO
+
+import cv2
+import numpy as np
+import rasterio
 import uvicorn
 from app import settings
 from app.db import get_async_session
-from app.models import DatasetRequest, DatasetCountTile, HealthCheck, H3TileRequest, DatasetsByLocationRequest, TifAsPngRequest
-from fastapi import Depends, FastAPI, Response
-from fastapi.middleware.cors import CORSMiddleware
-from shapely import wkt
-from sqlalchemy import text
-from sqlalchemy.ext.asyncio import AsyncSession
+from app.models import (
+    Dataset,
+    DatasetCountRequest,
+    DatasetCountTile,
+    DatasetRequest,
+    DatasetsByLocationRequest,
+    HealthCheck,
+    TifAsPngRequest,
+)
+from app.services import (
+    dataset_count_to_bytes,
+    get_dataset_count_tiles_async,
+    img_to_data_url,
+)
 from app.sql.bounds_fill import FILL, FILL_RES2
-from app.sql.datasets_by_location import LOCATION_FILL, LOCATION_FILL_RES2, DATASETS_BY_LOCATION
-from app.sql.dataset_metadata import DATASET_METADATA
 from app.sql.dataset_counts import DATASET_COUNTS
 from app.sql.dataset_coverage import DATASET_COVERAGE
-import cv2
-import rasterio
-import urllib
-import numpy as np
-from io import BytesIO
-import requests
-import base64
-from app.services import dataset_count_to_bytes, get_dataset_count_tiles_async, img_to_data_url
-from rasterio.warp import calculate_default_transform, reproject, Resampling, transform_bounds
-from rasterio.windows import from_bounds
-import pyarrow as pa
-
+from app.sql.dataset_metadata import DATASET_METADATA
+from app.sql.datasets_by_location import (
+    DATASETS_BY_LOCATION,
+    LOCATION_FILL,
+    LOCATION_FILL_RES2,
+)
+from fastapi import Depends, FastAPI, Response
+from fastapi.middleware.cors import CORSMiddleware
+from rasterio.warp import Resampling, reproject
+from shapely import wkt
+from sqlalchemy import func, select, text
+from sqlalchemy.ext.asyncio import AsyncSession
 
 app = FastAPI(
     title=settings.project_name,
@@ -56,60 +66,54 @@ async def get_h3_tile_data(
     index: str,
     session: AsyncSession = Depends(get_async_session),
 ):
-    resolution = h3.h3_get_resolution(index)
-    query = text(DATASET_METADATA).bindparams(target=index, resolution=resolution)
+    query = text(DATASET_METADATA).bindparams(target=index)
     results = await session.execute(query)
     return [
-        {
-            "id": row[0],
-            "name": row[1],
-            # TODO: decide whether to defer this conversion to frontend, but currently there doesn't seem to be a convenient library
-            "bbox": wkt.loads(row[2]).bounds,
-            "source_org": row[3],
-            "description": row[4],
-            "files": row[5],
-            "url": row[6],
-            "accessibility": row[7],
-            "date_start": row[8],
-            "date_end": row[9],
-        }
+        dict(
+            row._mapping,
+            bbox=wkt.loads(row._mapping['bbox']).bounds
+        )
         for row in results.fetchall()
     ]
 
 
-# TODO: rename method as it is already ambiguous compared to other endpoints'
-@app.post("/h3_tiles/{z}/{x}/{y}")
-async def get_h3_tiles(
-    payload: H3TileRequest,
+@app.post("/dataset_counts/{z}/{x}/{y}")
+async def get_dataset_counts(
+    payload: DatasetCountRequest,
     z: int,
     x: int,
     y: int,
     session: AsyncSession = Depends(get_async_session),
 ):
+    filters = {}
+    if payload.source_org:
+        filters["source_org"] = payload.source_org
     location = payload.location
-    should_hit_cache = not location
+    should_hit_cache = not (payload.ignore_cache or location or filters)
     cached_tile = None
     if should_hit_cache:
         cached_tile = await session.execute(
-            text(
-                """
-                SELECT dataset_counts FROM dataset_count_tiles
-                WHERE z = :z AND x = :x AND y = :y;
-                """
-            ).bindparams(z=z, x=x, y=y)
+            select(DatasetCountTile.dataset_counts).where(
+                DatasetCountTile.z == z,
+                DatasetCountTile.x == x,
+                DatasetCountTile.y == y,
+            )
         )
-        cached_tile = cached_tile.first()
     header_kwargs = {}
     if cached_tile:
-        dataset_count_bytes = cached_tile.dataset_counts
+        dataset_count_bytes = cached_tile.scalar()
         header_kwargs = {"headers": {"X-Tile-Cache-Hit": "true"}}
     else:
         resolution = payload.resolution
-        results = await get_dataset_count_tiles_async(session, z, x, y, resolution, location)
+        results = await get_dataset_count_tiles_async(session, z, x, y, resolution, location, filters)
+        if payload.debug_json_response:
+            return [row._mapping for row in results]
         dataset_counts = {'index': [], 'dataset_count': []}
+
         for row in results:
-            dataset_counts['index'].append(row[0])
-            dataset_counts['dataset_count'].append(row[1])
+            mapping = row._mapping
+            dataset_counts['index'].append(mapping.index)
+            dataset_counts['dataset_count'].append(mapping.dataset_count)
         dataset_count_bytes = dataset_count_to_bytes(dataset_counts)
         if should_hit_cache:
             async with session:
@@ -146,8 +150,8 @@ async def get_dataset_coverage(
 async def get_dataset_count(
     session: AsyncSession = Depends(get_async_session),
 ):
-    results = await session.execute(text("SELECT COUNT(*) FROM datasets;"))
-    return {"dataset_count": results.one()[0]}
+    result = await session.execute(select(func.count(Dataset.id)))
+    return {"dataset_count": result.scalar_one()}
 
 
 @app.post("/datasets_by_location/")
@@ -168,18 +172,10 @@ async def get_datasets_by_location(
     query = text(query).bindparams(location=location, resolution=resolution)
     results = await session.execute(query)
     return [
-        {
-            "id": row[0],
-            "name": row[1],
-            "bbox": wkt.loads(row[2]).bounds,
-            "source_org": row[3],
-            "description": row[4],
-            "files": row[5],
-            "url": row[6],
-            "accessibility": row[7],
-            "date_start": row[8],
-            "date_end": row[9],
-        }
+        dict(
+            row._mapping,
+            bbox=wkt.loads(row._mapping['bbox']).bounds
+        )
         for row in results.fetchall()
     ]
 
