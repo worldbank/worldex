@@ -3,7 +3,7 @@ import time
 import uvicorn
 from app import settings
 from app.db import get_async_session
-from app.models import DatasetRequest, DatasetCountTile, HealthCheck, H3TileRequest, DatasetsByLocationRequest, TifAsPngRequest
+from app.models import DatasetRequest, DatasetCountTile, HealthCheck, DatasetCountRequest, DatasetsByLocationRequest, TifAsPngRequest
 from fastapi import Depends, FastAPI, Response
 from fastapi.middleware.cors import CORSMiddleware
 from shapely import wkt
@@ -58,6 +58,7 @@ async def get_h3_tile_data(
 ):
     resolution = h3.h3_get_resolution(index)
     query = text(DATASET_METADATA).bindparams(target=index, resolution=resolution)
+    # TODO: rewrite this to use select(Dataset).where(target...resolution...)
     results = await session.execute(query)
     return [
         {
@@ -77,17 +78,19 @@ async def get_h3_tile_data(
     ]
 
 
-# TODO: rename method as it is already ambiguous compared to other endpoints'
+# TODO: rename endpoint as it is already ambiguous compared to other endpoints'
 @app.post("/h3_tiles/{z}/{x}/{y}")
-async def get_h3_tiles(
-    payload: H3TileRequest,
+async def get_dataset_counts(
+    payload: DatasetCountRequest,
     z: int,
     x: int,
     y: int,
     session: AsyncSession = Depends(get_async_session),
 ):
+    filters = None
     location = payload.location
-    should_hit_cache = not location
+    should_hit_cache = not location and not filters
+    should_hit_cache = False
     cached_tile = None
     if should_hit_cache:
         cached_tile = await session.execute(
@@ -105,7 +108,7 @@ async def get_h3_tiles(
         header_kwargs = {"headers": {"X-Tile-Cache-Hit": "true"}}
     else:
         resolution = payload.resolution
-        results = await get_dataset_count_tiles_async(session, z, x, y, resolution, location)
+        results = await get_dataset_count_tiles_async(session, z, x, y, resolution, location, filters)
         dataset_counts = {'index': [], 'dataset_count': []}
         for row in results:
             dataset_counts['index'].append(row[0])

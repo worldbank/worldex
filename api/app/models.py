@@ -32,7 +32,7 @@ class HealthCheck(BaseModel):
     version: str
 
 
-class H3TileRequest(BaseModel):
+class DatasetCountRequest(BaseModel):
     resolution: int
     location: str | None = None
 
