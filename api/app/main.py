@@ -67,11 +67,17 @@ async def get_h3_tile_data(
 ):
     query = text(DATASET_METADATA).bindparams(target=index)
     results = await session.execute(query)
-    return [row._mapping for row in results.fetchall()]
+    return [
+        dict(
+            row._mapping,
+            bbox=wkt.loads(row._mapping['bbox']).bounds
+        )
+        for row in results.fetchall()
+    ]
 
 
 # TODO: rename endpoint as it is already ambiguous compared to other endpoints'
-@app.post("/h3_tiles/{z}/{x}/{y}")
+@app.post("/dataset_counts/{z}/{x}/{y}")
 async def get_dataset_counts(
     payload: DatasetCountRequest,
     z: int,
@@ -84,6 +90,7 @@ async def get_dataset_counts(
         filters["source_org"] = payload.source_org
     location = payload.location
     should_hit_cache = not location and not filters
+    should_hit_cache = False
     cached_tile = None
     if should_hit_cache:
         cached_tile = await session.execute(
@@ -101,12 +108,13 @@ async def get_dataset_counts(
         resolution = payload.resolution
         results = await get_dataset_count_tiles_async(session, z, x, y, resolution, location, filters)
         if payload.debug_json_response:
-            return [{'index': row[0], 'dataset_count': row[1]} for row in results]
+            return [row._mapping for row in results]
         dataset_counts = {'index': [], 'dataset_count': []}
 
         for row in results:
-            dataset_counts['index'].append(row[0])
-            dataset_counts['dataset_count'].append(row[1])
+            mapping = row._mapping
+            dataset_counts['index'].append(mapping.index)
+            dataset_counts['dataset_count'].append(mapping.dataset_count)
         dataset_count_bytes = dataset_count_to_bytes(dataset_counts)
         if should_hit_cache:
             async with session:
@@ -165,18 +173,10 @@ async def get_datasets_by_location(
     query = text(query).bindparams(location=location, resolution=resolution)
     results = await session.execute(query)
     return [
-        {
-            "id": row[0],
-            "name": row[1],
-            "bbox": wkt.loads(row[2]).bounds,
-            "source_org": row[3],
-            "description": row[4],
-            "files": row[5],
-            "url": row[6],
-            "accessibility": row[7],
-            "date_start": row[8],
-            "date_end": row[9],
-        }
+        dict(
+            row._mapping,
+            bbox=wkt.loads(row._mapping['bbox']).bounds
+        )
         for row in results.fetchall()
     ]
 
