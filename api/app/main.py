@@ -8,6 +8,7 @@ import uvicorn
 from app import settings
 from app.db import get_async_session
 from app.models import (
+    Dataset,
     DatasetCountRequest,
     DatasetCountTile,
     DatasetRequest,
@@ -33,7 +34,7 @@ from fastapi import Depends, FastAPI, Response
 from fastapi.middleware.cors import CORSMiddleware
 from rasterio.warp import Resampling, reproject
 from shapely import wkt
-from sqlalchemy import select, text
+from sqlalchemy import func, select, text
 from sqlalchemy.ext.asyncio import AsyncSession
 
 app = FastAPI(
@@ -76,7 +77,6 @@ async def get_h3_tile_data(
     ]
 
 
-# TODO: rename endpoint as it is already ambiguous compared to other endpoints'
 @app.post("/dataset_counts/{z}/{x}/{y}")
 async def get_dataset_counts(
     payload: DatasetCountRequest,
@@ -151,8 +151,8 @@ async def get_dataset_coverage(
 async def get_dataset_count(
     session: AsyncSession = Depends(get_async_session),
 ):
-    results = await session.execute(text("SELECT COUNT(*) FROM datasets;"))
-    return {"dataset_count": results.one()[0]}
+    result = await session.execute(select(func.count(Dataset.id)))
+    return {"dataset_count": result.scalar_one()}
 
 
 @app.post("/datasets_by_location/")
