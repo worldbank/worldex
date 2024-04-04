@@ -89,7 +89,7 @@ async def get_dataset_counts(
     if payload.source_org:
         filters["source_org"] = payload.source_org
     location = payload.location
-    should_hit_cache = not (location or filters)
+    should_hit_cache = not (payload.ignore_cache or location or filters)
     cached_tile = None
     if should_hit_cache:
         cached_tile = await session.execute(
