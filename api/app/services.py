@@ -3,13 +3,14 @@ import cv2
 import numpy as np
 import pyarrow as pa
 
-from app.sql.bounds_fill import FILL, FILL_RES2
+from app.sql.bounds_fill import FILL, FILL_RES2, _bounds_query as BOUNDS_QUERY
 from app.sql.dataset_counts import DATASET_COUNTS, DATASET_COUNTS_FILTERED
 from app.models import Dataset
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import text
 from sqlalchemy.orm import Session, load_only
 from sqlalchemy import select
+from typing import List
 
 
 def img_to_data_url(img: np.ndarray):
@@ -28,7 +29,10 @@ def build_dataset_count_tiles_query(z: int, x: int, y: int, resolution: int, loc
     ]
     parents_comma_delimited = ", ".join(parents_array)
     dataset_counts_query = DATASET_COUNTS_FILTERED if filters else DATASET_COUNTS
-    candidate_datasets_stmt = select(Dataset.id).where(Dataset.source_org == "HDX")
+
+    candidate_datasets_stmt = select(Dataset.id)
+    if source_org := filters.get("source_org"):
+        candidate_datasets_stmt = candidate_datasets_stmt.where(Dataset.source_org.in_(source_org))
     compiled = candidate_datasets_stmt.compile(compile_kwargs={"literal_binds": True})
     filter_kwargs = { "candidate_datasets_query": compiled } if filters else {}
     query = dataset_counts_query.format(
@@ -39,14 +43,14 @@ def build_dataset_count_tiles_query(z: int, x: int, y: int, resolution: int, loc
     return text(query).bindparams(z=z, x=x, y=y, resolution=resolution, location=location)
 
 
-async def get_dataset_count_tiles_async(session: AsyncSession, z: int, x: int, y: int, resolution: int, location: str, filters=None):
-    query = build_dataset_count_tiles_query(z, x, y, resolution, location)
+async def get_dataset_count_tiles_async(session: AsyncSession, z: int, x: int, y: int, resolution: int, location: str, filters: dict[str, List[str]]=None):
+    query = build_dataset_count_tiles_query(z, x, y, resolution, location, filters)
     results = await session.execute(query)
     return results.fetchall()
 
 
 def get_dataset_count_tiles(session: Session, z: int, x: int, y: int, resolution: int, location: str, filters=None):
-    query = build_dataset_count_tiles_query(z, x, y, resolution, location)
+    query = build_dataset_count_tiles_query(z, x, y, resolution, location, filters)
     results = session.execute(query)
     return results.fetchall()
 

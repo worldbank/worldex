@@ -87,7 +87,9 @@ async def get_dataset_counts(
     y: int,
     session: AsyncSession = Depends(get_async_session),
 ):
-    filters = None
+    filters = {}
+    if payload.source_org:
+        filters["source_org"] = payload.source_org
     location = payload.location
     should_hit_cache = not location and not filters
     should_hit_cache = False
@@ -108,6 +110,7 @@ async def get_dataset_counts(
         header_kwargs = {"headers": {"X-Tile-Cache-Hit": "true"}}
     else:
         resolution = payload.resolution
+        print("filters", filters)
         results = await get_dataset_count_tiles_async(session, z, x, y, resolution, location, filters)
         dataset_counts = {'index': [], 'dataset_count': []}
         for row in results:
