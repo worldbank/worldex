@@ -1,20 +1,13 @@
-import base64
-import time
 import urllib
-from collections import namedtuple
 from io import BytesIO
 
 import cv2
-import h3
 import numpy as np
-import pyarrow as pa
 import rasterio
-import requests
 import uvicorn
 from app import settings
 from app.db import get_async_session
 from app.models import (
-    Dataset,
     DatasetCountRequest,
     DatasetCountTile,
     DatasetRequest,
@@ -38,17 +31,10 @@ from app.sql.datasets_by_location import (
 )
 from fastapi import Depends, FastAPI, Response
 from fastapi.middleware.cors import CORSMiddleware
-from rasterio.warp import (
-    Resampling,
-    calculate_default_transform,
-    reproject,
-    transform_bounds,
-)
-from rasterio.windows import from_bounds
+from rasterio.warp import Resampling, reproject
 from shapely import wkt
-from sqlalchemy import String, text
+from sqlalchemy import select, text
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.sql import column
 
 app = FastAPI(
     title=settings.project_name,
@@ -98,25 +84,21 @@ async def get_dataset_counts(
         filters["source_org"] = payload.source_org
     location = payload.location
     should_hit_cache = not location and not filters
-    should_hit_cache = False
     cached_tile = None
     if should_hit_cache:
         cached_tile = await session.execute(
-            text(
-                """
-                SELECT dataset_counts FROM dataset_count_tiles
-                WHERE z = :z AND x = :x AND y = :y;
-                """
-            ).bindparams(z=z, x=x, y=y)
+            select(DatasetCountTile.dataset_counts).where(
+                DatasetCountTile.z == z,
+                DatasetCountTile.x == x,
+                DatasetCountTile.y == y,
+            )
         )
-        cached_tile = cached_tile.first()
     header_kwargs = {}
     if cached_tile:
-        dataset_count_bytes = cached_tile.dataset_counts
+        dataset_count_bytes = cached_tile.scalar()
         header_kwargs = {"headers": {"X-Tile-Cache-Hit": "true"}}
     else:
         resolution = payload.resolution
-        print("filters", filters)
         results = await get_dataset_count_tiles_async(session, z, x, y, resolution, location, filters)
         if payload.debug_json_response:
             return [{'index': row[0], 'dataset_count': row[1]} for row in results]
