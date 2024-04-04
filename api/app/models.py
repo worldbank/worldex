@@ -36,7 +36,7 @@ class DatasetCountRequest(BaseModel):
     resolution: int
     location: str | None = None
     source_org: List[str] = []
-    # json_response: bool = False
+    debug_json_response: bool = False
 
 
 class DatasetRequest(BaseModel):

@@ -112,7 +112,10 @@ async def get_dataset_counts(
         resolution = payload.resolution
         print("filters", filters)
         results = await get_dataset_count_tiles_async(session, z, x, y, resolution, location, filters)
+        if payload.debug_json_response:
+            return [{'index': row[0], 'dataset_count': row[1]} for row in results]
         dataset_counts = {'index': [], 'dataset_count': []}
+
         for row in results:
             dataset_counts['index'].append(row[0])
             dataset_counts['dataset_count'].append(row[1])
