@@ -87,7 +87,6 @@ export default function DatasetCountLayer() {
   const { fileUrl } = useSelector((state: RootState) => state.preview);
   const dispatch = useDispatch();
   const sourceOrgs = useSelector(selectSourceOrgFilters);
-  console.log('source orgs selected', sourceOrgs);
 
   const domains = (import.meta.env.VITE_DATASET_COUNT_BINS).split(',').map(Number);
   const getColor = colorBins({
@@ -146,8 +145,15 @@ export default function DatasetCountLayer() {
           return;
         }
         dispatch(setSelectedH3Index(targetIndex));
-        const resp = await fetch(`${import.meta.env.VITE_API_URL}/h3_tile/${targetIndex}`, {
+        const resp = await fetch(`${import.meta.env.VITE_API_URL}/dataset_metadata/${targetIndex}`, {
           method: 'post',
+          headers: {
+            Accept: 'application/json',
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            source_org: sourceOrgs,
+          }),
         });
         const results = await resp.json();
         dispatch(setDatasets(results));

@@ -36,9 +36,13 @@ class HealthCheck(BaseModel):
 class DatasetCountRequest(BaseModel):
     resolution: int
     location: str | None = None
-    source_org: List[str] = []
+    source_org: Optional[List[str]] = []
     debug_json_response: bool = False
     ignore_cache: bool = False
+
+
+class DatasetMetadataRequest(BaseModel):
+    source_org: Optional[List[str]] = []
 
 
 class DatasetRequest(BaseModel):

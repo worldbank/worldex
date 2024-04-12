@@ -8,6 +8,7 @@ from app.models import Dataset
 from app.sql.bounds_fill import FILL, FILL_RES2
 from app.sql.bounds_fill import _bounds_query as BOUNDS_QUERY
 from app.sql.dataset_counts import DATASET_COUNTS, DATASET_COUNTS_FILTERED
+from app.sql.dataset_metadata import DATASET_METADATA, DATASET_METADATA_FILTERED
 from sqlalchemy import select, text
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import Session, load_only
@@ -68,3 +69,18 @@ def dataset_count_to_bytes(dataset_counts):
         writer.write_table(table)
     serialized_data = sink.getvalue()
     return serialized_data.to_pybytes()
+
+
+async def get_dataset_metadata_results(session: Session, target: str, filters=None):
+    dataset_metadata_query = DATASET_METADATA_FILTERED if filters else DATASET_METADATA
+    candidate_datasets_stmt = select(Dataset.id.label("dataset_id"))
+    if source_org := filters.get("source_org"):
+        candidate_datasets_stmt = candidate_datasets_stmt.where(Dataset.source_org.in_(source_org))
+    compiled = candidate_datasets_stmt.compile(compile_kwargs={"literal_binds": True})
+    filter_kwargs = { "candidate_datasets_query": compiled } if filters else {}
+    query = dataset_metadata_query.format(
+        **filter_kwargs
+    )
+    query = text(query).bindparams(target=target)
+    results = await session.execute(query)
+    return results.fetchall()

@@ -11,6 +11,7 @@ from app.models import (
     Dataset,
     DatasetCountRequest,
     DatasetCountTile,
+    DatasetMetadataRequest,
     DatasetRequest,
     DatasetsByLocationRequest,
     HealthCheck,
@@ -20,11 +21,11 @@ from app.routers import filters
 from app.services import (
     dataset_count_to_bytes,
     get_dataset_count_tiles_async,
+    get_dataset_metadata_results,
     img_to_data_url,
 )
 from app.sql.bounds_fill import FILL, FILL_RES2
 from app.sql.dataset_coverage import DATASET_COVERAGE
-from app.sql.dataset_metadata import DATASET_METADATA
 from app.sql.datasets_by_location import (
     DATASETS_BY_LOCATION,
     LOCATION_FILL,
@@ -65,19 +66,22 @@ async def health_check():
     }
 
 
-@app.post("/h3_tile/{index}")
-async def get_h3_tile_data(
+@app.post("/dataset_metadata/{index}")
+async def get_dataset_metadata(
     index: str,
+    payload: DatasetMetadataRequest,
     session: AsyncSession = Depends(get_async_session),
 ):
-    query = text(DATASET_METADATA).bindparams(target=index)
-    results = await session.execute(query)
+    filters={}
+    if payload.source_org:
+        filters["source_org"] = payload.source_org
+    results = await get_dataset_metadata_results(session, target=index, filters=filters)
     return [
         dict(
             row._mapping,
             bbox=wkt.loads(row._mapping['bbox']).bounds
         )
-        for row in results.fetchall()
+        for row in results
     ]
 
 
