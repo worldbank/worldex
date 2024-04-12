@@ -8,6 +8,7 @@ import groupBy from "utils/groupBy";
 import Datasets from "./Datasets";
 import { Dataset } from "../types";
 import HidePreviewButton from "./HidePreviewButton";
+import Filters from "./Filters";
 
 const Overview = () => {
   const { datasetCount }: { datasetCount: number } = useSelector((state: RootState) => state.selected);
@@ -49,6 +50,7 @@ const Overview = () => {
         { (previewFileUrl && !isLoadingPreview) && <HidePreviewButton /> }
       </div>
       <Divider />
+      <Filters className="p-4" />
       { datasetsByOrgs && <Datasets header={`${location.name} Datasets`} datasetsByOrgs={datasetsByOrgs} /> }
     </>
   );

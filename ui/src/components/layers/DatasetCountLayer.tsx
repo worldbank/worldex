@@ -18,6 +18,7 @@ import {
 import { load } from '@loaders.gl/core';
 import getSteppedZoomResolutionPair from 'utils/getSteppedZoomResolutionPair';
 import { ArrowLoader } from '@loaders.gl/arrow';
+import { selectSourceOrgFilters } from 'store/selectedFiltersSlice';
 
 export const DATASET_COUNT_LAYER_ID = 'datasetCountLayer';
 
@@ -85,6 +86,8 @@ export default function DatasetCountLayer() {
   const { location } = useSelector((state: RootState) => state.location);
   const { fileUrl } = useSelector((state: RootState) => state.preview);
   const dispatch = useDispatch();
+  const sourceOrgs = useSelector(selectSourceOrgFilters);
+  console.log('source orgs selected', sourceOrgs);
 
   const domains = (import.meta.env.VITE_DATASET_COUNT_BINS).split(',').map(Number);
   const getColor = colorBins({
@@ -122,6 +125,7 @@ export default function DatasetCountLayer() {
                   ? JSON.stringify(location.geojson)
                   : null
               ),
+              source_org: sourceOrgs,
             }),
             headers: {
               'Content-Type': 'application/json',
@@ -208,6 +212,7 @@ export default function DatasetCountLayer() {
         getLineColor: [selectedH3Index, shouldDim],
         getFillColor: [selectedH3Index, shouldDim],
         getLineWidth: [selectedH3Index, shouldDim],
+        getTileData: [sourceOrgs],
       },
     });
   }

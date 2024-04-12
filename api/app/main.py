@@ -16,13 +16,13 @@ from app.models import (
     HealthCheck,
     TifAsPngRequest,
 )
+from app.routers import filters
 from app.services import (
     dataset_count_to_bytes,
     get_dataset_count_tiles_async,
     img_to_data_url,
 )
 from app.sql.bounds_fill import FILL, FILL_RES2
-from app.sql.dataset_counts import DATASET_COUNTS
 from app.sql.dataset_coverage import DATASET_COVERAGE
 from app.sql.dataset_metadata import DATASET_METADATA
 from app.sql.datasets_by_location import (
@@ -50,6 +50,10 @@ app.add_middleware(
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
+)
+
+app.include_router(
+    filters.router
 )
 
 

@@ -87,7 +87,6 @@
   "scripts": {
     "start": "vite",
     "build": "tsc && cross-env NODE_OPTIONS=--max-old-space-size=8192 vite build",
-
     "serve": "vite preview",
     "eject": "react-scripts eject",
     "lint": "eslint './**/*.{ts,tsx}' --ignore-path .gitignore",
