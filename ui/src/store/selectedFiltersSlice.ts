@@ -5,20 +5,25 @@ const slice = createSlice({
   name: 'selectedFilters',
   initialState: {
     sourceOrgs: {},
+    accessibilities: {},
   },
 
   reducers: {
     setSourceOrgs: (state, action) => {
       state.sourceOrgs = action.payload;
-    //   // console.log(action.payload);
-    //   // If you need to pass a function with previous state,
-    //   // you can call it here and pass the previous state as an argument
-    //   // const newState = action.payload(state.sourceOrgs); // Calling function with previous state
-    //   return { ...state, value: newState };
     },
     updateSourceOrgs: (state, action) => {
       state.sourceOrgs = {
         ...state.sourceOrgs,
+        ...action.payload,
+      };
+    },
+    setAccessibilities: (state, action) => {
+      state.accessibilities = action.payload;
+    },
+    updateAccessibilities: (state, action) => {
+      state.accessibilities = {
+        ...state.accessibilities,
         ...action.payload,
       };
     },
@@ -47,5 +52,28 @@ export const selectSourceOrgFilters = createSelector(
       (sourceOrg: string) => sourceOrgs[sourceOrg] === true,
     );
     return selectedSourceOrgs;
+  },
+);
+
+export const setAccessibilities = (payload: string[]) => ({
+  type: 'selectedFilters/setAccessibilities',
+  payload,
+});
+
+export const updateAcccessibilities = (payload: { [x: string]: boolean; }) => ({
+  type: 'selectedFilters/updateAccessibilities',
+  payload,
+});
+
+export const selectAccessibilities = createSelector(
+  (state: RootState) => state.selectedFilters.accessibilities,
+  (accessibilities) => {
+    if (accessibilities == null || Object.keys(accessibilities).length === 0) {
+      return [];
+    }
+    const selectedAccessibilities = Object.keys(accessibilities).filter(
+      (a11y: string) => accessibilities[a11y] === true,
+    );
+    return selectedAccessibilities;
   },
 );
