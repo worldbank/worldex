@@ -50,9 +50,7 @@ function SourceOrganization({ className } : { className?: string }) {
       !relative
       !w-full
       border
-      border-gray-200
-      !border-b-0
-      !rounded-b-none"
+      border-gray-200"
     >
       <AccordionSummary
         className="bg-gray-100"
@@ -60,7 +58,7 @@ function SourceOrganization({ className } : { className?: string }) {
       >
         <Typography className="uppercase text-sm font-bold">Source Organization</Typography>
       </AccordionSummary>
-      <AccordionDetails>
+      <AccordionDetails className="pb-2">
         {
           Array.isArray(sourceOrgs) && sourceOrgs.length > 0 && (
             <FormGroup>

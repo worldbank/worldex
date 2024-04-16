@@ -5,7 +5,7 @@ import SourceOrganization from './SourceOrganization';
 function Filters({ className }: { className?: string }) {
   return (
     <div className={className}>
-      <Typography variant="h3" className="text-sm mb-2">Search Filters</Typography>
+      <Typography className="mb-2 font-bold">Search Filters</Typography>
       <div>
         <SourceOrganization />
         <Accessibility />

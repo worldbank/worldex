@@ -61,7 +61,7 @@ function Accessibility({ className }: { className?: string }) {
       >
         <Typography className="uppercase text-sm font-bold">Accessibility</Typography>
       </AccordionSummary>
-      <AccordionDetails>
+      <AccordionDetails className="pb-2">
         <FormGroup>
           {
             Array.isArray(accessibilities) && accessibilities.length > 0 && (
