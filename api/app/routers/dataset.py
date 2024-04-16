@@ -143,6 +143,8 @@ async def get_dataset_metadata(
     filters={}
     if payload.source_org:
         filters["source_org"] = payload.source_org
+    if payload.accessibility:
+        filters["accessibility"] = payload.accessibility
     results = await get_dataset_metadata_results(session, target=index, filters=filters)
     return [
         dict(
