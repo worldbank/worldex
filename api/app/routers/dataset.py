@@ -46,13 +46,14 @@ async def get_dataset_counts(
     should_hit_cache = not (payload.ignore_cache or location or filters)
     dataset_count_bytes = None
     if should_hit_cache:
-        dataset_count_bytes = await session.execute(
+        result = await session.execute(
             select(DatasetCountTile.dataset_counts).where(
                 DatasetCountTile.z == z,
                 DatasetCountTile.x == x,
                 DatasetCountTile.y == y,
             )
-        ).scalar()
+        )
+        dataset_count_bytes = result.scalar()
     header_kwargs = {}
     if dataset_count_bytes is not None:
         header_kwargs = {"headers": {"X-Tile-Cache-Hit": "true"}}
