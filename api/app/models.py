@@ -37,6 +37,7 @@ class DatasetCountRequest(BaseModel):
     resolution: int
     location: str | None = None
     source_org: Optional[List[str]] = []
+    accessibility: Optional[List[str]] = []
     debug_json_response: bool = False
     ignore_cache: bool = False
 

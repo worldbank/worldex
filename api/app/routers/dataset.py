@@ -40,6 +40,8 @@ async def get_dataset_counts(
     filters = {}
     if payload.source_org:
         filters["source_org"] = payload.source_org
+    if payload.accessibility:
+        filters["accessibility"] = payload.accessibility
     location = payload.location
     should_hit_cache = not (payload.ignore_cache or location or filters)
     cached_tile = None

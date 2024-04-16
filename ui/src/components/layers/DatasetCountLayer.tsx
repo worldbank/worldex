@@ -18,7 +18,7 @@ import {
 import { load } from '@loaders.gl/core';
 import getSteppedZoomResolutionPair from 'utils/getSteppedZoomResolutionPair';
 import { ArrowLoader } from '@loaders.gl/arrow';
-import { selectSourceOrgFilters } from 'store/selectedFiltersSlice';
+import { selectAccessibilities, selectSourceOrgFilters } from 'store/selectedFiltersSlice';
 
 export const DATASET_COUNT_LAYER_ID = 'datasetCountLayer';
 
@@ -87,6 +87,7 @@ export default function DatasetCountLayer() {
   const { fileUrl } = useSelector((state: RootState) => state.preview);
   const dispatch = useDispatch();
   const sourceOrgs = useSelector(selectSourceOrgFilters);
+  const accessibilities = useSelector(selectAccessibilities);
 
   const domains = (import.meta.env.VITE_DATASET_COUNT_BINS).split(',').map(Number);
   const getColor = colorBins({
@@ -125,6 +126,7 @@ export default function DatasetCountLayer() {
                   : null
               ),
               source_org: sourceOrgs,
+              accessibility: accessibilities,
             }),
             headers: {
               'Content-Type': 'application/json',
@@ -153,6 +155,7 @@ export default function DatasetCountLayer() {
           },
           body: JSON.stringify({
             source_org: sourceOrgs,
+            accessibility: accessibilities,
           }),
         });
         const results = await resp.json();
@@ -218,7 +221,7 @@ export default function DatasetCountLayer() {
         getLineColor: [selectedH3Index, shouldDim],
         getFillColor: [selectedH3Index, shouldDim],
         getLineWidth: [selectedH3Index, shouldDim],
-        getTileData: [sourceOrgs],
+        getTileData: [sourceOrgs, accessibilities],
       },
     });
   }

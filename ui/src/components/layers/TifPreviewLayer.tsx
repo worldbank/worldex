@@ -1,5 +1,4 @@
 import { useDispatch, useSelector } from 'react-redux';
-// @ts-ignore
 import { BitmapLayer } from '@deck.gl/layers/typed';
 import '@loaders.gl/polyfills';
 import { useEffect, useState } from 'react';
