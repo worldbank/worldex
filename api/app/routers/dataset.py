@@ -44,18 +44,17 @@ async def get_dataset_counts(
         filters["accessibility"] = payload.accessibility
     location = payload.location
     should_hit_cache = not (payload.ignore_cache or location or filters)
-    cached_tile = None
+    dataset_count_bytes = None
     if should_hit_cache:
-        cached_tile = await session.execute(
+        dataset_count_bytes = await session.execute(
             select(DatasetCountTile.dataset_counts).where(
                 DatasetCountTile.z == z,
                 DatasetCountTile.x == x,
                 DatasetCountTile.y == y,
             )
-        )
+        ).scalar()
     header_kwargs = {}
-    if cached_tile:
-        dataset_count_bytes = cached_tile.scalar()
+    if dataset_count_bytes is not None:
         header_kwargs = {"headers": {"X-Tile-Cache-Hit": "true"}}
     else:
         resolution = payload.resolution
