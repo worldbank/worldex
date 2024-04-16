@@ -1,7 +1,6 @@
 import base64
 from typing import List
 
-import cv2
 import numpy as np
 import pyarrow as pa
 from app.models import Dataset
@@ -16,6 +15,7 @@ from sqlalchemy.sql.functions import coalesce
 
 
 def img_to_data_url(img: np.ndarray):
+    import cv2
     retval, buffer = cv2.imencode('.png', img)
     if not retval:
         raise Exception("Error encoding image")
@@ -53,13 +53,13 @@ def build_dataset_count_tiles_query(z: int, x: int, y: int, resolution: int, loc
     return text(query).bindparams(z=z, x=x, y=y, resolution=resolution, location=location)
 
 
-async def get_dataset_count_tiles_async(session: AsyncSession, z: int, x: int, y: int, resolution: int, location: str, filters: dict[str, List[str]]=None):
+async def get_dataset_count_tiles_async(session: AsyncSession, z: int, x: int, y: int, resolution: int, location: str, filters: dict[str, List[str]]={}):
     query = build_dataset_count_tiles_query(z, x, y, resolution, location, filters)
     results = await session.execute(query)
     return results.fetchall()
 
 
-def get_dataset_count_tiles(session: Session, z: int, x: int, y: int, resolution: int, location: str, filters=None):
+def get_dataset_count_tiles(session: Session, z: int, x: int, y: int, resolution: int, location: str, filters: dict[str, List[str]]={}):
     query = build_dataset_count_tiles_query(z, x, y, resolution, location, filters)
     results = session.execute(query)
     return results.fetchall()
@@ -80,7 +80,7 @@ def dataset_count_to_bytes(dataset_counts):
     return serialized_data.to_pybytes()
 
 
-async def get_dataset_metadata_results(session: Session, target: str, filters=None):
+async def get_dataset_metadata_results(session: Session, target: str, filters: dict[str, List[str]]={}):
     dataset_metadata_query = DATASET_METADATA_FILTERED if filters else DATASET_METADATA
     candidate_datasets_stmt = select(Dataset.id.label("dataset_id"))
     if source_org := filters.get("source_org"):
