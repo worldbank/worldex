@@ -1,7 +1,7 @@
 from app.db import get_async_session
 from app.models import Dataset
 from fastapi import APIRouter, Depends
-from sqlalchemy import func, select, text
+from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 router = APIRouter(
