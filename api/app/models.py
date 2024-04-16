@@ -44,6 +44,7 @@ class DatasetCountRequest(BaseModel):
 
 class DatasetMetadataRequest(BaseModel):
     source_org: Optional[List[str]] = []
+    accessibility: Optional[List[str]] = []
 
 
 class DatasetRequest(BaseModel):
