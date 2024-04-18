@@ -1,11 +1,15 @@
 import { Typography } from '@mui/material';
 import Accessibility from './Accessibility';
 import SourceOrganization from './SourceOrganization';
+import ClearFiltersButton from './ClearFiltersButton';
 
 function Filters({ className }: { className?: string }) {
   return (
     <div className={className}>
-      <Typography className="mb-2 font-bold">Search Filters</Typography>
+      <div className="mb-2 flex items-center justify-between">
+        <Typography className="font-bold">Search Filters</Typography>
+        <ClearFiltersButton className="mr-2" />
+      </div>
       <div>
         <SourceOrganization />
         <Accessibility />

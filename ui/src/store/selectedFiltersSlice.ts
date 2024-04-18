@@ -32,7 +32,7 @@ const slice = createSlice({
 
 export default slice.reducer;
 
-export const setSourceOrgs = (payload: string[]) => ({
+export const setSourceOrgs = (payload: { [x: string]: boolean; }) => ({
   type: 'selectedFilters/setSourceOrgs',
   payload,
 });
@@ -55,7 +55,7 @@ export const selectSourceOrgFilters = createSelector(
   },
 );
 
-export const setAccessibilities = (payload: string[]) => ({
+export const setAccessibilities = (payload: { [x: string]: boolean; }) => ({
   type: 'selectedFilters/setAccessibilities',
   payload,
 });
