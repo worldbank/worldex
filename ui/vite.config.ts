@@ -1,11 +1,11 @@
-import { defineConfig } from 'vite';
-import eslintPlugin from 'vite-plugin-eslint';
 import react from '@vitejs/plugin-react';
-import viteTsconfigPaths from 'vite-tsconfig-paths';
-import svgrPlugin from 'vite-plugin-svgr';
-import checker from 'vite-plugin-checker';
-import pluginRewriteAll from 'vite-plugin-rewrite-all';
 import path from 'path';
+import { defineConfig } from 'vite';
+import checker from 'vite-plugin-checker';
+import eslintPlugin from 'vite-plugin-eslint';
+import pluginRewriteAll from 'vite-plugin-rewrite-all';
+import svgrPlugin from 'vite-plugin-svgr';
+import viteTsconfigPaths from 'vite-tsconfig-paths';
 
 // https://vitejs.dev/config/
 export default defineConfig({
