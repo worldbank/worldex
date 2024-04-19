@@ -14,7 +14,6 @@ const DatasetItem = ({idx, dataset}: {idx: number, dataset: Dataset}) => {
   const [anchor, setAnchor] = useState(null);
   const { selectedDataset } = useSelector((state: RootState) => state.selected);
   const viewState = useSelector((state: RootState) => state.carto.viewState);
-  const { width, height } = viewState;
   const { location } = useSelector((state: RootState) => state.location);
   const dispatch = useDispatch();
   const toggleVisibility = (datasetId: number, bbox: BoundingBox) => {
@@ -32,7 +31,7 @@ const DatasetItem = ({idx, dataset}: {idx: number, dataset: Dataset}) => {
     }
     dispatch(setSelectedDataset(datasetId));
   }
-  
+
   return (
     <Stack
       direction="row"
@@ -74,7 +73,7 @@ const Datasets = ({ datasetsByOrgs, header }: { datasetsByOrgs: { [source_org: s
         <Divider />
       </>
     )}
-    { 
+    {
       Object.entries(datasetsByOrgs).map(([org, datasets]) => (
         <Accordion
           disableGutters

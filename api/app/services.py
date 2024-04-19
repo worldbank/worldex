@@ -1,19 +1,21 @@
 import base64
 from typing import List
 
-import cv2
 import numpy as np
 import pyarrow as pa
 from app.models import Dataset
 from app.sql.bounds_fill import FILL, FILL_RES2
 from app.sql.bounds_fill import _bounds_query as BOUNDS_QUERY
 from app.sql.dataset_counts import DATASET_COUNTS, DATASET_COUNTS_FILTERED
-from sqlalchemy import select, text
+from app.sql.dataset_metadata import DATASET_METADATA, DATASET_METADATA_FILTERED
+from sqlalchemy import or_, select, text
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.orm import Session, load_only
+from sqlalchemy.orm import Session
+from sqlalchemy.sql.functions import coalesce
 
 
 def img_to_data_url(img: np.ndarray):
+    import cv2
     retval, buffer = cv2.imencode('.png', img)
     if not retval:
         raise Exception("Error encoding image")
@@ -33,6 +35,14 @@ def build_dataset_count_tiles_query(z: int, x: int, y: int, resolution: int, loc
     candidate_datasets_stmt = select(Dataset.id)
     if source_org := filters.get("source_org"):
         candidate_datasets_stmt = candidate_datasets_stmt.where(Dataset.source_org.in_(source_org))
+    if accessibility := filters.get("accessibility"):
+        conditions = []
+        if "Others" in accessibility:
+            conditions.append(Dataset.accessibility == None)
+            accessibility.remove("Others")
+        conditions.append(Dataset.accessibility.in_(accessibility))
+        candidate_datasets_stmt = candidate_datasets_stmt.where(or_(*conditions))
+
     compiled = candidate_datasets_stmt.compile(compile_kwargs={"literal_binds": True})
     filter_kwargs = { "candidate_datasets_query": compiled } if filters else {}
     query = dataset_counts_query.format(
@@ -43,13 +53,13 @@ def build_dataset_count_tiles_query(z: int, x: int, y: int, resolution: int, loc
     return text(query).bindparams(z=z, x=x, y=y, resolution=resolution, location=location)
 
 
-async def get_dataset_count_tiles_async(session: AsyncSession, z: int, x: int, y: int, resolution: int, location: str, filters: dict[str, List[str]]=None):
+async def get_dataset_count_tiles_async(session: AsyncSession, z: int, x: int, y: int, resolution: int, location: str, filters: dict[str, List[str]]={}):
     query = build_dataset_count_tiles_query(z, x, y, resolution, location, filters)
     results = await session.execute(query)
     return results.fetchall()
 
 
-def get_dataset_count_tiles(session: Session, z: int, x: int, y: int, resolution: int, location: str, filters=None):
+def get_dataset_count_tiles(session: Session, z: int, x: int, y: int, resolution: int, location: str, filters: dict[str, List[str]]={}):
     query = build_dataset_count_tiles_query(z, x, y, resolution, location, filters)
     results = session.execute(query)
     return results.fetchall()
@@ -68,3 +78,25 @@ def dataset_count_to_bytes(dataset_counts):
         writer.write_table(table)
     serialized_data = sink.getvalue()
     return serialized_data.to_pybytes()
+
+
+async def get_dataset_metadata_results(session: Session, target: str, filters: dict[str, List[str]]={}):
+    dataset_metadata_query = DATASET_METADATA_FILTERED if filters else DATASET_METADATA
+    candidate_datasets_stmt = select(Dataset.id.label("dataset_id"))
+    if source_org := filters.get("source_org"):
+        candidate_datasets_stmt = candidate_datasets_stmt.where(Dataset.source_org.in_(source_org))
+    if accessibility := filters.get("accessibility"):
+        conditions = []
+        if "Others" in accessibility:
+            conditions.append(Dataset.accessibility == None)
+            accessibility.remove("Others")
+        conditions.append(Dataset.accessibility.in_(accessibility))
+        candidate_datasets_stmt = candidate_datasets_stmt.where(or_(*conditions))
+    compiled = candidate_datasets_stmt.compile(compile_kwargs={"literal_binds": True})
+    filter_kwargs = { "candidate_datasets_query": compiled } if filters else {}
+    query = dataset_metadata_query.format(
+        **filter_kwargs
+    )
+    query = text(query).bindparams(target=target)
+    results = await session.execute(query)
+    return results.fetchall()
