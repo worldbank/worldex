@@ -57,3 +57,22 @@ You will still use the `poetry` command on your host machine to add/remove depen
 This is admittedly added toil when compared to ui where the `node_modules` can be bind-mounted and thus `yarn add` commands can be issued from the host.
 
 Unfortunately, the same cannot be done for the poetry-managed `virtualenv`. You will encounter ownership/permission issues if you try to run `poetry` commands from the host for a bind-mounted virtualenv. So we're not doing it unless we find a workaround.
+
+
+## Load DB dump
+
+This is useful for loading an sql dump to a postgresql instance. The dump is located at `/opt/datasets.sql` and can be loaded with the following commands:
+
+```bash
+# Install postgis deps
+sudo apt-get install postgis postgresql-15-postgis-3
+
+# Create the database
+createdb public.datasets -U postgres
+
+# Install postgis extension
+psql -d public.datasets -c "CREATE EXTENSION IF NOT EXISTS postgis;" -U postgres
+
+# Load the dump
+psql -d public.datasets -f /opt/datasets.sql -U postgres
+```
