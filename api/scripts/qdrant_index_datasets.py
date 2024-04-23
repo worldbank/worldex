@@ -15,17 +15,20 @@ from sqlalchemy.orm import sessionmaker
 
 
 # Connect to the Qdrant server
+batch_size = 512
 url = "http://localhost"
 port = 6323
 grpc_port = 6324
 collection_name = "worldex"
+
+# embedding_model = "avsolatorio/GIST-Embedding-v0"
 embedding_model = "mixedbread-ai/mxbai-embed-large-v1"
-embedding_model = "avsolatorio/GIST-Embedding-v0"
+subcollection_name = f"{collection_name}__{embedding_model.replace('/', '__')}"
 
 embeddings = SentenceTransformerEmbeddings(model_name=embedding_model, show_progress=True, model_kwargs={"device": "mps"})
 
 # client = qdrant_client.QdrantClient(url=url, port=port, grpc_port=grpc_port)
-# doc_store = Qdrant(client=client, collection_name=collection_name, embeddings=embeddings)
+# doc_store = Qdrant(client=client, collection_name=subcollection_name, embeddings=embeddings)
 
 # DATABASE_CONNECTION = os.getenv("DATABASE_URL_SYNC")
 DATABASE_CONNECTION = "postgresql://postgres:pass@localhost:5432/public.datasets"
@@ -64,8 +67,9 @@ def main():
             port=port,
             grpc_port=grpc_port,
             prefer_grpc=True,
-            collection_name=collection_name,
+            collection_name=subcollection_name,
             force_recreate=True,
+            batch_size=batch_size,
         )
 
 if __name__ == "__main__":
