@@ -1,6 +1,17 @@
-from elasticsearch_dsl import Date, Document, GeoShape, Integer, Keyword, Object, Text
+from elasticsearch_dsl import (
+    Date,
+    Document,
+    GeoShape,
+    Index,
+    Integer,
+    Keyword,
+    Object,
+    Text,
+)
 
+datasets = Index('datasets')
 
+@datasets.document
 class Dataset(Document):
     pg_id = Integer()
     uid = Keyword()
