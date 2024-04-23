@@ -102,3 +102,9 @@ async def get_dataset_metadata_results(session: Session, target: str, filters: d
     query = text(query).bindparams(target=target)
     results = await session.execute(query)
     return results.fetchall()
+
+
+def search_embedding(query):
+    query = f"Represent this sentence for searching relevant passages: {query}"
+
+    return query

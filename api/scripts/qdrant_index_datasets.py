@@ -73,4 +73,7 @@ def main():
         )
 
 if __name__ == "__main__":
+    # cd api/
+    # poetry run python -m scripts.qdrant_index_datasets
+
     sys.exit(main())
