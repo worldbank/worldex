@@ -6,32 +6,28 @@ from langchain_community.embeddings.sentence_transformer import SentenceTransfor
 import os
 import sys
 
+
+# # TODO: Remove the dotenv loading later...
 from dotenv import load_dotenv
 load_dotenv(".envrc")
 
+from app.search.embedding import get_collection_name, get_embedding_model
 from app.models import Dataset
 from sqlalchemy import create_engine, func, select
 from sqlalchemy.orm import sessionmaker
 
+# # TODO: Change this later to the actual DB...
+DATABASE_CONNECTION = "postgresql://postgres:pass@localhost:5432/public.datasets"
+# DATABASE_CONNECTION = os.getenv("DATABASE_URL_SYNC")
 
 # Connect to the Qdrant server
 batch_size = 512
-url = "http://localhost"
-port = 6323
-grpc_port = 6324
-collection_name = "worldex"
 
-# embedding_model = "avsolatorio/GIST-Embedding-v0"
-embedding_model = "mixedbread-ai/mxbai-embed-large-v1"
-subcollection_name = f"{collection_name}__{embedding_model.replace('/', '__')}"
+QDRANT_URL = os.getenv("QDRANT_URL")
+QDRANT_PORT = int(os.getenv("QDRANT_PORT"))
+QDRANT_GRPC_PORT = int(os.getenv("QDRANT_GRPC_PORT"))
+QDRANT_COLLECTION_PREFIX = os.getenv("QDRANT_COLLECTION_PREFIX")
 
-embeddings = SentenceTransformerEmbeddings(model_name=embedding_model, show_progress=True, model_kwargs={"device": "mps"})
-
-# client = qdrant_client.QdrantClient(url=url, port=port, grpc_port=grpc_port)
-# doc_store = Qdrant(client=client, collection_name=subcollection_name, embeddings=embeddings)
-
-# DATABASE_CONNECTION = os.getenv("DATABASE_URL_SYNC")
-DATABASE_CONNECTION = "postgresql://postgres:pass@localhost:5432/public.datasets"
 
 def main():
     engine = create_engine(DATABASE_CONNECTION)
@@ -62,12 +58,12 @@ def main():
                 print(f"{idx} documents processed")
 
         Qdrant.from_documents(documents,
-            embeddings,
-            url=url,
-            port=port,
-            grpc_port=grpc_port,
+            get_embedding_model(),
+            url=QDRANT_URL,
+            port=QDRANT_PORT,
+            grpc_port=QDRANT_GRPC_PORT,
             prefer_grpc=True,
-            collection_name=subcollection_name,
+            collection_name=get_collection_name(),
             force_recreate=True,
             batch_size=batch_size,
         )
