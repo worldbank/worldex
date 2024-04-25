@@ -4,18 +4,15 @@ import sys
 from app.document import Dataset as DatasetDocument
 from app.models import Dataset
 from elasticsearch_dsl import connections
-from sqlalchemy import create_engine, func, select
+from sqlalchemy import create_engine, select
 from sqlalchemy.orm import sessionmaker
 
 DATABASE_CONNECTION = os.getenv("DATABASE_URL_SYNC")
-ELASTICSEARCH_HOST = os.getenv("ELASTICSEARCH_HOST")
-ELASTICSEARCH_USER = os.getenv("ELASTICSEARCH_USER")
-ELASTICSEARCH_PASSWORD = os.getenv("ELASTICSEARCH_PASSWORD")
+ELASTICSEARCH_CONNECTION = os.getenv("ELASTICSEARCH_URL_SYNC")
 # Define connection to your Elasticsearch cluster
 # connections.create_connection(hosts=['http://localhost:9200'])
 connections.create_connection(
-    hosts=[ELASTICSEARCH_HOST],
-    basic_auth=(ELASTICSEARCH_USER, ELASTICSEARCH_PASSWORD),
+    hosts=[ELASTICSEARCH_CONNECTION],
     verify_certs=False,
 )
 
@@ -23,7 +20,8 @@ connections.create_connection(
 def main():
     engine = create_engine(DATABASE_CONNECTION)
     Session = sessionmaker(bind=engine)
-    DatasetDocument._index.delete()
+    if DatasetDocument._index.exists():
+        DatasetDocument._index.delete()
     with Session() as sess:
         result = sess.execute(select(Dataset))
         for idx, r in enumerate(result):
