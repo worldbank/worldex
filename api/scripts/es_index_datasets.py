@@ -8,8 +8,10 @@ from sqlalchemy import create_engine, func, select
 from sqlalchemy.orm import sessionmaker
 
 DATABASE_CONNECTION = os.getenv("DATABASE_URL_SYNC")
+ELASTICSEARCH_CONNECTION = os.getenv("ELASTICSEARCH_URL_SYNC")
 # Define connection to your Elasticsearch cluster
-connections.create_connection(hosts=['http://localhost:9200'])
+# connections.create_connection(hosts=['http://localhost:9200'])
+connections.create_connection(hosts=[ELASTICSEARCH_CONNECTION])
 
 
 def main():
