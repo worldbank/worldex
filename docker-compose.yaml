@@ -81,5 +81,11 @@ services:
     depends_on:
       db:
         condition: service_healthy
+  es:
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.13.2
+    ports:
+      - 9200:9200
+    env_file:
+      - secrets/es.env
 volumes:
   pg_data:

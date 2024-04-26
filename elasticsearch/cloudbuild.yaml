@@ -1,0 +1,17 @@
+steps:
+# pull container image
+- name: 'gcr.io/cloud-builders/docker'
+  args: ['pull', 'docker.elastic.co/elasticsearch/elasticsearch:8.13.2']
+  dir: 'elasticsearch/'
+# tag container image
+- name: 'gcr.io/cloud-builders/docker'
+  args: [
+    'tag',
+    'docker.elastic.co/elasticsearch/elasticsearch:8.13.2',
+    'us-central1-docker.pkg.dev/worldex-417100/worldex-repo/elasticsearch:8.13.2'
+  ]
+  dir: 'elasticsearch/'
+# push container image to artifact registry
+- name: 'gcr.io/cloud-builders/docker'
+  args: ['push', 'us-central1-docker.pkg.dev/worldex-417100/worldex-repo/elasticsearch:8.13.2']
+  dir: 'elasticsearch/'
