@@ -25,6 +25,9 @@ brew install gettext
 brew link --force gettext
 ```
 
+## `just generate-es-password`
+to generate a password to the `elastic` user of the `es` elasticsearch service
+
 ## `just refresh-db-password`
 to generate a postgres password and the environment files to be used by the `api`, `db`, and `pgweb` services as per the docker compose spec.
 
