@@ -9,8 +9,6 @@ from sqlalchemy.orm import sessionmaker
 
 DATABASE_CONNECTION = os.getenv("DATABASE_URL_SYNC")
 ELASTICSEARCH_CONNECTION = os.getenv("ELASTICSEARCH_URL_SYNC")
-# Define connection to your Elasticsearch cluster
-# connections.create_connection(hosts=['http://localhost:9200'])
 connections.create_connection(
     hosts=[ELASTICSEARCH_CONNECTION],
     verify_certs=False,
@@ -40,12 +38,10 @@ def main():
                 description = dataset.description,
                 projection = dataset.projection,
                 properties = dataset.properties,
-                # bbox = dataset.bbox
             )
             doc.save()
             if (idx > 0 and idx % 100 == 0):
                 print(f"{idx} documents indexed")
-            # print(doc)
 
 
 if __name__ == "__main__":
