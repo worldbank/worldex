@@ -19,9 +19,8 @@ import { TIF_PREVIEW_LAYER_ID } from 'components/layers/TifPreviewLayer';
 import datasetCoverageSource from 'data/sources/datasetCoverageSource';
 import { useDispatch, useSelector } from 'react-redux';
 
-import { debounce, Grid, Modal } from '@mui/material';
+import { debounce, Grid } from '@mui/material';
 import { styled } from '@mui/material/styles';
-import { useMapHooks } from 'components/common/map/useMapHooks';
 import { useSearchParams } from 'react-router-dom';
 import { RootState } from 'store/store';
 import LazyLoadComponent from 'components/common/LazyLoadComponent';
