@@ -9,12 +9,10 @@ const BlurredModal = styled(Modal)`
   }
 `;
 
-export default function AccessBlocker() {
-  const theme = useTheme();
-  return <BlurredModal disableAutoFocus={true} open={true}>
-    <div className={`
+const AccessBlocker = () => (
+  <BlurredModal disableAutoFocus={true} open={true}>
+    <div className="
       absolute
-      bg-[${theme.palette.brand.navyBlue.toLowerCase()}]
       width-[400px]
       height-[100px]
       top-1/2
@@ -23,7 +21,7 @@ export default function AccessBlocker() {
       -translate-x-1/2
       -translate-y-1/2
       rounded-md
-    `}>
+    ">
       <Typography className="
         py-4
         pb-3
@@ -34,11 +32,13 @@ export default function AccessBlocker() {
       ">
         WorldEx
       </Typography>
-      <Divider className="border-slate-500 border-1" />
+      <Divider className="border-1 border-slate-300" />
       <div className="px-6 pb-5 pt-3 text-center">
         <Typography className="text-2xl text-white font-medium">Find subnational data smarter.</Typography>
         <Typography className="text-white">Launching in June 2024</Typography>
       </div>
     </div>
   </BlurredModal>
-};
+);
+
+export default AccessBlocker;
