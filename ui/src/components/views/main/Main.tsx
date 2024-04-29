@@ -19,12 +19,13 @@ import { TIF_PREVIEW_LAYER_ID } from 'components/layers/TifPreviewLayer';
 import datasetCoverageSource from 'data/sources/datasetCoverageSource';
 import { useDispatch, useSelector } from 'react-redux';
 
-import { debounce, Grid } from '@mui/material';
+import { debounce, Grid, Modal } from '@mui/material';
 import { styled } from '@mui/material/styles';
 import { useMapHooks } from 'components/common/map/useMapHooks';
 import { useSearchParams } from 'react-router-dom';
 import { RootState } from 'store/store';
 import LazyLoadComponent from 'components/common/LazyLoadComponent';
+import AccessBlocker from 'components/common/AccessBlocker';
 
 const MapContainer = lazy(
   () => import(
@@ -55,6 +56,7 @@ interface AtArgs {
   latitude: number;
   longitude: number;
   zoom?: number;
+  unblock?: boolean;
 }
 
 export default function Main() {
@@ -64,6 +66,7 @@ export default function Main() {
   const [searchParams, setSearchParams] = useSearchParams();
   const debouncedSetSearchParams = useCallback(debounce(setSearchParams, 300), []);
   const dispatch = useDispatch();
+  const shouldBlockAccess = (import.meta.env.VITE_BLOCK_ACCESS === 'true');
 
   useEffect(() => {
     const at = searchParams.get('at');
@@ -143,12 +146,23 @@ export default function Main() {
   // [hygen] Add useEffect
 
   useEffect(() => {
-    debouncedSetSearchParams({ at: `${latitude.toFixed(5)},${longitude.toFixed(5)},${zoom.toFixed(2)}z` });
+    const searchParamKeys = Array.from(searchParams.keys());
+    const newSearchParams = {
+      at: `${latitude.toFixed(5)},${longitude.toFixed(5)},${zoom.toFixed(2)}z`,
+    };
+    if (searchParamKeys.includes('unblock')) {
+      // @ts-ignore
+      newSearchParams.unblock = 'true';
+    }
+    debouncedSetSearchParams(newSearchParams);
   }, [debouncedSetSearchParams, latitude, longitude, zoom]);
 
   return (
     <GridMain container item xs>
       <LazyLoadComponent>
+        {
+          shouldBlockAccess && !searchParams.get('unblock') && <AccessBlocker />
+        }
         <Sidebar />
         <MapContainer />
         <ErrorSnackbar />

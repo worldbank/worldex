@@ -10,6 +10,7 @@ import { styled } from '@mui/material/styles';
 import LocationSearch from 'components/common/LocationSearch';
 import { RootState } from 'store/store';
 import PreviewErrorSnackbar from 'components/common/PreviewErrorSnackbar';
+import AccessBlocker from 'components/common/AccessBlocker';
 
 const Map = lazy(
   () => import(/* webpackChunkName: 'map' */ 'components/common/map/Map'),
