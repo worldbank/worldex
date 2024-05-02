@@ -1,32 +1,21 @@
 import json
 from langchain.docstore.document import Document
 from langchain_community.vectorstores import Qdrant
-from langchain_community.embeddings.sentence_transformer import SentenceTransformerEmbeddings
 
 import os
 import sys
 
-
-# # TODO: Remove the dotenv loading later...
-from dotenv import load_dotenv
-load_dotenv(".envrc")
-
-from app.search.embedding import get_collection_name, get_embedding_model
+from app.search.embedding import get_embedding_model, get_qdrant_kwargs
 from app.models import Dataset
-from sqlalchemy import create_engine, func, select
+from sqlalchemy import create_engine, select
 from sqlalchemy.orm import sessionmaker
 
 # # TODO: Change this later to the actual DB...
-DATABASE_CONNECTION = "postgresql://postgres:pass@localhost:5432/public.datasets"
-# DATABASE_CONNECTION = os.getenv("DATABASE_URL_SYNC")
+# DATABASE_CONNECTION = "postgresql://postgres:pass@localhost:5432/public.datasets"
+DATABASE_CONNECTION = os.getenv("DATABASE_URL_SYNC")
 
 # Connect to the Qdrant server
 batch_size = 512
-
-QDRANT_URL = os.getenv("QDRANT_URL")
-QDRANT_PORT = int(os.getenv("QDRANT_PORT"))
-QDRANT_GRPC_PORT = int(os.getenv("QDRANT_GRPC_PORT"))
-QDRANT_COLLECTION_PREFIX = os.getenv("QDRANT_COLLECTION_PREFIX")
 
 
 def main():
@@ -57,15 +46,12 @@ def main():
             if (idx > 0 and idx % 100 == 0):
                 print(f"{idx} documents processed")
 
+        qdrant_kwargs = get_qdrant_kwargs()
         Qdrant.from_documents(documents,
             get_embedding_model(),
-            url=QDRANT_URL,
-            port=QDRANT_PORT,
-            grpc_port=QDRANT_GRPC_PORT,
-            prefer_grpc=True,
-            collection_name=get_collection_name(),
             force_recreate=True,
             batch_size=batch_size,
+            **qdrant_kwargs
         )
 
 if __name__ == "__main__":
