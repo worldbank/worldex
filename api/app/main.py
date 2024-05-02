@@ -1,7 +1,7 @@
 import uvicorn
 from app import settings
 from app.models import HealthCheck
-from app.routers import dataset, filters, raster
+from app.routers import dataset, filters, raster, search
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
@@ -23,6 +23,7 @@ app.add_middleware(
 app.include_router(dataset.router)
 app.include_router(filters.router)
 app.include_router(raster.router)
+app.include_router(search.router)
 
 
 @app.get("/health_check", response_model=HealthCheck)
