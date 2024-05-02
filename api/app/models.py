@@ -88,6 +88,7 @@ class Dataset(Base):
     __tablename__ = "datasets"
 
     id: Mapped[int] = mapped_column(primary_key=True, index=True)
+    dataset_id: Mapped[int] = mapped_column(nullable=True, index=True)
     uid: Mapped[str] = mapped_column(nullable=False, server_default='')
     name: Mapped[str] = mapped_column(nullable=False)
     source_org: Mapped[str] = mapped_column(nullable=True)
