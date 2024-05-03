@@ -13,7 +13,11 @@ _parent_datasets AS (
 parent_datasets AS (
   SELECT
     fill_index,
-    ARRAY_REMOVE(ARRAY_CAT(ARRAY[p.dataset_id], ARRAY_AGG(d.id)), NULL) dataset_ids
+    CASE
+      WHEN ARRAY_AGG(d.id) = CAST(:null_array AS int[])
+      THEN ARRAY[p.dataset_id]
+      ELSE ARRAY_CAT(ARRAY[p.dataset_id], ARRAY_AGG(d.id))
+    END dataset_ids
   FROM _parent_datasets p
   LEFT JOIN datasets d ON p.dataset_id = d.dataset_id
   GROUP BY fill_index, p.dataset_id
@@ -28,7 +32,14 @@ _children_datasets AS (
   JOIN h3_children_indicators c ON h3_index = fill_index
 ),
 children_datasets AS (
-  SELECT fill_index, ARRAY_REMOVE(ARRAY_CAT(ARRAY[c.dataset_id], ARRAY_AGG(d.id)), NULL) dataset_ids FROM _children_datasets c
+  SELECT
+    fill_index,
+    CASE
+      WHEN ARRAY_AGG(d.id) = CAST(:null_array AS int[])
+      THEN ARRAY[c.dataset_id]
+      ELSE ARRAY_CAT(ARRAY[c.dataset_id], ARRAY_AGG(d.id))
+    END dataset_ids
+  FROM _children_datasets c
   LEFT JOIN datasets d ON c.dataset_id = d.dataset_id
   GROUP BY fill_index, c.dataset_id
 ),
