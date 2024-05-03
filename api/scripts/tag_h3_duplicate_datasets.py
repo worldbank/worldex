@@ -53,6 +53,16 @@ def main():
                 """
             ).bindparams(natl_boundary_dataset_id=natl_boundary_dataset_id, duplicate_dataset_ids=duplicate_dataset_ids)
             sess.execute(mark_as_duplicate_q)
+
+            sess.execute(
+                text("""
+                    UPDATE datasets
+                    SET has_derivatives = TRUE
+                    WHERE id = (
+                        SELECT id FROM datasets WHERE name ILIKE :natl_boundary_country
+                    )
+                """).bindparams(natl_boundary_country=f"%national boundaries%{country}%")
+            )
             sess.commit()
 
             # separate script
