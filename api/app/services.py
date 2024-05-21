@@ -56,7 +56,7 @@ def build_dataset_count_tiles_query(z: int, x: int, y: int, resolution: int, loc
         fill_query=FILL_RES2 if resolution == 2 else FILL,
         **filter_kwargs
     )
-    return text(query).bindparams(z=z, x=x, y=y, resolution=resolution, location=location, null_array='{NULL}')
+    return text(query).bindparams(z=z, x=x, y=y, resolution=resolution, location=location)
 
 
 async def get_dataset_count_tiles_async(session: AsyncSession, z: int, x: int, y: int, resolution: int, location: str, filters: dict[str, List[str]]={}):
