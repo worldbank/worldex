@@ -6,7 +6,21 @@ from sqlalchemy.orm import sessionmaker
 
 DATABASE_CONNECTION = os.getenv("DATABASE_URL_SYNC")
 COUNTRY_KEYWORDS = [
-    "china"
+    "canada",
+    "russia",
+    "united states",
+    "china",
+    "india",
+    "brazil",
+    "australia",
+    "indonesia",
+    "greenland",
+    "sweden",
+    "argentina",
+    "norway",
+    "chile",
+    "finland",
+    "kazakhstan",
 ]
 
 def main():
