@@ -25,5 +25,5 @@ jobs:
           path: .cache
           restore-keys: |
             mkdocs-material-
-      - run: pip install mkdocs-material
-      - run: cd worldex/ && mkdocs gh-deploy --force
+      - run: pip install poetry
+      - run: cd worldex/ && poetry install --with docs && mkdocs gh-deploy --force
