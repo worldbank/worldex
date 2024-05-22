@@ -4,6 +4,7 @@ on:
     branches:
       - main
       - mkdocs
+      - docs/gh-actions
 permissions:
   contents: write
 jobs:
@@ -26,4 +27,13 @@ jobs:
           restore-keys: |
             mkdocs-material-
       - run: pip install poetry
-      - run: cd worldex/ && poetry install --with docs && mkdocs gh-deploy --force
+      - name: Set working directory
+        run: echo "WORKDIR=worldex" >> $GITHUB_ENV
+      - name: Remove poetry.lock
+        run: rm $WORKDIR/poetry.lock
+      - name: Install docs dependencies
+        run: poetry install --with docs --no-root
+        working-directory: ${{ env.WORKDIR }}
+      - name: Deploy documentation
+        run: mkdocs gh-deploy --force
+        working-directory: ${{ env.WORKDIR }}
