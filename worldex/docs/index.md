@@ -1,8 +1,12 @@
-# worldex
+# WorldEx
+
+This is the documentation for the `worldex` package. The package is used to catalog geospatial data using H3 indices. The [WorldEx](https://worldex.org/) application comprises a collection of datasets sourced from different data provides that are indexed using H3 indices to demonstrate the value of the standardized geospatial indexing.
 
 ## Introduction
 
 `worldex` is a python package for cataloging geospatial data using H3 indices. It provides a suite of tools that standardizes cataloging geospatial data and streamlines common processes needed for indexing data.
+
+It offers a simple API for indexing common geospatial data formats such as GeoJSON, shapefiles, and rasters. It also provides a component for fetching data from the web and indexing it.
 
 ## H3 indices
 
