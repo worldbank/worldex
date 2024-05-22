@@ -30,6 +30,7 @@ def main():
     Session = sessionmaker(bind=engine)
     with Session() as sess:
         for country in COUNTRY_KEYWORDS:
+            country_ = country if country != "united states" else f"{country}(?! minor outlying islands)"
             q = text(
                 """
                 WITH country_datasets AS (
@@ -51,7 +52,7 @@ def main():
                 WHERE h3_count = (SELECT h3_count FROM with_h3_counts WHERE name ILIKE '%national boundaries%')
                 ORDER BY CASE WHEN name ILIKE '%national boundaries%' THEN 0 ELSE 1 end;
                 """
-            ).bindparams(country=country if country != "united states" else f"{country}(?! minor outlying islands)")
+            ).bindparams(country=country_)
             results = sess.execute(q).fetchall()
             country_datasets = [row._mapping for row in results]
             print(country_datasets)
@@ -76,9 +77,9 @@ def main():
                     UPDATE datasets
                     SET has_derivatives = TRUE
                     WHERE id = (
-                        SELECT id FROM datasets WHERE name ILIKE :natl_boundary_country
+                        SELECT id FROM datasets WHERE name ~* :natl_boundary_country
                     )
-                """).bindparams(natl_boundary_country=f"%national boundaries%{country}%")
+                """).bindparams(natl_boundary_country=f"national boundaries.*{country_}")
             )
             if DRY_RUN:
                 print("Running in dry run mode, not committing")
