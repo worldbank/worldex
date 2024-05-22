@@ -4,6 +4,7 @@ import sys
 from sqlalchemy import create_engine, text
 from sqlalchemy.orm import sessionmaker
 
+DRY_RUN = os.getenv("DRY_RUN", "true").lower() == "true"
 DATABASE_CONNECTION = os.getenv("DATABASE_URL_SYNC")
 COUNTRY_KEYWORDS = [
     "canada",
@@ -29,16 +30,11 @@ def main():
     Session = sessionmaker(bind=engine)
     with Session() as sess:
         for country in COUNTRY_KEYWORDS:
-            natl_boundary_country = (
-                "national boundaries.*{country}"
-                if country != "united states"
-                else "national boundaries.*{country}(?! minor outlying islands)"
-            )
             q = text(
                 """
                 WITH country_datasets AS (
                     SELECT id, name FROM datasets
-                    WHERE name ~* :natl_boundary_country
+                    WHERE name ~* :country
                 ),
                 with_h3_counts AS (
                     SELECT
@@ -55,10 +51,13 @@ def main():
                 WHERE h3_count = (SELECT h3_count FROM with_h3_counts WHERE name ILIKE '%national boundaries%')
                 ORDER BY CASE WHEN name ILIKE '%national boundaries%' THEN 0 ELSE 1 end;
                 """
-            ).bindparams(natl_boundary_country=natl_boundary_country)
+            ).bindparams(country=country if country != "united states" else f"{country}(?! minor outlying islands)")
             results = sess.execute(q).fetchall()
             country_datasets = [row._mapping for row in results]
             print(country_datasets)
+            if not country_datasets:
+                print("No datasets to tag")
+                continue
 
             assert "national boundaries" in country_datasets[0]["name"].lower()
             natl_boundary_dataset_id = country_datasets[0]["id"]
@@ -81,6 +80,9 @@ def main():
                     )
                 """).bindparams(natl_boundary_country=f"%national boundaries%{country}%")
             )
+            if DRY_RUN:
+                print("Running in dry run mode, not committing")
+                continue
             sess.commit()
 
 
