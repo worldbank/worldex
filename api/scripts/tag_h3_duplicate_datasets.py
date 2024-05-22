@@ -29,7 +29,6 @@ def main():
     Session = sessionmaker(bind=engine)
     with Session() as sess:
         for country in COUNTRY_KEYWORDS:
-            # marking stage
             q = text(
                 """
                 WITH country_datasets AS (
@@ -78,37 +77,6 @@ def main():
                 """).bindparams(natl_boundary_country=f"%national boundaries%{country}%")
             )
             sess.commit()
-
-            # separate script
-            # dropping stage
-            # sess.execute(
-            #     text(
-            #         """
-            #         WITH natl_boundary AS (
-            #             SELECT id FROM datasets WHERE name ILIKE :natl_boundary_country
-            #         ),
-            #         duplicates AS (
-            #             SELECT id AS dupe_id FROM datasets WHERE dataset_id = (SELECT id FROM natl_boundary)
-            #         )
-            #         DELETE FROM h3_data WHERE dataset_id IN (SELECT dupe_id FROM duplicates);
-            #         """
-            #     ).bindparams(natl_boundary_country=f"%national boundaries%{country}%")
-            # )
-
-            # sess.execute(
-            #     text(
-            #         """
-            #         WITH natl_boundary AS (
-            #             SELECT id FROM datasets WHERE name ILIKE :natl_boundary_country
-            #         ),
-            #         duplicates AS (
-            #             SELECT id AS dupe_id FROM datasets WHERE dataset_id = (SELECT id FROM natl_boundary)
-            #         )
-            #         DELETE FROM h3_children_indicators WHERE dataset_id IN (SELECT dupe_id FROM duplicates);
-            #         """
-            #     ).bindparams(natl_boundary_country=f"%national boundaries%{country}%")
-            # )
-            # sess.commit()
 
 
 if __name__ == "__main__":
