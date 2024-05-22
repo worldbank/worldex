@@ -35,5 +35,5 @@ jobs:
         run: poetry install --with docs --no-root
         working-directory: ${{ env.WORKDIR }}
       - name: Deploy documentation
-        run: mkdocs gh-deploy --force
+        run: poetry run mkdocs gh-deploy --force
         working-directory: ${{ env.WORKDIR }}
