@@ -1,0 +1,39 @@
+name: Publish documentation
+on:
+  push:
+    branches:
+      - main
+      - mkdocs
+      - docs/gh-actions
+permissions:
+  contents: write
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Configure Git Credentials
+        run: |
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+      - uses: actions/setup-python@v5
+        with:
+          python-version: 3.x
+      - run: echo "cache_id=$(date --utc '+%V')" >> $GITHUB_ENV
+      - uses: actions/cache@v4
+        with:
+          key: mkdocs-material-${{ env.cache_id }}
+          path: .cache
+          restore-keys: |
+            mkdocs-material-
+      - run: pip install poetry
+      - name: Set working directory
+        run: echo "WORKDIR=worldex" >> $GITHUB_ENV
+      - name: Remove poetry.lock
+        run: rm $WORKDIR/poetry.lock
+      - name: Install docs dependencies
+        run: poetry install --with docs --no-root
+        working-directory: ${{ env.WORKDIR }}
+      - name: Deploy documentation
+        run: poetry run mkdocs gh-deploy --force
+        working-directory: ${{ env.WORKDIR }}
