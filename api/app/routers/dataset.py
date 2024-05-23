@@ -2,11 +2,12 @@ from app import settings
 from app.db import get_async_session
 from app.models import (
     Dataset,
-    DatasetCountRequest,
+    DatasetCountsRequest,
     DatasetCountTile,
     DatasetMetadataRequest,
     DatasetRequest,
     DatasetsByLocationRequest,
+    TotalDatasetCountRequest,
 )
 from app.services import (
     dataset_count_to_bytes,
@@ -22,7 +23,7 @@ from app.sql.datasets_by_location import (
 )
 from fastapi import APIRouter, Depends, Response
 from shapely import wkt
-from sqlalchemy import func, select, text
+from sqlalchemy import func, or_, select, text
 from sqlalchemy.ext.asyncio import AsyncSession
 
 router = APIRouter(
@@ -31,7 +32,7 @@ router = APIRouter(
 
 @router.post("/dataset_counts/{z}/{x}/{y}")
 async def get_dataset_counts(
-    payload: DatasetCountRequest,
+    payload: DatasetCountsRequest,
     z: int,
     x: int,
     y: int,
@@ -102,9 +103,21 @@ async def get_dataset_coverage(
 
 @router.post("/dataset_count/")
 async def get_dataset_count(
+    payload: TotalDatasetCountRequest,
     session: AsyncSession = Depends(get_async_session),
 ):
-    result = await session.execute(select(func.count(Dataset.id)))
+    query = select(func.count(Dataset.id))
+    if source_org := payload.source_org:
+        query = query.where(Dataset.source_org.in_(source_org))
+    if accessibility := payload.accessibility:
+        conditions = []
+        if "Others" in accessibility:
+            conditions.append(Dataset.accessibility == None)
+            accessibility.remove("Others")
+        if accessibility:
+            conditions.append(Dataset.accessibility.in_(accessibility))
+        query = query.where(or_(*conditions))
+    result = await session.execute(query)
     return {"dataset_count": result.scalar_one()}
 
 

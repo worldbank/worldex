@@ -33,13 +33,18 @@ class HealthCheck(BaseModel):
     version: str
 
 
-class DatasetCountRequest(BaseModel):
+class DatasetCountsRequest(BaseModel):
     resolution: int
     location: str | None = None
     source_org: Optional[List[str]] = []
     accessibility: Optional[List[str]] = []
     debug_json_response: bool = False
     ignore_cache: bool = False
+
+
+class TotalDatasetCountRequest(BaseModel):
+    source_org: Optional[List[str]] = []
+    accessibility: Optional[List[str]] = []
 
 
 class DatasetMetadataRequest(BaseModel):
