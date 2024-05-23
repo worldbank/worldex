@@ -1,14 +1,13 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { Divider, Grid, IconButton, Modal, Typography, useMediaQuery } from '@mui/material';
 import { AppBar } from '@carto/react-ui';
 import DrawerMenu from './DrawerMenu';
 import NavigationMenu from './NavigationMenu';
-import Logo from './Logo';
 import InfoIcon from '@mui/icons-material/Info';
 import UserMenu from './UserMenu';
 import { styled, Theme } from '@mui/material/styles';
 import { useLocation } from 'react-router-dom';
-import AboutModal from 'components/about/AboutModal';
+import AboutModal from 'components/common/AboutModal';
 
 export const StyledAppBar = styled(AppBar)(({ theme }) => ({
   zIndex: theme.zIndex.modal + 1,
@@ -21,6 +20,7 @@ export const StyledDivider = styled(Divider)(({ theme }) => ({
 export default function Header() {
   const location = useLocation();
   const [drawerOpen, setDrawerOpen] = useState(false);
+  const [aboutOpen, setAboutOpen] = useState(false);
 
   useEffect(() => {
     setDrawerOpen(false);
@@ -33,6 +33,9 @@ export default function Header() {
   const smDownHidden = useMediaQuery((theme: Theme) =>
     theme.breakpoints.down('md'),
   );
+
+  const handleAboutOpen = () => setAboutOpen(true);
+  const handleAboutClose = () => setAboutOpen(false);
 
   return (
     <StyledAppBar
@@ -50,11 +53,11 @@ export default function Header() {
       ) : (
         <>
           <StyledDivider orientation='vertical' flexItem light></StyledDivider>
-          <AboutModal />
+          <AboutModal open={aboutOpen} onClose={handleAboutClose} />
           <NavigationMenu />
           <Grid container item xs justifyContent='flex-end'>
             <UserMenu />
-              <IconButton className='w-20 text-white' arial-label="about">
+              <IconButton onClick={handleAboutOpen} className='w-20 text-white' arial-label="about">
                 <InfoIcon className='mr-1' />
                 <span className="text-xs font-bold">About</span>
               </IconButton>
