@@ -38,33 +38,21 @@ def main():
                     else "national boundaries.*{country}(?! minor outlying islands)"
                 )
                 natl_boundary_country = f"national boundaries.*{country}$"
-                sess.execute(
+                dupe_ids = sess.scalars(
                     text(
                         """
-                        WITH natl_boundary AS (
+                        SELECT id FROM datasets
+                        WHERE dataset_id IS NOT NULL
+                        AND dataset_id = (
                             SELECT id FROM datasets WHERE name ~* :natl_boundary_country
-                        ),
-                        duplicates AS (
-                            SELECT id AS dupe_id FROM datasets WHERE dataset_id = (SELECT id FROM natl_boundary)
                         )
-                        DELETE FROM h3_data WHERE dataset_id IN (SELECT dupe_id FROM duplicates);
                         """
                     ).bindparams(natl_boundary_country=natl_boundary_country)
-                )
-
-                sess.execute(
-                    text(
-                        """
-                        WITH natl_boundary AS (
-                            SELECT id FROM datasets WHERE name ~* :natl_boundary_country
-                        ),
-                        duplicates AS (
-                            SELECT id AS dupe_id FROM datasets WHERE dataset_id = (SELECT id FROM natl_boundary)
-                        )
-                        DELETE FROM h3_children_indicators WHERE dataset_id IN (SELECT dupe_id FROM duplicates);
-                        """
-                    ).bindparams(natl_boundary_country=natl_boundary_country)
-                )
+                ).all()
+                print("Deleting h3 tiles of the ff dupe datasets:", dupe_ids)
+                for dupe_id in dupe_ids:
+                    sess.execute(text("DELETE FROM h3_data WHERE dataset_id = :dupe_id").bindparams(dupe_id=dupe_id))
+                    sess.execute(text("DELETE FROM h3_children_indicators WHERE dataset_id = :dupe_id").bindparams(dupe_id=dupe_id))
                 if DRY_RUN:
                     print("Dry run only, not committing")
                     continue
