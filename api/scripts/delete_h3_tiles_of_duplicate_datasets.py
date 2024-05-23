@@ -32,11 +32,6 @@ def main():
     with Session() as sess:
         for country in COUNTRY_KEYWORDS:
             try:
-                natl_boundary_country = (
-                    "national boundaries.*{country}"
-                    if country != "united states"
-                    else "national boundaries.*{country}(?! minor outlying islands)"
-                )
                 natl_boundary_country = f"national boundaries.*{country}$"
                 dupe_ids = sess.scalars(
                     text(
