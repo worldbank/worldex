@@ -3,9 +3,9 @@ nav:
   - Getting Started:
       - Introduction: index.md
       - Installation: installation.md
-      - Quick Start: quick_start.ipynb
+      # - Quick Start: quick_start.ipynb
       - Dataset Providers: dataset_providers.md
-      - Metadata Schema: quick_start.ipynb
+      # - Metadata Schema: quick_start.ipynb
   - Examples:
       - Generic Vector Data: notebooks/index_generic_vector.ipynb
       - HDX: notebooks/index_hdx.ipynb
@@ -14,7 +14,7 @@ nav:
       - Protected Planet: notebooks/index_protectedplanet.ipynb
       - UNHCR: notebooks/index_unhcr.ipynb
       - World Bank Catalog: notebooks/index_worldbankcatalog.ipynb
-      - Building a custom provider: notebooks/custom_provider.ipynb
+      # - Building a custom provider: notebooks/custom_provider.ipynb
 theme:
   name: material
   features:
