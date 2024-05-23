@@ -27,7 +27,7 @@ We can break down WorldEx into three main components or steps.
 
 1. H3 index generation
 
-   This component uses the worldex Python package to generate H3 indices for geospatial data. At this stage, metadata must be included in the generated H3 indices. See documentation for details: https://avsolatorio.github.io/worldex/.
+   This component uses the worldex Python package to generate H3 indices for geospatial data. At this stage, metadata must be included in the generated H3 indices. See [documentation](https://avsolatorio.github.io/worldex/) for details.
 
    It is essential to highlight that this step can be decentralized. Using our library, data catalogs can process and generate H3 indices for their data, ensuring that their data does not leave their repositories. This decentralization is critical for data that are not publicly available.
 
@@ -52,10 +52,10 @@ For example, the World Bank’s Geospatial Operations Support Team (GOST) is lea
 WorldEx leverages well-known and trusted open-sourced technologies. It uses Python, [H3](https://h3geo.org/docs/highlights/indexing/) from Uber, [Nominatim](https://nominatim.org/) from OpenStreetMap, [PostgreSQL](https://www.postgresql.org/) (with [PostGIS](https://postgis.net/)), [ElasticSearch](https://postgis.net/), and [Qdrant](https://qdrant.tech/).
 
 ## Team
-- Renzo Gabriel Bongocan: Lead Developer
-- Joseph Thomas Miclat: Geospatial Data Engineer
-- Aivin V. Solatorio: Project Lead
-- Olivier Dupriez: Advisor
+- [Renzo Gabriel Bongocan](https://www.linkedin.com/in/renzo-bongocan/): Lead Developer
+- [Joseph Thomas Miclat](https://www.linkedin.com/in/jtmiclat/): Geospatial Data Engineer
+- [Aivin V. Solatorio](https://www.linkedin.com/in/avsolatorio/): Project Lead
+- [Olivier Dupriez](https://www.linkedin.com/in/olivier-dupriez-5285ab1b8): Advisor
 
 ## Acknowledgment
 The development of WorldEx has been funded by the Knowledge for Change program (KCP IV) of the World Bank. Project name: (P180150) _Indexing the World: Enabling the effective and efficient discovery of geospatial data for holistic and localized research)_, KCP IV - TF085237
