@@ -8,5 +8,5 @@ Here is a list of dataset providers and examples on how to use them.
 | The Humanitarian Data Exchange | https://data.humdata.org          | [Example Notebook](../notebooks/index_hdx/)              |
 | Protected Planet               | https://www.protectedplanet.net/  | [Example Notebook](../notebooks/index_protectedplanet/)  |
 | UNHCR                          | https://www.unhcr.org/            | [Example Notebook](../notebooks/index_unhcr/)            |
-| Worldbank Catalog              | https://datacatalog.worldbank.org | [Example Notebook](../notebooks/index_worldbankcatalog/) |
+| World Bank Catalog             | https://datacatalog.worldbank.org | [Example Notebook](../notebooks/index_worldbankcatalog/) |
 | Worldpop                       | https://www.worldpop.org/         | [Example Notebook](../notebooks/index_worldpop/)         |

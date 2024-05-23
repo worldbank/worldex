@@ -13,7 +13,7 @@ nav:
       - EnergyData: notebooks/index_energydata.ipynb
       - Protected Planet: notebooks/index_protectedplanet.ipynb
       - UNHCR: notebooks/index_unhcr.ipynb
-      - Worldbank Catalog: notebooks/index_worldbankcatalog.ipynb
+      - World Bank Catalog: notebooks/index_worldbankcatalog.ipynb
       - Building a custom provider: notebooks/custom_provider.ipynb
 theme:
   name: material
