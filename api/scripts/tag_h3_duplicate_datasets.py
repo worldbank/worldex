@@ -84,7 +84,7 @@ def main():
                     """).bindparams(natl_boundary_country=f"national boundaries.*{country_}")
                 )
                 if DRY_RUN:
-                    print("Running in dry run mode, not committing")
+                    print("Dry run only, not committing")
                     continue
                 sess.commit()
             except Exception:
