@@ -1,3 +1,5 @@
+from app.services import build_h3_parents_expression
+
 _bounds_query = "SELECT ST_GeomFromGeoJSON(CAST(:location AS TEXT)) bounds"
 
 # TODO: make this less redundant
@@ -45,13 +47,9 @@ FROM datasets JOIN filtered_datasets USING (id)
 """
 
 def get_datasets_by_location_query(resolution: int, candidate_datasets_cte=None) -> str:
-    parents_array = ["fill_index"] + [
-        f"h3_cell_to_parent(fill_index, {res})" for res in range(0, resolution)
-    ]
-    parents_comma_delimited = ", ".join(parents_array)
     return datasets_by_location.format(
         fill_query=location_fill_res2 if resolution == 2 else location_fill,
-        parents_array=parents_comma_delimited,
+        parents_array=build_h3_parents_expression(resolution),
         candidate_datasets_cte=candidate_datasets_cte or "",
         # jerryrig
         candidate_datasets_filter="""
