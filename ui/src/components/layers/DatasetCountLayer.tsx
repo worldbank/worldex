@@ -4,7 +4,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { H3HexagonLayer, TileLayer } from '@deck.gl/geo-layers/typed';
 import { TileLoadProps, Tile2DHeader } from '@deck.gl/geo-layers/typed/tileset-2d';
 import { Typography } from '@mui/material';
-import { DatasetCount } from 'components/common/types';
+import { Dataset, DatasetCount } from 'components/common/types';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { setDatasets, setH3Index as setSelectedH3Index } from 'store/selectedSlice';
 import { RootState } from 'store/store';
@@ -19,6 +19,7 @@ import { load } from '@loaders.gl/core';
 import getSteppedZoomResolutionPair from 'utils/getSteppedZoomResolutionPair';
 import { ArrowLoader } from '@loaders.gl/arrow';
 import { selectAccessibilities, selectSourceOrgFilters } from 'store/selectedFiltersSlice';
+import { useEffect } from 'react';
 
 export const DATASET_COUNT_LAYER_ID = 'datasetCountLayer';
 
@@ -147,19 +148,19 @@ export default function DatasetCountLayer() {
           return;
         }
         dispatch(setSelectedH3Index(targetIndex));
-        const resp = await fetch(`${import.meta.env.VITE_API_URL}/dataset_metadata/${targetIndex}`, {
-          method: 'post',
-          headers: {
-            Accept: 'application/json',
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            source_org: sourceOrgs,
-            accessibility: accessibilities,
-          }),
-        });
-        const results = await resp.json();
-        dispatch(setDatasets(results));
+        // const resp = await fetch(`${import.meta.env.VITE_API_URL}/dataset_metadata/${targetIndex}`, {
+        //   method: 'post',
+        //   headers: {
+        //     Accept: 'application/json',
+        //     'Content-Type': 'application/json',
+        //   },
+        //   body: JSON.stringify({
+        //     source_org: sourceOrgs,
+        //     accessibility: accessibilities,
+        //   }),
+        // });
+        // const results = await resp.json();
+        // dispatch(setDatasets(results));
       },
       onHover: (info: any) => {
         if (info?.object) {
