@@ -1,28 +1,29 @@
 _bounds_query = "SELECT ST_GeomFromGeoJSON(CAST(:location AS TEXT)) bounds"
 
 # TODO: make this less redundant
-LOCATION_FILL = f"""
+location_fill = f"""
 WITH bounds AS (
-    {_bounds_query}
+  {_bounds_query}
 )
 SELECT h3_polygon_to_cells((SELECT bounds FROM bounds), :resolution) fill_index
 """
 
-LOCATION_FILL_RES2 = f"""
+location_fill_res2 = f"""
 WITH bounds AS ({_bounds_query}),
 res3 AS (
-    SELECT h3_polygon_to_cells((SELECT bounds FROM bounds), 3) res3
+  SELECT h3_polygon_to_cells((SELECT bounds FROM bounds), 3) res3
 )
 SELECT DISTINCT fill_index FROM res3,
 LATERAL h3_cell_to_parent(res3, :resolution) AS fill_index
 WHERE ST_Contains((SELECT bounds FROM bounds), h3_cell_to_geometry(fill_index))
 """
 
-DATASETS_BY_LOCATION = """
+datasets_by_location = """
 WITH fill AS ({fill_query}),
 with_parents AS (
   SELECT fill_index, ARRAY[{parents_array}] parents FROM fill GROUP BY fill_index
 ),
+{candidate_datasets_cte}
 filtered_datasets AS (
   SELECT DISTINCT(dataset_id) id FROM h3_data JOIN with_parents ON h3_index = ANY(parents)
   UNION ALL
@@ -39,5 +40,21 @@ SELECT
   accessibility,
   date_start,
   date_end
-FROM datasets JOIN filtered_datasets USING (id);
+FROM datasets JOIN filtered_datasets USING (id)
+{candidate_datasets_filter}
 """
+
+def get_datasets_by_location_query(resolution: int, candidate_datasets_cte=None) -> str:
+    parents_array = ["fill_index"] + [
+        f"h3_cell_to_parent(fill_index, {res})" for res in range(0, resolution)
+    ]
+    parents_comma_delimited = ", ".join(parents_array)
+    return datasets_by_location.format(
+        fill_query=location_fill_res2 if resolution == 2 else location_fill,
+        parents_array=parents_comma_delimited,
+        candidate_datasets_cte=candidate_datasets_cte or "",
+        # jerryrig
+        candidate_datasets_filter="""
+        WHERE id = ANY(SELECT id FROM candidate_datasets)
+        """ if candidate_datasets_cte else ""
+    )
