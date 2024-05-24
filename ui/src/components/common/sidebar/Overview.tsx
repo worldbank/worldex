@@ -5,7 +5,7 @@ import { setDatasetCount } from "store/selectedSlice";
 import { RootState } from "store/store";
 import DeselectDatasetButton from "./DeselectDatasetButton";
 import HidePreviewButton from "./HidePreviewButton";
-import { selectAccessibilities, selectSourceOrgFilters, setSourceOrgs } from "store/selectedFiltersSlice";
+import { selectAccessibilities, selectSourceOrgFilters } from "store/selectedFiltersSlice";
 
 const Overview = () => {
   const { datasetCount }: { datasetCount: number } = useSelector((state: RootState) => state.selected);
@@ -14,10 +14,12 @@ const Overview = () => {
   const { h3Resolution, zIndex } = useSelector((state: RootState) => state.app);
   const { selectedDataset } = useSelector((state: RootState) => state.selected);
   const { fileUrl: previewFileUrl, isLoadingPreview } = useSelector((state: RootState) => state.preview);
+  const { location } = useSelector((state: RootState) => state.location);
   const sourceOrgs = useSelector(selectSourceOrgFilters);
   const accessibilities = useSelector(selectAccessibilities);
   const isFiltered = (
-    (Array.isArray(sourceOrgs) && sourceOrgs.length > 0)
+    location
+    || (Array.isArray(sourceOrgs) && sourceOrgs.length > 0)
     || (Array.isArray(accessibilities) && accessibilities.length > 0)
   )
 
@@ -29,6 +31,12 @@ const Overview = () => {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
+        location: (
+          location && ['Polygon', 'MultiPolygon'].includes(location.geojson.type)
+            ? JSON.stringify(location.geojson)
+            : null
+        ),
+        resolution: h3Resolution,
         source_org: sourceOrgs,
         accessibility: accessibilities,
       })
@@ -37,7 +45,7 @@ const Overview = () => {
     .then((data) => {
       dispatch(setDatasetCount(data["dataset_count"]))
     });
-  }, [sourceOrgs, accessibilities]);
+  }, [location, sourceOrgs, accessibilities]);
 
   return (
     <div className="p-4">

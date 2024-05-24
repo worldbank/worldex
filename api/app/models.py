@@ -42,7 +42,9 @@ class DatasetCountsRequest(BaseModel):
     ignore_cache: bool = False
 
 
-class TotalDatasetCountRequest(BaseModel):
+class IndexedDatasetCountRequest(BaseModel):
+    resolution: int | None = None
+    location: str | None = None
     source_org: Optional[List[str]] = []
     accessibility: Optional[List[str]] = []
 

@@ -7,7 +7,7 @@ from app.models import (
     DatasetMetadataRequest,
     DatasetRequest,
     DatasetsByLocationRequest,
-    TotalDatasetCountRequest,
+    IndexedDatasetCountRequest,
 )
 from app.services import (
     dataset_count_to_bytes,
@@ -21,6 +21,7 @@ from app.sql.datasets_by_location import (
     LOCATION_FILL,
     LOCATION_FILL_RES2,
 )
+from app.sql.indexed_dataset_count import get_indexed_dataset_count_query
 from fastapi import APIRouter, Depends, Response
 from shapely import wkt
 from sqlalchemy import func, or_, select, text
@@ -103,12 +104,13 @@ async def get_dataset_coverage(
 
 @router.post("/dataset_count/")
 async def get_dataset_count(
-    payload: TotalDatasetCountRequest,
+    payload: IndexedDatasetCountRequest,
     session: AsyncSession = Depends(get_async_session),
 ):
-    query = select(func.count(Dataset.id))
+    location = payload.location
+    candidate_datasets_stmt = select(Dataset.id if location else func.count(Dataset.id))
     if source_org := payload.source_org:
-        query = query.where(Dataset.source_org.in_(source_org))
+        candidate_datasets_stmt = candidate_datasets_stmt.where(Dataset.source_org.in_(source_org))
     if accessibility := payload.accessibility:
         conditions = []
         if "Others" in accessibility:
@@ -116,7 +118,19 @@ async def get_dataset_count(
             accessibility.remove("Others")
         if accessibility:
             conditions.append(Dataset.accessibility.in_(accessibility))
-        query = query.where(or_(*conditions))
+        candidate_datasets_stmt = candidate_datasets_stmt.where(or_(*conditions))
+    if not location:
+        query = candidate_datasets_stmt
+    else:
+        resolution = payload.resolution
+        assert resolution is not None
+        parents_array = ["fill_index"] + [
+            f"h3_cell_to_parent(fill_index, {res})" for res in range(0, resolution)
+        ]
+        parents_comma_delimited = ", ".join(parents_array)
+        compiled = candidate_datasets_stmt.compile(compile_kwargs={"literal_binds": True})
+        query = get_indexed_dataset_count_query(resolution, compiled, parents_comma_delimited)
+        query = text(query).bindparams(resolution=resolution, location=location)
     result = await session.execute(query)
     return {"dataset_count": result.scalar_one()}
 
