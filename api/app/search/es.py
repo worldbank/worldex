@@ -5,9 +5,9 @@ from app.document import DatasetFacetedSearch
 
 def keyword_search(
     query: str,
-    source_org: List[str],
-    accessibility: List[str],
-    projection: List[str],
+    source_org: List[str] = None,
+    accessibility: List[str] = None,
+    projection: List[str] = None,
     min_year: int = None,
     max_year: int = None,
     from_result: int = 0,
