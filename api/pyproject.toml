@@ -39,6 +39,7 @@ sentence-transformers = "^2.7.0"
 gliner = "^0.1.11"
 pycountry = "^23.12.11"
 scipy = "1.12"
+gradio-client = "^0.16.4"
 
 [tool.poetry.group.handlers]
 optional = true
