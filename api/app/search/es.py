@@ -1,6 +1,15 @@
+import os
 from typing import List
 from datetime import datetime
 from app.document import DatasetFacetedSearch
+from elasticsearch_dsl import connections
+
+
+ELASTICSEARCH_CONNECTION = os.getenv("ELASTICSEARCH_URL_SYNC")
+connections.create_connection(
+    hosts=[ELASTICSEARCH_CONNECTION],
+    verify_certs=False,
+)
 
 
 def keyword_search(
