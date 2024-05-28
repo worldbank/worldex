@@ -148,19 +148,6 @@ export default function DatasetCountLayer() {
           return;
         }
         dispatch(setSelectedH3Index(targetIndex));
-        // const resp = await fetch(`${import.meta.env.VITE_API_URL}/dataset_metadata/${targetIndex}`, {
-        //   method: 'post',
-        //   headers: {
-        //     Accept: 'application/json',
-        //     'Content-Type': 'application/json',
-        //   },
-        //   body: JSON.stringify({
-        //     source_org: sourceOrgs,
-        //     accessibility: accessibilities,
-        //   }),
-        // });
-        // const results = await resp.json();
-        // dispatch(setDatasets(results));
       },
       onHover: (info: any) => {
         if (info?.object) {
