@@ -4,9 +4,9 @@ import { Autocomplete, CircularProgress, IconButton, Paper, TextField } from "@m
 import booleanWithin from "@turf/boolean-within";
 import { multiPolygon, point, polygon } from "@turf/helpers";
 import { cellToLatLng, getResolution } from "h3-js";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { setFilteredDatasets, setLocation, setPendingLocationCheck } from 'store/locationSlice';
+import { setFilteredDatasets, setLastZoom, setLocation, setPendingLocationCheck } from 'store/locationSlice';
 import { setH3Index as setSelectedH3Index } from 'store/selectedSlice';
 import { RootState } from "store/store";
 import getSteppedZoomResolutionPair from 'utils/getSteppedZoomResolutionPair';
@@ -14,6 +14,7 @@ import isEqual from 'lodash.isequal';
 import uniqWith from 'lodash.uniqwith';
 import isEqualWith from 'lodash.isequalwith';
 import moveViewportToBbox from 'utils/moveViewportToBbox';
+import { selectAccessibilities, selectSourceOrgFilters } from 'store/selectedFiltersSlice';
 
 const SearchButton = ({isLoading}: {isLoading: boolean}) =>
   <div className="flex justify-center items-center w-[2em] mr-[-8px]">
@@ -36,13 +37,15 @@ const ClearButton = () =>
 
 const LocationSearch = ({ className }: { className?: string }) => {
   const [query, setQuery] = useState("");
-
   const [options, setOptions] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
   const [isError, setIsError] = useState(false);
   const dispatch = useDispatch();
   const { h3Index: selectedH3Index }: { h3Index: string } = useSelector((state: RootState) => state.selected);
   const viewState = useSelector((state: RootState) => state.carto.viewState);
+  const { location, lastZoom } = useSelector((state: RootState) => state.location);
+  const sourceOrgs = useSelector(selectSourceOrgFilters);
+  const accessibilities = useSelector(selectAccessibilities);
 
   const getDatasets = async ({ location, zoom }: { location: any, zoom: number }) => {
     const [_, resolution] = getSteppedZoomResolutionPair(zoom);
@@ -55,6 +58,8 @@ const LocationSearch = ({ className }: { className?: string }) => {
       body: JSON.stringify({
         location: JSON.stringify(location.geojson),
         resolution,
+        source_org: sourceOrgs,
+        accessibility: accessibilities,
       })
     });
     const datasetsResults = await datasetsResp.json();
@@ -101,6 +106,7 @@ const LocationSearch = ({ className }: { className?: string }) => {
     const bbox = { minLat, maxLat, minLon, maxLon };
     dispatch(setLocation(location));
     const { zoom } = moveViewportToBbox(bbox, viewState, dispatch);
+    dispatch(setLastZoom(zoom));
     if (['Polygon', 'MultiPolygon'].includes(location.geojson.type)) {
       getDatasets({ location, zoom });
     }
@@ -111,8 +117,15 @@ const LocationSearch = ({ className }: { className?: string }) => {
     setIsError(false);
     setOptions([]);
     dispatch(setLocation(null));
+    dispatch(setLastZoom(null));
     dispatch(setFilteredDatasets(null));
   }
+
+  useEffect(() => {
+    if (location && lastZoom) {
+      getDatasets({ location, zoom: lastZoom })
+    }
+  }, [sourceOrgs, accessibilities]);
 
   // use Autocomplete as the base component since it conveniently
   // combines free text search and dropdown functionalities

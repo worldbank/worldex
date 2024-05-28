@@ -7,6 +7,7 @@ const slice = createSlice({
   initialState: {
     query: null,
     location: null,
+    lastZoom: null,
     filteredDatasets: null,
     pendingLocationCheck: false,
   },
@@ -16,6 +17,9 @@ const slice = createSlice({
     },
     setLocation: (state, action) => {
       state.location = action.payload;
+    },
+    setLastZoom: (state, action) => {
+      state.lastZoom = action.payload;
     },
     setFilteredDatasets: (state, action) => {
       state.filteredDatasets = action.payload;
@@ -34,6 +38,10 @@ export const setQuery = (payload: string | null) => ({
 });
 export const setLocation = (payload: any) => ({
   type: 'location/setLocation',
+  payload,
+});
+export const setLastZoom = (payload: any) => ({
+  type: 'location/setLastZoom',
   payload,
 });
 export const setFilteredDatasets = (payload: Dataset[]) => ({

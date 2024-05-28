@@ -5,7 +5,6 @@ import numpy as np
 import pyarrow as pa
 from app.models import Dataset
 from app.sql.bounds_fill import FILL, FILL_RES2
-from app.sql.bounds_fill import _bounds_query as BOUNDS_QUERY
 from app.sql.dataset_counts import DATASET_COUNTS, DATASET_COUNTS_FILTERED
 from app.sql.dataset_metadata import DATASET_METADATA, DATASET_METADATA_FILTERED
 from sqlalchemy import or_, select, text
@@ -23,13 +22,16 @@ def img_to_data_url(img: np.ndarray):
     return f"data:image/png;base64,{base64_str}"
 
 
-def build_dataset_count_tiles_query(z: int, x: int, y: int, resolution: int, location: str, filters=None):
+def build_h3_parents_expression(resolution: int) -> str:
     # dynamically constructing this expression is faster than deriving from
     # generate_series(0, :resolution) despite the latter resulting to more readable code
     parents_array = ["fill_index"] + [
         f"h3_cell_to_parent(fill_index, {res})" for res in range(0, resolution)
     ]
-    parents_comma_delimited = ", ".join(parents_array)
+    return ", ".join(parents_array)
+
+
+def build_dataset_count_tiles_query(z: int, x: int, y: int, resolution: int, location: str, filters=None):
     dataset_counts_query = DATASET_COUNTS_FILTERED if filters else DATASET_COUNTS
 
     candidate_datasets_stmt = select(Dataset.id)
@@ -46,7 +48,7 @@ def build_dataset_count_tiles_query(z: int, x: int, y: int, resolution: int, loc
     compiled = candidate_datasets_stmt.compile(compile_kwargs={"literal_binds": True})
     filter_kwargs = { "candidate_datasets_query": compiled } if filters else {}
     query = dataset_counts_query.format(
-        parents_array=parents_comma_delimited,
+        parents_array=build_h3_parents_expression(resolution),
         fill_query=FILL_RES2 if resolution == 2 else FILL,
         **filter_kwargs
     )
