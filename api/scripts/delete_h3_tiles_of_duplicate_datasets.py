@@ -7,23 +7,10 @@ from sqlalchemy.orm import sessionmaker
 
 DRY_RUN = os.getenv("DRY_RUN", "true").lower() == "true"
 DATABASE_CONNECTION = os.getenv("DATABASE_URL_SYNC")
-COUNTRY_KEYWORDS = [
-    "canada",
-    "russia",
-    "united states",
-    "china",
-    # "india",
-    "brazil",
-    "australia",
-    "indonesia",
-    "greenland",
-    "sweden",
-    "argentina",
-    "norway",
-    "chile",
-    "finland",
-    "kazakhstan",
-]
+COUNTRY_KEYWORDS = os.getenv("COUNTRY_KEYWORDS")
+if COUNTRY_KEYWORDS:
+    COUNTRY_KEYWORDS = COUNTRY_KEYWORDS.split(",") if COUNTRY_KEYWORDS else []
+
 
 def main():
     engine = create_engine(DATABASE_CONNECTION)
@@ -32,7 +19,6 @@ def main():
     with Session() as sess:
         for country in COUNTRY_KEYWORDS:
             try:
-                natl_boundary_country = f"national boundaries.*{country}$"
                 dupe_ids = sess.scalars(
                     text(
                         """
@@ -42,7 +28,7 @@ def main():
                             SELECT id FROM datasets WHERE name ~* :natl_boundary_country
                         )
                         """
-                    ).bindparams(natl_boundary_country=natl_boundary_country)
+                    ).bindparams(natl_boundary_country=f"national boundaries.*{country.lower()}$")
                 ).all()
                 print("Deleting h3 tiles of the ff dupe datasets:", dupe_ids)
                 for dupe_id in dupe_ids:

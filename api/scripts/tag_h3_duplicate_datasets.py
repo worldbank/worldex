@@ -7,23 +7,10 @@ from sqlalchemy.orm import sessionmaker
 
 DRY_RUN = os.getenv("DRY_RUN", "true").lower() == "true"
 DATABASE_CONNECTION = os.getenv("DATABASE_URL_SYNC")
-COUNTRY_KEYWORDS = [
-    # "canada",
-    # "russia",
-    # "united states",
-    # "china",
-    # "india",
-    "brazil",
-    "australia",
-    "indonesia",
-    "greenland",
-    "sweden",
-    "argentina",
-    "norway",
-    "chile",
-    "finland",
-    "kazakhstan",
-]
+COUNTRY_KEYWORDS = os.getenv("COUNTRY_KEYWORDS")
+if COUNTRY_KEYWORDS:
+    COUNTRY_KEYWORDS = COUNTRY_KEYWORDS.split(",") if COUNTRY_KEYWORDS else []
+
 
 def main():
     engine = create_engine(DATABASE_CONNECTION)
@@ -32,7 +19,7 @@ def main():
     with Session() as sess:
         for country in COUNTRY_KEYWORDS:
             try:
-                country_ = country if country != "united states" else f"{country}(?! minor outlying islands)"
+                country_lowered = country.lower()
                 q = text(
                     """
                     WITH country_datasets AS (
@@ -51,10 +38,12 @@ def main():
                         ORDER BY h3_count
                     )
                     SELECT * FROM with_h3_counts
-                    WHERE h3_count = (SELECT h3_count FROM with_h3_counts WHERE name ILIKE '%national boundaries%')
+                    WHERE h3_count = (SELECT h3_count FROM with_h3_counts WHERE name ~* :natl_boundary_country)
                     ORDER BY CASE WHEN name ILIKE '%national boundaries%' THEN 0 ELSE 1 end;
                     """
-                ).bindparams(country=country_)
+                ).bindparams(
+                    country=country_lowered,
+                    natl_boundary_country=f"national boundaries.*{country_lowered}$")
                 results = sess.execute(q).fetchall()
                 country_datasets = [row._mapping for row in results]
                 print(country_datasets)
@@ -81,7 +70,7 @@ def main():
                         WHERE id = (
                             SELECT id FROM datasets WHERE name ~* :natl_boundary_country
                         )
-                    """).bindparams(natl_boundary_country=f"national boundaries.*{country_}")
+                    """).bindparams(natl_boundary_country=f"national boundaries.*{country.lower()}$")
                 )
                 if DRY_RUN:
                     print("Dry run only, not committing")
