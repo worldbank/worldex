@@ -28,7 +28,7 @@ def main():
                             SELECT id FROM datasets WHERE name ~* :natl_boundary_country
                         )
                         """
-                    ).bindparams(natl_boundary_country=f"national boundaries.*{country.lower()}$")
+                    ).bindparams(natl_boundary_country=f"national boundaries, {country.lower()}$")
                 ).all()
                 print("Deleting h3 tiles of the ff dupe datasets:", dupe_ids)
                 for dupe_id in dupe_ids:

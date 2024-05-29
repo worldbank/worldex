@@ -20,6 +20,7 @@ def main():
         for country in COUNTRY_KEYWORDS:
             try:
                 country_lowered = country.lower()
+                natl_boundary_country = f"national boundaries, {country_lowered}$"
                 q = text(
                     """
                     WITH country_datasets AS (
@@ -39,11 +40,11 @@ def main():
                     )
                     SELECT * FROM with_h3_counts
                     WHERE h3_count = (SELECT h3_count FROM with_h3_counts WHERE name ~* :natl_boundary_country)
-                    ORDER BY CASE WHEN name ILIKE '%national boundaries%' THEN 0 ELSE 1 end;
+                    ORDER BY CASE WHEN name ~* :natl_boundary_country THEN 0 ELSE 1 end;
                     """
                 ).bindparams(
                     country=country_lowered,
-                    natl_boundary_country=f"national boundaries.*{country_lowered}$")
+                    natl_boundary_country=natl_boundary_country)
                 results = sess.execute(q).fetchall()
                 country_datasets = [row._mapping for row in results]
                 print(country_datasets)
@@ -70,7 +71,7 @@ def main():
                         WHERE id = (
                             SELECT id FROM datasets WHERE name ~* :natl_boundary_country
                         )
-                    """).bindparams(natl_boundary_country=f"national boundaries.*{country.lower()}$")
+                    """).bindparams(natl_boundary_country=natl_boundary_country)
                 )
                 if DRY_RUN:
                     print("Dry run only, not committing")
@@ -78,6 +79,7 @@ def main():
                 sess.commit()
             except Exception:
                 traceback.print_exc()
+                sess.rollback()
                 continue
 
 
