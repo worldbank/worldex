@@ -10,8 +10,6 @@ from app.models import Dataset
 from sqlalchemy import create_engine, select
 from sqlalchemy.orm import sessionmaker
 
-# # TODO: Change this later to the actual DB...
-# DATABASE_CONNECTION = "postgresql://postgres:pass@localhost:5432/public.datasets"
 DATABASE_CONNECTION = os.getenv("DATABASE_URL_SYNC")
 
 # Connect to the Qdrant server

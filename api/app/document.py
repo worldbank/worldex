@@ -105,6 +105,4 @@ class DatasetFacetedSearch(FacetedSearch):
 
             search = search.query(query)
 
-            print(search.to_dict())
-
         return search
