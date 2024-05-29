@@ -14,7 +14,7 @@ services:
       - ./ui/.env
     depends_on:
       - api
-    profiles: ["web"]
+    profiles: [ "web" ]
   preview:
     build:
       context: ./ui/
@@ -29,7 +29,7 @@ services:
       - ./ui/.env
     depends_on:
       - api
-    profiles: ["preview"]
+    profiles: [ "preview" ]
   cors-anywhere:
     build:
       context: ./cors-anywhere
@@ -51,6 +51,8 @@ services:
     depends_on:
       db:
         condition: service_healthy
+      qdrant:
+        condition: service_healthy
     healthcheck:
       test: curl --fail localhost:8000/health_check || exit 1
   db:
@@ -68,7 +70,7 @@ services:
     env_file:
       - secrets/db.env
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready"]
+      test: [ "CMD-SHELL", "pg_isready" ]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -87,5 +89,15 @@ services:
       - 9200:9200
     env_file:
       - secrets/es.env
+  qdrant:
+    image: qdrant/qdrant:v1.9.0
+    volumes:
+      - qdrant_storage:/qdrant/storage:z
+    ports:
+      - 6333:6333
+      - 6334:6334
+    healthcheck:
+      test: curl --fail localhost:6333/readyz || exit 1
 volumes:
   pg_data:
+  qdrant_storage:

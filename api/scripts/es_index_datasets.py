@@ -20,6 +20,10 @@ def main():
     Session = sessionmaker(bind=engine)
     if DatasetDocument._index.exists():
         DatasetDocument._index.delete()
+
+    # Create the mappings in Elasticsearch
+    DatasetDocument.init()
+
     with Session() as sess:
         result = sess.execute(select(Dataset))
         for idx, r in enumerate(result):

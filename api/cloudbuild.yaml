@@ -19,6 +19,6 @@ steps:
   - '--region'
   - 'us-central1'
   - '--min-instances'
-  - '4'
+  - '2'
 images:
 - us-central1-docker.pkg.dev/$PROJECT_ID/worldex-repo/worldex-api:$COMMIT_SHA
