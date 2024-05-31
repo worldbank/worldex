@@ -30,7 +30,7 @@ def main():
                         """
                     ).bindparams(natl_boundary_country=f"national boundaries, {country.lower()}$")
                 ).all()
-                print("Deleting h3 tiles of the ff dupe datasets:", dupe_ids)
+                print(f"Deleting h3 tiles of {country}'s dupe datasets:", dupe_ids)
                 for dupe_id in dupe_ids:
                     sess.execute(text("DELETE FROM h3_data WHERE dataset_id = :dupe_id").bindparams(dupe_id=dupe_id))
                     sess.execute(text("DELETE FROM h3_children_indicators WHERE dataset_id = :dupe_id").bindparams(dupe_id=dupe_id))
