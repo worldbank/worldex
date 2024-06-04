@@ -58,24 +58,31 @@ function Search({ className }: { className?: string }) {
   const sourceOrgs = useSelector(selectSourceOrgFilters);
   const accessibilities = useSelector(selectAccessibilities);
 
-  const getDatasets = async ({ location, zoom }: { location: any, zoom: number }) => {
+  const getDatasets = async ({ location, zoom, datasetIds }: { location: any, zoom: number, datasetIds?: number[] }) => {
     const [_, resolution] = getSteppedZoomResolutionPair(zoom);
-    const datasetsResp = await fetch(`${import.meta.env.VITE_API_URL}/datasets_by_location/`, {
-      method: 'post',
-      headers: {
-        Accept: 'application/json',
-        'Content-Type': 'application/json',
+    const body: any = {
+      location: JSON.stringify(location.geojson),
+      resolution,
+    };
+    if (Array.isArray(datasetIds) && datasetIds.length > 0) {
+      body.dataset_ids = datasetIds;
+    } else {
+      body.source_org = sourceOrgs;
+      body.accessibility = accessibilities;
+    }
+    const { data: datasetsResults } = await axios.post(
+      `${import.meta.env.VITE_API_URL}/datasets_by_location/`,
+      body,
+      {
+        headers: {
+          Accept: 'application/json',
+          'Content-Type': 'application/json',
+        },
       },
-      body: JSON.stringify({
-        location: JSON.stringify(location.geojson),
-        resolution,
-        source_org: sourceOrgs,
-        accessibility: accessibilities,
-      }),
-    });
-    const datasetsResults = await datasetsResp.json();
+    );
     if (datasetsResults) {
-      dispatch(setFilteredDatasets(datasetsResults));
+      dispatch(setDatasets(datasetsResults));
+      // dispatch(setFilteredDatasets(datasetsResults));
     }
 
     dispatch(setPendingLocationCheck(true));
@@ -109,7 +116,6 @@ function Search({ className }: { className?: string }) {
         { params: { query: encodedQuery } },
       );
       const { entities } = parseResults || [];
-      console.log(entities);
 
       keywordPayload_.query = encodedQuery;
       // single pass only
@@ -121,10 +127,8 @@ function Search({ className }: { className?: string }) {
         keywordPayload_.max_year = yearEntity.text;
       }
 
-      console.log(keywordPayload_);
       setKeywordPayload(keywordPayload_);
       if (regionEntity || countryEntity || entities.length === 0) {
-        console.log('should proceed with loc search');
         const locationQ = regionEntity?.text || countryEntity?.text || encodedQuery;
         const { data: nominatimResults } = await axios.get(
           'https://nominatim.openstreetmap.org/search',
@@ -136,49 +140,45 @@ function Search({ className }: { className?: string }) {
             },
           },
         );
-        if (nominatimResults == null || nominatimResults.length === 0) {
-          // continue;
-          console.log('prcoeed to keyword');
-        } else {
+        if (Array.isArray(nominatimResults) && nominatimResults.length > 0) {
           const dedupedResults = uniqWith(
             nominatimResults,
             (result: any, other: any) => isEqualWith(result, other, (result: any, other: any) => isEqual(result.geojson.coordinates, other.geojson.coordinates)),
           );
-          console.log(dedupedResults);
           setOptions([{ display_name: 'Skip geography filtering', name: 'Skip geography filtering', skip: true }, ...dedupedResults]);
           return;
         }
       }
 
+      // use getDatasetsByKeyword()?
       const { data } = await axios.get(
         `${import.meta.env.VITE_API_URL}/search/keyword`,
         { params: keywordPayload_ },
       );
       dispatch(setDatasets(data.hits));
     } catch (err) {
-      console.log(err.toJSON());
+      console.error(err.toJSON());
     } finally {
       setIsLoading(false);
     }
   };
 
   const getDatasetsByKeyword = async () => {
-    console.log(keywordPayload);
     const { data } = await axios.get(
       `${import.meta.env.VITE_API_URL}/search/keyword`,
       { params: keywordPayload },
     );
-    dispatch(setDatasets(data.hits));
+    return data;
+    // dispatch(setDatasets(data.hits));
   };
 
-  const selectLocation = (event: React.ChangeEvent<HTMLInputElement>, location: any | null) => {
+  const selectLocation = async (event: React.ChangeEvent<HTMLInputElement>, location: any | null) => {
+    const { hits: datasets } = await getDatasetsByKeyword();
+    const datasetIds = datasets.map((d: any) => d.id);
     if (location.skip) {
-      console.log('skipping');
-      getDatasetsByKeyword();
+      dispatch(setDatasets(datasets));
       return;
     }
-    console.log('selecting location');
-    setQuery(location.display_name || location.name);
     const [minLat, maxLat, minLon, maxLon] = location.boundingbox.map(parseFloat);
     const bbox = {
       minLat, maxLat, minLon, maxLon,
@@ -187,7 +187,7 @@ function Search({ className }: { className?: string }) {
     const { zoom } = moveViewportToBbox(bbox, viewState, dispatch);
     dispatch(setLastZoom(zoom));
     if (['Polygon', 'MultiPolygon'].includes(location.geojson.type)) {
-      getDatasets({ location, zoom });
+      getDatasets({ location, zoom, datasetIds });
     }
   };
 
@@ -219,7 +219,6 @@ function Search({ className }: { className?: string }) {
         getOptionLabel={(option) => option.display_name || option.name}
         isOptionEqualToValue={(option, value) => option.place_id === value.place_id}
         inputValue={query}
-        defaultValue="Search for datasets"
         onChange={selectLocation}
         renderInput={(params) => (
           <TextField

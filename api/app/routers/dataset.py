@@ -102,6 +102,7 @@ async def get_dataset_count(
     payload: IndexedDatasetCountRequest,
     session: AsyncSession = Depends(get_async_session),
 ):
+    # needs to be filterable with dataset_ids
     query = select(func.count(Dataset.id))
     if source_org := payload.source_org:
         query = query.where(Dataset.source_org.in_(source_org))
@@ -126,11 +127,23 @@ async def get_datasets_by_location(
     resolution = payload.resolution
     source_org = payload.source_org
     accessibility = payload.accessibility
+    dataset_ids = payload.dataset_ids
     has_filters = source_org or accessibility
     candidate_datasets_stmt = None
     kwargs = { "resolution": resolution }
     # TODO: move to a service
-    if has_filters:
+    # if dataset_ids is provided, assume it is already filtered
+    if dataset_ids:
+        candidate_datasets_stmt = text(f"""
+           SELECT id, ordinality
+           FROM UNNEST(ARRAY[{','.join(str(id) for id in dataset_ids)}])
+           WITH ORDINALITY AS element_list(id, ordinality)
+        """)
+        # candidate_datasets_stmt = select(func.unnest(dataset_ids).label("id"))
+        candidate_datasets_stmt = candidate_datasets_stmt.compile(compile_kwargs={"literal_binds": True})
+        kwargs["candidate_datasets_cte"] = f"candidate_datasets AS ({candidate_datasets_stmt}),"
+        kwargs["has_ordinality"] = True
+    elif has_filters:
         candidate_datasets_stmt = select(Dataset.id)
         if source_org:
             candidate_datasets_stmt = candidate_datasets_stmt.where(Dataset.source_org.in_(source_org))

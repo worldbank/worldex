@@ -21,10 +21,7 @@ const Content = () => {
   const { location, filteredDatasets }: { location: any, filteredDatasets: Dataset[] } = useSelector((state: RootState) => state.search);
   // const datasets = h3Index ? datasets_ : filteredDatasets;
   const datasets = datasets_;
-  console.log(datasets_);
   const datasetsByOrgs = datasets ? groupBy(datasets, "source_org") : null;
-  // const header = h3Index ? 'Tile Datasets' : `${location?.name} Datasets`;
-  const header = 'Datasets';
 
   const { h3Index: selectedH3Index } = useSelector((state: RootState) => state.selected);
   const sourceOrgs = useSelector(selectSourceOrgFilters);
@@ -79,12 +76,9 @@ const Content = () => {
     });
   }, [sourceOrgs, accessibilities]);
 
-  console.log(datasetsByOrgs);
   return (
     <div className="h-full">
       <Search className="p-3" />
-      {/* <Divider /> */}
-      {/* { h3Index ? <Selected /> : <Overview /> } */}
       <Divider />
       <Filters className="p-4 pb-6" />
       <Divider />
@@ -94,12 +88,14 @@ const Content = () => {
             Total datasets indexed
             { isFiltered && ' (filtered)' }:{' '}
           </span>
-          {/* <span className="text-lg">{locationFilteredDatasets ? locationFilteredDatasets.length : datasetCount}</span> */}
           <span className="text-lg">{ datasets ? datasets.length : datasetCount}</span>
         </Typography>
         {
+          location?.display_name && (<span className="text-xs italic">{location.display_name}</span>)
+        }
+        {
           (selectedDataset || selectedH3Index || (previewFileUrl && !isLoadingPreview)) ? (
-            <div className="flex justify-start mt-3.5">
+            <div className="flex justify-start mt-1">
               { selectedDataset && <DeselectDatasetButton className="p-0 leading-4 first:text-left" /> }
               { selectedH3Index && <DeselectTileButton className="p-0 leading-4 first:text-left last:text-right" /> }
               { (previewFileUrl && !isLoadingPreview) && <HidePreviewButton className="p-0 leading-4 first:text-left last:text-right" /> }

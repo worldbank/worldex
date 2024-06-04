@@ -10,6 +10,7 @@ const slice = createSlice({
     lastZoom: null,
     filteredDatasets: null,
     pendingLocationCheck: false,
+    datasetIds: [],
   },
   reducers: {
     setQuery: (state, action) => {
@@ -27,28 +28,35 @@ const slice = createSlice({
     setPendingLocationCheck: (state, action) => {
       state.pendingLocationCheck = action.payload;
     },
+    setDatasetIds: (state, action) => {
+      state.datasetIds = action.payload;
+    },
   },
 });
 
 export default slice.reducer;
 
 export const setQuery = (payload: string | null) => ({
-  type: 'location/setQuery',
+  type: 'search/setQuery',
   payload,
 });
 export const setLocation = (payload: any) => ({
-  type: 'location/setLocation',
+  type: 'search/setLocation',
   payload,
 });
 export const setLastZoom = (payload: any) => ({
-  type: 'location/setLastZoom',
+  type: 'search/setLastZoom',
   payload,
 });
 export const setFilteredDatasets = (payload: Dataset[]) => ({
-  type: 'location/setFilteredDatasets',
+  type: 'search/setFilteredDatasets',
   payload,
 });
 export const setPendingLocationCheck = (payload: boolean) => ({
-  type: 'location/setPendingLocationCheck',
+  type: 'search/setPendingLocationCheck',
+  payload,
+});
+export const setDatasetIds = (payload: number[]) => ({
+  type: 'search/setDatasetIds',
   payload,
 });

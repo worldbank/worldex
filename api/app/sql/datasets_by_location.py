@@ -26,7 +26,7 @@ with_parents AS (
   SELECT fill_index, ARRAY[{parents_array}] parents FROM fill GROUP BY fill_index
 ),
 {candidate_datasets_cte}
-filtered_datasets AS (
+located_datasets AS (
   SELECT DISTINCT(dataset_id) id FROM h3_data JOIN with_parents ON h3_index = ANY(parents)
   UNION ALL
   SELECT DISTINCT(dataset_id) id FROM h3_children_indicators JOIN fill ON h3_index = fill_index
@@ -42,17 +42,20 @@ SELECT
   accessibility,
   date_start,
   date_end
-FROM datasets JOIN filtered_datasets USING (id)
-{candidate_datasets_filter}
+FROM datasets JOIN located_datasets USING (id)
+{candidate_datasets_join}
 """
 
-def get_datasets_by_location_query(resolution: int, candidate_datasets_cte=None) -> str:
+def get_datasets_by_location_query(resolution: int, candidate_datasets_cte=None, has_ordinality=False) -> str:
+    # jerryrig
+    candidate_datasets_join = ""
+    if candidate_datasets_cte:
+        candidate_datasets_join = "JOIN candidate_datasets USING (id)"
+        if has_ordinality:
+            candidate_datasets_join += " ORDER BY ordinality"
     return datasets_by_location.format(
         fill_query=location_fill_res2 if resolution == 2 else location_fill,
         parents_array=build_h3_parents_expression(resolution),
         candidate_datasets_cte=candidate_datasets_cte or "",
-        # jerryrig
-        candidate_datasets_filter="""
-        WHERE id = ANY(SELECT id FROM candidate_datasets)
-        """ if candidate_datasets_cte else ""
+        candidate_datasets_join=candidate_datasets_join
     )

@@ -89,12 +89,6 @@ const Datasets = ({ datasets }: { datasets: Dataset[] }) => {
 // TODO: rm component
 const DatasetsByOrgs = ({ datasetsByOrgs, header }: { datasetsByOrgs: { [source_org: string]: Dataset[]; }, header?: string }) => (
   <div>
-    {/* { header && (
-      <>
-        <Typography className="px-4 py-3.5 font-bold">{header}</Typography>
-        <Divider />
-      </>
-    )} */}
     {
       Object.entries(datasetsByOrgs).map(([org, datasets]) => (
         <Accordion
