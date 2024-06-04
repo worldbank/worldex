@@ -14,7 +14,7 @@ const DatasetItem = ({idx, dataset}: {idx: number, dataset: Dataset}) => {
   const [anchor, setAnchor] = useState(null);
   const { selectedDataset } = useSelector((state: RootState) => state.selected);
   const viewState = useSelector((state: RootState) => state.carto.viewState);
-  const { location } = useSelector((state: RootState) => state.location);
+  const { location } = useSelector((state: RootState) => state.search);
   const dispatch = useDispatch();
   const toggleVisibility = (datasetId: number, bbox: BoundingBox) => {
     if (anchor) {

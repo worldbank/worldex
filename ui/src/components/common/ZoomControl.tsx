@@ -7,7 +7,7 @@ import RemoveOutlinedIcon from '@mui/icons-material/RemoveOutlined';
 import { setViewState } from '@carto/react-redux';
 import { RootState } from 'store/store';
 import { MAXIMUM_ZOOM, MINIMUM_ZOOM } from 'constants/h3';
-import { setPendingLocationCheck } from 'store/locationSlice';
+import { setPendingLocationCheck } from 'store/searchSlice';
 
 const GridZoomControl = styled(Grid)(({ theme }) => ({
   backgroundColor: theme.palette.background.paper,

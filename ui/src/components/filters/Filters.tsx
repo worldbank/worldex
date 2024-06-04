@@ -7,7 +7,7 @@ function Filters({ className }: { className?: string }) {
   return (
     <div className={className}>
       <div className="mb-2 flex items-center justify-between">
-        <Typography className="font-bold">Search Filters</Typography>
+        <Typography className="font-bold">Filters</Typography>
         <ClearFiltersButton className="mr-2" />
       </div>
       <div>

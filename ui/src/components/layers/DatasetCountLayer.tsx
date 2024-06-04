@@ -84,7 +84,7 @@ export default function DatasetCountLayer() {
   const source = useSelector((state: RootState) => selectSourceById(state, datasetH3Layer?.source));
   const { selectedDataset, h3Index: selectedH3Index } = useSelector((state: RootState) => state.selected);
   const { steppedZoom } = useSelector((state: RootState) => state.app);
-  const { location } = useSelector((state: RootState) => state.location);
+  const { location } = useSelector((state: RootState) => state.search);
   const { fileUrl } = useSelector((state: RootState) => state.preview);
   const dispatch = useDispatch();
   const sourceOrgs = useSelector(selectSourceOrgFilters);

@@ -6,7 +6,7 @@ import { Typography } from '@carto/react-ui';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { debounce } from '@mui/material';
 import { MAXIMUM_ZOOM, MINIMUM_ZOOM } from 'constants/h3';
-import { setPendingLocationCheck } from 'store/locationSlice';
+import { setPendingLocationCheck } from 'store/searchSlice';
 import { RootState } from 'store/store';
 import getSteppedZoomResolutionPair from 'utils/getSteppedZoomResolutionPair';
 import { setSteppedZoom } from 'store/appSlice';
@@ -37,7 +37,7 @@ export function useMapHooks() {
   const dispatch = useDispatch();
 
   let isHovering = false;
-  const { pendingLocationCheck } = useSelector((state: RootState) => state.location);
+  const { pendingLocationCheck } = useSelector((state: RootState) => state.search);
 
   const handleViewStateChange = ({ viewState }: { viewState: ViewState }) => {
     if (viewState.zoom != null) {

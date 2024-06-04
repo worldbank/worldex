@@ -10,7 +10,7 @@ import React, { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import {
   setFilteredDatasets, setLastZoom, setLocation, setPendingLocationCheck,
-} from 'store/locationSlice';
+} from 'store/searchSlice';
 import { setDatasets, setH3Index as setSelectedH3Index } from 'store/selectedSlice';
 import { RootState } from 'store/store';
 import getSteppedZoomResolutionPair from 'utils/getSteppedZoomResolutionPair';
@@ -50,10 +50,11 @@ function Search({ className }: { className?: string }) {
   const [options, setOptions] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
   const [isError, setIsError] = useState(false);
+  const [keywordPayload, setKeywordPayload] = useState({});
   const dispatch = useDispatch();
   const { h3Index: selectedH3Index }: { h3Index: string } = useSelector((state: RootState) => state.selected);
   const viewState = useSelector((state: RootState) => state.carto.viewState);
-  const { location, lastZoom } = useSelector((state: RootState) => state.location);
+  const { location, lastZoom } = useSelector((state: RootState) => state.search);
   const sourceOrgs = useSelector(selectSourceOrgFilters);
   const accessibilities = useSelector(selectAccessibilities);
 
@@ -95,90 +96,89 @@ function Search({ className }: { className?: string }) {
     let parseResults;
     let entities;
 
+    // add source org and accessibility filters
+    const keywordPayload_: any = {
+      query: encodedQuery,
+      size: 999,
+      source_org: sourceOrgs,
+      accessibility: accessibilities,
+    };
     try {
-      // const { data: parseResults } = await axios.get(`${import.meta.env.VITE_API_URL}/search/parse`, { params: { query: encodedQuery } });
-      // entities = parseResults.entities;
+      const { data: parseResults } = await axios.get(
+        `${import.meta.env.VITE_API_URL}/search/parse`,
+        { params: { query: encodedQuery } },
+      );
+      const { entities } = parseResults || [];
+      console.log(entities);
+
+      keywordPayload_.query = encodedQuery;
+      // single pass only
+      const yearEntity = entities.find((e: any) => e.label === 'year');
+      const regionEntity = entities.find((e: any) => e.label === 'region');
+      const countryEntity = entities.find((e: any) => e.label === 'country');
+      if (yearEntity) {
+        keywordPayload_.min_year = yearEntity.text;
+        keywordPayload_.max_year = yearEntity.text;
+      }
+
+      console.log(keywordPayload_);
+      setKeywordPayload(keywordPayload_);
+      if (regionEntity || countryEntity || entities.length === 0) {
+        console.log('should proceed with loc search');
+        const locationQ = regionEntity?.text || countryEntity?.text || encodedQuery;
+        const { data: nominatimResults } = await axios.get(
+          'https://nominatim.openstreetmap.org/search',
+          {
+            params: {
+              q: locationQ,
+              format: 'json',
+              polygon_geojson: 1,
+            },
+          },
+        );
+        if (nominatimResults == null || nominatimResults.length === 0) {
+          // continue;
+          console.log('prcoeed to keyword');
+        } else {
+          const dedupedResults = uniqWith(
+            nominatimResults,
+            (result: any, other: any) => isEqualWith(result, other, (result: any, other: any) => isEqual(result.geojson.coordinates, other.geojson.coordinates)),
+          );
+          console.log(dedupedResults);
+          setOptions([{ display_name: 'Skip geography filtering', name: 'Skip geography filtering', skip: true }, ...dedupedResults]);
+          return;
+        }
+      }
+
       const { data } = await axios.get(
         `${import.meta.env.VITE_API_URL}/search/keyword`,
-        {
-          params: {
-            query: encodedQuery,
-            size: 999,
-          },
-        },
+        { params: keywordPayload_ },
       );
-      console.log('hits', data.hits);
       dispatch(setDatasets(data.hits));
     } catch (err) {
       console.log(err.toJSON());
     } finally {
       setIsLoading(false);
     }
+  };
 
-    // console.log(parseResults);
-    // let encodedNominatimQ;
-    // // location
-    // // if empty entities, pass query to nominatim
-    // if (Array.isArray(entities) && entities.length === 0) {
-    //   const resp = await fetch(
-    //     `https://nominatim.openstreetmap.org/search?q=${encodedNominatimQ || encodedQuery}&format=json&polygon_geojson=1`,
-    //   );
-    //   const results = await resp.json();
-    // }
-
-    // if (Array.isArray(entities) && entities.length > 0) {
-    //   let locEntityIndex = entities.findIndex((entity) => entity.label === 'region');
-    //   if (locEntityIndex === -1) {
-    //     locEntityIndex = entities.findIndex((entity) => entity.label === 'country');
-    //   }
-    //   if (locEntityIndex !== -1) {
-    //     const locationEntity = entities[locEntityIndex];
-    //     entities.splice(locEntityIndex, 1);
-    //     // consider normalized[0]['name']
-    //     encodedNominatimQ = new URLSearchParams(locationEntity.text).toString();
-    //   }
-
-    //   // get dataset ids
-    //   if (entities.length > 0) {
-    //     // pass encoded location to nominatim
-    //   } else {
-    //     console.log();
-    //   }
-    // }
-    // console.log(parseResults);
-    // TODO: if no entities at all - pass raw query to nominatim
-    // const nominatimResp = await fetch(
-    //   `https://nominatim.openstreetmap.org/search?q=${encodedNominatimQ || encodedQuery}&format=json&polygon_geojson=1`,
-    // );
-    // const nominatimResults = await nominatimResp.json();
-    // if (nominatimResults == null || nominatimResults.length === 0) {
-    //   // push to keyword instead
-    //   setIsError(true);
-    //   const { data: keywordResp } = await axios.get(
-    //     `${import.meta.env.VITE_API_URL}/search/keyword?query=${encodedQuery}&size=999`,
-    //     {
-    //       params: {
-    //         query: encodedQuery,
-    //         size: 999,
-    //         // min_year: ,
-    //         // max_year ,
-    //         // accessibility: ,
-    //         // source_orgs: ,
-    //       },
-    //     },
-    //   );
-    //   const keywordResults = await keywordResp.json();
-    //   console.log(keywordResults);
-    // } else {
-    //   const dedupedResults = uniqWith(nominatimResults, (result: any, other: any) => isEqualWith(result, other, (result: any, other: any) => isEqual(result.geojson.coordinates, other.geojson.coordinates)));
-    //   setOptions(dedupedResults);
-    // }
-    setIsLoading(false);
+  const getDatasetsByKeyword = async () => {
+    console.log(keywordPayload);
+    const { data } = await axios.get(
+      `${import.meta.env.VITE_API_URL}/search/keyword`,
+      { params: keywordPayload },
+    );
+    dispatch(setDatasets(data.hits));
   };
 
   const selectLocation = (event: React.ChangeEvent<HTMLInputElement>, location: any | null) => {
-    setQuery(location.display_name || location.option.name);
-
+    if (location.skip) {
+      console.log('skipping');
+      getDatasetsByKeyword();
+      return;
+    }
+    console.log('selecting location');
+    setQuery(location.display_name || location.name);
     const [minLat, maxLat, minLon, maxLon] = location.boundingbox.map(parseFloat);
     const bbox = {
       minLat, maxLat, minLon, maxLon,
@@ -219,14 +219,15 @@ function Search({ className }: { className?: string }) {
         getOptionLabel={(option) => option.display_name || option.name}
         isOptionEqualToValue={(option, value) => option.place_id === value.place_id}
         inputValue={query}
+        defaultValue="Search for datasets"
         onChange={selectLocation}
         renderInput={(params) => (
           <TextField
             // eslint-disable-next-line react/jsx-props-no-spreading
             {...params}
+            label="Search for datasets"
             error={isError}
             helperText={isError && 'No results.'}
-            // label="Search"
             variant="outlined"
             value={query}
             onChange={

@@ -18,7 +18,7 @@ import HidePreviewButton from "./HidePreviewButton";
 
 const Content = () => {
   const { h3Index, datasets: datasets_ }: { h3Index: string, datasets: Dataset[] } = useSelector((state: RootState) => state.selected);
-  const { location, filteredDatasets }: { location: any, filteredDatasets: Dataset[] } = useSelector((state: RootState) => state.location);
+  const { location, filteredDatasets }: { location: any, filteredDatasets: Dataset[] } = useSelector((state: RootState) => state.search);
   // const datasets = h3Index ? datasets_ : filteredDatasets;
   const datasets = datasets_;
   console.log(datasets_);
@@ -29,7 +29,7 @@ const Content = () => {
   const { h3Index: selectedH3Index } = useSelector((state: RootState) => state.selected);
   const sourceOrgs = useSelector(selectSourceOrgFilters);
   const accessibilities = useSelector(selectAccessibilities);
-  const { filteredDatasets: locationFilteredDatasets }: { filteredDatasets: Dataset[] } = useSelector((state: RootState) => state.location);
+  const { filteredDatasets: locationFilteredDatasets }: { filteredDatasets: Dataset[] } = useSelector((state: RootState) => state.search);
   const { datasetCount }: { datasetCount: number } = useSelector((state: RootState) => state.selected);
   const { selectedDataset } = useSelector((state: RootState) => state.selected);
   const { fileUrl: previewFileUrl, isLoadingPreview } = useSelector((state: RootState) => state.preview);
@@ -94,7 +94,8 @@ const Content = () => {
             Total datasets indexed
             { isFiltered && ' (filtered)' }:{' '}
           </span>
-          <span className="text-lg">{locationFilteredDatasets ? locationFilteredDatasets.length : datasetCount}</span>
+          {/* <span className="text-lg">{locationFilteredDatasets ? locationFilteredDatasets.length : datasetCount}</span> */}
+          <span className="text-lg">{ datasets ? datasets.length : datasetCount}</span>
         </Typography>
         {
           (selectedDataset || selectedH3Index || (previewFileUrl && !isLoadingPreview)) ? (

@@ -18,7 +18,7 @@ const Overview = () => {
   const { fileUrl: previewFileUrl, isLoadingPreview } = useSelector((state: RootState) => state.preview);
   const sourceOrgs = useSelector(selectSourceOrgFilters);
   const accessibilities = useSelector(selectAccessibilities);
-  const { filteredDatasets: locationFilteredDatasets }: { filteredDatasets: Dataset[] } = useSelector((state: RootState) => state.location);
+  const { filteredDatasets: locationFilteredDatasets }: { filteredDatasets: Dataset[] } = useSelector((state: RootState) => state.search);
   const isFiltered = (
     locationFilteredDatasets
     || (Array.isArray(sourceOrgs) && sourceOrgs.length > 0)
