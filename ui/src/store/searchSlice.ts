@@ -3,7 +3,7 @@ import { createSlice } from '@reduxjs/toolkit';
 import { Dataset } from 'components/common/types';
 
 const slice = createSlice({
-  name: 'location',
+  name: 'search',
   initialState: {
     query: null,
     location: null,

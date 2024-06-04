@@ -9,7 +9,7 @@ import {
   Store,
 } from 'redux';
 import appSlice from './appSlice';
-import locationSlice from './locationSlice';
+import searchSlice from './searchSlice';
 import selectedSlice from './selectedSlice';
 import previewSlice from './previewSlice';
 import selectedFiltersSlice from './selectedFiltersSlice';
@@ -22,7 +22,7 @@ interface AppStore extends Store {
 // Define the Reducers that will always be present in the application
 const staticReducers = {
   app: appSlice,
-  location: locationSlice,
+  search: searchSlice,
   selected: selectedSlice,
   preview: previewSlice,
   selectedFilters: selectedFiltersSlice,
