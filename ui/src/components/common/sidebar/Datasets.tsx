@@ -65,8 +65,29 @@ const DatasetItem = ({idx, dataset}: {idx: number, dataset: Dataset}) => {
   )
 }
 
-// TODO: rm header from code
-const Datasets = ({ datasetsByOrgs, header }: { datasetsByOrgs: { [source_org: string]: Dataset[]; }, header?: string }) => (
+const Datasets = ({ datasets }: { datasets: Dataset[] }) => {
+  return (
+    <List className="m-0 p-0 max-h-[60vh] overflow-y-scroll">
+      {
+        datasets.map((dataset: Dataset, idx: number) => (
+            <ListItem
+              key={idx}
+              className="p-0"
+            >
+              {/* TODO: consider semantic usage of ListItemX components */}
+              <Stack direction="column" className="w-full">
+                <DatasetItem idx={idx} dataset={dataset} />
+                {idx + 1 < datasets.length && <Divider />}
+              </Stack>
+            </ListItem>
+        ))
+      }
+    </List>
+  );
+};
+
+// TODO: rm component
+const DatasetsByOrgs = ({ datasetsByOrgs, header }: { datasetsByOrgs: { [source_org: string]: Dataset[]; }, header?: string }) => (
   <div>
     {/* { header && (
       <>

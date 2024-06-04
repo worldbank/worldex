@@ -107,7 +107,7 @@ const Content = () => {
         }
       </div>
       <Divider />
-      { datasetsByOrgs && <Datasets header={header} datasetsByOrgs={datasetsByOrgs} /> }
+      { datasets && <Datasets datasets={datasets} /> }
     </div>
   );
 };
