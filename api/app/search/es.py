@@ -1,9 +1,10 @@
 import os
-from typing import List
 from datetime import datetime
+from typing import List
+
 from app.document import DatasetFacetedSearch
 from elasticsearch_dsl import connections
-
+from shapely import wkt
 
 ELASTICSEARCH_CONNECTION = os.getenv("ELASTICSEARCH_URL_SYNC")
 connections.create_connection(
@@ -22,7 +23,9 @@ def keyword_search(
     from_result: int = 0,
     size: int = 10,
 ):
-    '''This endpoint provides the service for the keyword search functionality. This uses Elasticsearch in the backend for the full-text search.
+    '''
+    This endpoint provides the service for the keyword search functionality.
+    This uses Elasticsearch in the backend for the full-text search.
     '''
 
     filters = dict(
@@ -63,7 +66,10 @@ def keyword_search(
 
     for ix, h in enumerate(response, 1):
         highlight = {}
-        hits.append(h.to_dict())
+        h_dict = h.to_dict()
+        h_dict["id"] = h_dict.pop("pg_id")
+        h_dict["bbox"] = wkt.loads(h_dict.pop("bbox")).bounds
+        hits.append(h_dict)
         result.append(dict(id=h.meta.id, rank=ix +
                       from_result, score=h.meta.score))
         try:

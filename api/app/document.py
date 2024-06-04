@@ -1,17 +1,19 @@
 import re
+
 from elasticsearch_dsl import (
     Date,
+    DateHistogramFacet,
     Document,
+    FacetedSearch,
     GeoShape,
     Index,
     Integer,
     Keyword,
     Object,
-    Text,
     Q,
+    TermsFacet,
+    Text,
 )
-from elasticsearch_dsl import FacetedSearch, TermsFacet, DateHistogramFacet
-
 
 DOC_INDEX = 'datasets'
 datasets = Index(DOC_INDEX)
@@ -31,13 +33,17 @@ class Dataset(Document):
     description = Text(analyzer='snowball')
     projection = Keyword()
     properties = Object()
-    bbox = GeoShape()
+    # we have a couple bboxes whose lonlats are all the same points
+    # indexing it as a GeoShape results in an error
+    # `failed to parse field [bbox] of type [geo_shape]`
+    bbox = Keyword()
 
     class Index:
         name = DOC_INDEX
         settings = {
             "number_of_shards": 2,
-            "number_of_replicas": 1,
+            # just to keep the health status green for now
+            "number_of_replicas": 0,
             "highlight": {"max_analyzed_offset": 5000000},
             "max_terms_count": 262144,  # 2 ^ 18
             "refresh_interval": "30s"
