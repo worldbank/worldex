@@ -11,7 +11,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import {
   setFilteredDatasets, setLastZoom, setLocation, setPendingLocationCheck,
 } from 'store/locationSlice';
-import { setH3Index as setSelectedH3Index } from 'store/selectedSlice';
+import { setDatasets, setH3Index as setSelectedH3Index } from 'store/selectedSlice';
 import { RootState } from 'store/store';
 import getSteppedZoomResolutionPair from 'utils/getSteppedZoomResolutionPair';
 import isEqual from 'lodash.isequal';
@@ -19,7 +19,7 @@ import uniqWith from 'lodash.uniqwith';
 import isEqualWith from 'lodash.isequalwith';
 import moveViewportToBbox from 'utils/moveViewportToBbox';
 import { selectAccessibilities, selectSourceOrgFilters } from 'store/selectedFiltersSlice';
-import { parse } from 'date-fns';
+import axios, { AxiosError } from 'axios';
 
 function SearchButton({ isLoading }: { isLoading: boolean }) {
   return (
@@ -92,17 +92,85 @@ function Search({ className }: { className?: string }) {
     event.preventDefault();
     setIsLoading(true);
     const encodedQuery = new URLSearchParams(query).toString();
-    const parseResp = await fetch(`${import.meta.env.VITE_API_URL}/search/parse?query=${encodedQuery}`);
-    const results = await parseResp.json();
-    console.log(results);
-    // const resp = await fetch(
-    //   `https://nominatim.openstreetmap.org/search?q=${encodedQuery}&format=json&polygon_geojson=1`,
+    let parseResults;
+    let entities;
+
+    try {
+      // const { data: parseResults } = await axios.get(`${import.meta.env.VITE_API_URL}/search/parse`, { params: { query: encodedQuery } });
+      // entities = parseResults.entities;
+      const { data } = await axios.get(
+        `${import.meta.env.VITE_API_URL}/search/keyword`,
+        {
+          params: {
+            query: encodedQuery,
+            size: 999,
+          },
+        },
+      );
+      console.log('hits', data.hits);
+      dispatch(setDatasets(data.hits));
+    } catch (err) {
+      console.log(err.toJSON());
+    } finally {
+      setIsLoading(false);
+    }
+
+    // console.log(parseResults);
+    // let encodedNominatimQ;
+    // // location
+    // // if empty entities, pass query to nominatim
+    // if (Array.isArray(entities) && entities.length === 0) {
+    //   const resp = await fetch(
+    //     `https://nominatim.openstreetmap.org/search?q=${encodedNominatimQ || encodedQuery}&format=json&polygon_geojson=1`,
+    //   );
+    //   const results = await resp.json();
+    // }
+
+    // if (Array.isArray(entities) && entities.length > 0) {
+    //   let locEntityIndex = entities.findIndex((entity) => entity.label === 'region');
+    //   if (locEntityIndex === -1) {
+    //     locEntityIndex = entities.findIndex((entity) => entity.label === 'country');
+    //   }
+    //   if (locEntityIndex !== -1) {
+    //     const locationEntity = entities[locEntityIndex];
+    //     entities.splice(locEntityIndex, 1);
+    //     // consider normalized[0]['name']
+    //     encodedNominatimQ = new URLSearchParams(locationEntity.text).toString();
+    //   }
+
+    //   // get dataset ids
+    //   if (entities.length > 0) {
+    //     // pass encoded location to nominatim
+    //   } else {
+    //     console.log();
+    //   }
+    // }
+    // console.log(parseResults);
+    // TODO: if no entities at all - pass raw query to nominatim
+    // const nominatimResp = await fetch(
+    //   `https://nominatim.openstreetmap.org/search?q=${encodedNominatimQ || encodedQuery}&format=json&polygon_geojson=1`,
     // );
-    // const results = await resp.json();
-    // if (results == null || results.length === 0) {
+    // const nominatimResults = await nominatimResp.json();
+    // if (nominatimResults == null || nominatimResults.length === 0) {
+    //   // push to keyword instead
     //   setIsError(true);
+    //   const { data: keywordResp } = await axios.get(
+    //     `${import.meta.env.VITE_API_URL}/search/keyword?query=${encodedQuery}&size=999`,
+    //     {
+    //       params: {
+    //         query: encodedQuery,
+    //         size: 999,
+    //         // min_year: ,
+    //         // max_year ,
+    //         // accessibility: ,
+    //         // source_orgs: ,
+    //       },
+    //     },
+    //   );
+    //   const keywordResults = await keywordResp.json();
+    //   console.log(keywordResults);
     // } else {
-    //   const dedupedResults = uniqWith(results, (result: any, other: any) => isEqualWith(result, other, (result: any, other: any) => isEqual(result.geojson.coordinates, other.geojson.coordinates)));
+    //   const dedupedResults = uniqWith(nominatimResults, (result: any, other: any) => isEqualWith(result, other, (result: any, other: any) => isEqual(result.geojson.coordinates, other.geojson.coordinates)));
     //   setOptions(dedupedResults);
     // }
     setIsLoading(false);
@@ -142,7 +210,7 @@ function Search({ className }: { className?: string }) {
   // combines free text search and dropdown functionalities
 
   return (
-    <form className="w-full" onSubmit={handleSubmit} onReset={clearLocation}>
+    <form className={`w-full ${className}`} onSubmit={handleSubmit} onReset={clearLocation}>
       <Autocomplete
         id="location-search"
         options={options}
@@ -158,7 +226,7 @@ function Search({ className }: { className?: string }) {
             {...params}
             error={isError}
             helperText={isError && 'No results.'}
-            label="Search"
+            // label="Search"
             variant="outlined"
             value={query}
             onChange={

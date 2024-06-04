@@ -2,13 +2,13 @@ import { Button } from "@mui/material";
 import { useDispatch } from "react-redux"
 import { setSelectedDataset } from "store/selectedSlice";
 
-const DeselectDatasetButton = () => {
+const DeselectDatasetButton = ({ className }: { className?: string }) => {
   const dispatch = useDispatch();
   return (
-    <Button 
+    <Button
       size="small"
       variant="text"
-      className="uppercase mt-1 p-0 hover:bg-transparent"
+      className={`uppercase hover:bg-transparent ${className}`}
       onClick={() => {
         dispatch(setSelectedDataset(null));
       }}

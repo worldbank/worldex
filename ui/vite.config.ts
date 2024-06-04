@@ -1,5 +1,5 @@
-import react from '@vitejs/plugin-react';
 import path from 'path';
+import react from '@vitejs/plugin-react';
 import { defineConfig } from 'vite';
 import checker from 'vite-plugin-checker';
 import eslintPlugin from 'vite-plugin-eslint';
@@ -33,7 +33,7 @@ export default defineConfig({
     }),
     viteTsconfigPaths(),
     svgrPlugin(),
-    pluginRewriteAll()
+    pluginRewriteAll(),
   ],
   build: {
     outDir: 'build',
@@ -66,6 +66,6 @@ export default defineConfig({
         rewrite: (path) => path.replace(/^\/cors-anywhere/, ''),
         secure: false,
       },
-    }
-  }
+    },
+  },
 });

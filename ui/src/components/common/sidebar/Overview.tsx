@@ -8,6 +8,7 @@ import HidePreviewButton from "./HidePreviewButton";
 import { selectAccessibilities, selectSourceOrgFilters } from "store/selectedFiltersSlice";
 import { Dataset } from "../types";
 
+// TODO: repurpose as diagnostics component
 const Overview = () => {
   const { datasetCount }: { datasetCount: number } = useSelector((state: RootState) => state.selected);
   const dispatch = useDispatch();

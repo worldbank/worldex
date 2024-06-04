@@ -65,14 +65,15 @@ const DatasetItem = ({idx, dataset}: {idx: number, dataset: Dataset}) => {
   )
 }
 
+// TODO: rm header from code
 const Datasets = ({ datasetsByOrgs, header }: { datasetsByOrgs: { [source_org: string]: Dataset[]; }, header?: string }) => (
   <div>
-    { header && (
+    {/* { header && (
       <>
         <Typography className="px-4 py-3.5 font-bold">{header}</Typography>
         <Divider />
       </>
-    )}
+    )} */}
     {
       Object.entries(datasetsByOrgs).map(([org, datasets]) => (
         <Accordion
