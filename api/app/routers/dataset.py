@@ -94,8 +94,8 @@ async def get_dataset_coverage(
     location = payload.location
     query = DATASET_COVERAGE.format(fill_query=FILL_RES2 if resolution == 2 else FILL)
     query = text(query).bindparams(z=z, x=x, y=y, location=location, resolution=resolution, dataset_id=payload.dataset_id)
-    results = await session.execute(query)
-    return [row[0] for row in results.fetchall()]
+    results = await session.scalars(query)
+    return [h3_index for h3_index in results.fetchall()]
 
 
 # only called if keyword search is not used so we
@@ -140,17 +140,18 @@ async def get_datasets_by_location(
     ]
 
 
+# rename endpoint to datasets_by_h3_index
 @router.post("/dataset_metadata/{index}")
 async def get_dataset_metadata(
     index: str,
     payload: DatasetMetadataRequest,
     session: AsyncSession = Depends(get_async_session),
 ):
-    filters = {}
-    if payload.source_org:
-        filters["source_org"] = payload.source_org
-    if payload.accessibility:
-        filters["accessibility"] = payload.accessibility
+    filters = {
+        attr: getattr(payload, attr)
+        for attr in ["source_org", "accessibility"]
+        if getattr(payload, attr)
+    }
     results = await get_dataset_metadata_results(session, target=index, filters=filters)
     return [
         dict(
