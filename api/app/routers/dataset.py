@@ -149,7 +149,7 @@ async def get_dataset_metadata(
     # TODO: further by dataset_ids if available
     filters = {
         attr: getattr(payload, attr)
-        for attr in ["source_org", "accessibility"]
+        for attr in ["source_org", "accessibility", "dataset_ids"]
         if getattr(payload, attr)
     }
     results = await get_dataset_metadata_results(session, target=index, filters=filters)

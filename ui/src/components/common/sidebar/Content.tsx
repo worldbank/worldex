@@ -85,11 +85,19 @@ const Content = () => {
       <Divider />
       <div className="px-4 py-3.5">
         <Typography className="text-md font-bold">
-          <span>
-            Total datasets indexed
-            { isFiltered && ' (filtered)' }:{' '}
-          </span>
-          <span className="text-lg">{ datasets ? datasets.length : datasetCount}</span>
+          {
+            (Array.isArray(datasets) && datasets.length > 0) ? (
+              <>
+                <span>Filtered datasets: </span>
+                <span className="text-lg">{ datasets.length }</span>
+              </>
+            ) : (
+              <>
+                <span>Total datasets: </span>
+                <span className="text-lg">{ datasetCount }</span>
+              </>
+            )
+          }
         </Typography>
         {
           location?.display_name && (<span className="text-xs italic">{location.display_name}</span>)

@@ -16,7 +16,12 @@ import { useDispatch, useSelector } from 'react-redux';
 import {
   setLastZoom, setLocation, setPendingLocationCheck,
 } from 'store/searchSlice';
-import { selectAccessibilities, selectSourceOrgFilters, setDatasetIds } from 'store/selectedFiltersSlice';
+import {
+  selectAccessibilities,
+  selectSourceOrgFilters,
+  setDatasetIds,
+  setH3IndexedDatasets,
+} from 'store/selectedFiltersSlice';
 import { resetDatasets, setDatasets, setH3Index as setSelectedH3Index } from 'store/selectedSlice';
 import { RootState } from 'store/store';
 import getSteppedZoomResolutionPair from 'utils/getSteppedZoomResolutionPair';
@@ -200,6 +205,8 @@ function Search({ className }: { className?: string }) {
     dispatch(setLocation(null));
     dispatch(setLastZoom(null));
     dispatch(resetDatasets());
+    dispatch(setDatasetIds([]));
+    dispatch(setH3IndexedDatasets([]));
   };
 
   useEffect(() => {

@@ -1,6 +1,7 @@
 import { Button } from "@mui/material";
 import { useDispatch } from "react-redux";
-import { resetDatasets, setH3Index as setSelectedH3Index } from 'store/selectedSlice';
+import { setH3IndexedDatasets } from "store/selectedFiltersSlice";
+import { setH3Index as setSelectedH3Index } from 'store/selectedSlice';
 
 const DeselectTileButton = ({ className }: { className?: string }) => {
   const dispatch = useDispatch();
@@ -11,7 +12,8 @@ const DeselectTileButton = ({ className }: { className?: string }) => {
       className={`uppercase hover:bg-transparent ${className}`}
       onClick={() => {
         dispatch(setSelectedH3Index(null));
-        dispatch(resetDatasets());
+        // TODO: reset dataset to previous state instead
+        dispatch(setH3IndexedDatasets([]));
       }}
     >
       Deselect tile
