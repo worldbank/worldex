@@ -183,6 +183,13 @@ function Search({ className }: { className?: string }) {
     dispatch(setDatasetIds(datasetIds));
     if (location.skip) {
       dispatch(setDatasets(datasets));
+      if (datasets[0]?.bbox) {
+        const [w, s, e, n] = datasets[0].bbox;
+        const bbox = {
+          minLat: s, maxLat: n, minLon: w, maxLon: e,
+        };
+        moveViewportToBbox(bbox, viewState, dispatch);
+      }
       // fly map to first dataset's bbox
       return;
     }
