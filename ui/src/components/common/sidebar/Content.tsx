@@ -20,20 +20,18 @@ const Content = () => {
   const { h3Index, datasets: datasets_ }: { h3Index: string, datasets: Dataset[] } = useSelector((state: RootState) => state.selected);
   const { location }: { location: any } = useSelector((state: RootState) => state.search);
   const { h3IndexedDatasets } : { h3IndexedDatasets: Dataset[] } = useSelector((state: RootState) => state.selectedFilters);
-  // const datasets = h3Index ? datasets_ : filteredDatasets;
+  const { datasetIds }: { datasetIds: number[] } = useSelector((state: RootState) => state.selectedFilters);
   const datasets = h3Index ? h3IndexedDatasets : datasets_;
-  // const datasetsByOrgs = datasets ? groupBy(datasets, "source_org") : null;
 
   const { h3Index: selectedH3Index } = useSelector((state: RootState) => state.selected);
   const sourceOrgs = useSelector(selectSourceOrgFilters);
   const accessibilities = useSelector(selectAccessibilities);
-  const { filteredDatasets: locationFilteredDatasets }: { filteredDatasets: Dataset[] } = useSelector((state: RootState) => state.search);
   const { datasetCount }: { datasetCount: number } = useSelector((state: RootState) => state.selected);
   const { selectedDataset } = useSelector((state: RootState) => state.selected);
   const { fileUrl: previewFileUrl, isLoadingPreview } = useSelector((state: RootState) => state.preview);
 
   const isFiltered = (
-    locationFilteredDatasets
+    (Array.isArray(datasetIds) && datasetIds.length > 0)
     || (Array.isArray(sourceOrgs) && sourceOrgs.length > 0)
     || (Array.isArray(accessibilities) && accessibilities.length > 0)
   )
@@ -85,19 +83,12 @@ const Content = () => {
       <Divider />
       <div className="px-4 py-3.5">
         <Typography className="text-md font-bold">
-          {
-            (Array.isArray(datasets) && datasets.length > 0) ? (
-              <>
-                <span>Filtered datasets: </span>
-                <span className="text-lg">{ datasets.length }</span>
-              </>
-            ) : (
-              <>
-                <span>Total datasets: </span>
-                <span className="text-lg">{ datasetCount }</span>
-              </>
-            )
-          }
+          <span>
+            { selectedH3Index ? `Tile ${selectedH3Index} datasets` : `Total datasets`}
+            { isFiltered ? ' (filtered)' : ''}
+            {": "}
+            { datasets.length || datasetCount }
+          </span>
         </Typography>
         {
           location?.display_name && (<span className="text-xs italic">{location.display_name}</span>)
