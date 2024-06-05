@@ -7,7 +7,7 @@ import { Dataset } from "../types";
 import Datasets from "./Datasets";
 import Overview from "./Overview";
 import Selected from "./Selected";
-import { selectAccessibilities, selectSourceOrgFilters } from "store/selectedFiltersSlice";
+import { selectAccessibilities, selectSourceOrgFilters, setH3IndexedDatasets } from "store/selectedFiltersSlice";
 import { useEffect } from "react";
 import { setDatasetCount, setDatasets } from "store/selectedSlice";
 import Search from "components/search/Search";
@@ -18,10 +18,11 @@ import HidePreviewButton from "./HidePreviewButton";
 
 const Content = () => {
   const { h3Index, datasets: datasets_ }: { h3Index: string, datasets: Dataset[] } = useSelector((state: RootState) => state.selected);
-  const { location, filteredDatasets }: { location: any, filteredDatasets: Dataset[] } = useSelector((state: RootState) => state.search);
+  const { location }: { location: any } = useSelector((state: RootState) => state.search);
+  const { h3IndexedDatasets } : { h3IndexedDatasets: Dataset[] } = useSelector((state: RootState) => state.selectedFilters);
   // const datasets = h3Index ? datasets_ : filteredDatasets;
-  const datasets = datasets_;
-  const datasetsByOrgs = datasets ? groupBy(datasets, "source_org") : null;
+  const datasets = h3Index ? h3IndexedDatasets : datasets_;
+  // const datasetsByOrgs = datasets ? groupBy(datasets, "source_org") : null;
 
   const { h3Index: selectedH3Index } = useSelector((state: RootState) => state.selected);
   const sourceOrgs = useSelector(selectSourceOrgFilters);
@@ -53,7 +54,7 @@ const Content = () => {
       })
       .then((resp: Response) => resp.json())
       .then((results) => {
-        dispatch(setDatasets(results));
+        dispatch(setH3IndexedDatasets(results));
       });
     }
   }, [selectedH3Index, sourceOrgs, accessibilities]);

@@ -1,25 +1,26 @@
 import ClearIcon from '@mui/icons-material/Clear';
 import SearchIcon from '@mui/icons-material/Search';
 import {
-  Autocomplete, CircularProgress, IconButton, Paper, TextField,
+  Autocomplete, CircularProgress, IconButton, TextField,
 } from '@mui/material';
 import booleanWithin from '@turf/boolean-within';
 import { multiPolygon, point, polygon } from '@turf/helpers';
+import axios from 'axios';
+import { Dataset } from 'components/common/types';
 import { cellToLatLng, getResolution } from 'h3-js';
+import isEqual from 'lodash.isequal';
+import isEqualWith from 'lodash.isequalwith';
+import uniqWith from 'lodash.uniqwith';
 import React, { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import {
   setLastZoom, setLocation, setPendingLocationCheck,
 } from 'store/searchSlice';
-import { setDatasets, setH3Index as setSelectedH3Index } from 'store/selectedSlice';
+import { selectAccessibilities, selectSourceOrgFilters, setDatasetIds } from 'store/selectedFiltersSlice';
+import { resetDatasets, setDatasets, setH3Index as setSelectedH3Index } from 'store/selectedSlice';
 import { RootState } from 'store/store';
 import getSteppedZoomResolutionPair from 'utils/getSteppedZoomResolutionPair';
-import isEqual from 'lodash.isequal';
-import uniqWith from 'lodash.uniqwith';
-import isEqualWith from 'lodash.isequalwith';
 import moveViewportToBbox from 'utils/moveViewportToBbox';
-import { selectAccessibilities, selectSourceOrgFilters } from 'store/selectedFiltersSlice';
-import axios, { AxiosError } from 'axios';
 
 function SearchButton({ isLoading }: { isLoading: boolean }) {
   return (
@@ -82,7 +83,6 @@ function Search({ className }: { className?: string }) {
     );
     if (datasetsResults) {
       dispatch(setDatasets(datasetsResults));
-      // dispatch(setFilteredDatasets(datasetsResults));
     }
 
     dispatch(setPendingLocationCheck(true));
@@ -109,11 +109,16 @@ function Search({ className }: { className?: string }) {
         source_org: sourceOrgs,
         accessibility: accessibilities,
       };
-      const { data: parseResults } = await axios.get(
-        `${import.meta.env.VITE_API_URL}/search/parse`,
-        { params: { query: encodedQuery }, timeout: 6000 },
-      );
-      const { entities } = parseResults || [];
+      let entities: any[] = [];
+      try {
+        const { data: parseResults } = await axios.get(
+          `${import.meta.env.VITE_API_URL}/search/parse`,
+          { params: { query: encodedQuery }, timeout: 6000 },
+        );
+        entities = parseResults.entities;
+      } catch (err) {
+        console.error(err.toJSON());
+      }
 
       keywordPayload_.query = encodedQuery;
       // single pass only
@@ -150,6 +155,7 @@ function Search({ className }: { className?: string }) {
       }
 
       const { hits: datasets } = await getDatasetsByKeyword(keywordPayload_);
+      dispatch(setDatasetIds(datasets.map((d: Dataset) => d.id)));
       dispatch(setDatasets(datasets));
     } catch (err) {
       console.error(err.toJSON());
@@ -168,9 +174,11 @@ function Search({ className }: { className?: string }) {
 
   const selectLocation = async (event: React.ChangeEvent<HTMLInputElement>, location: any | null) => {
     const { hits: datasets } = await getDatasetsByKeyword();
-    const datasetIds = datasets.map((d: any) => d.id);
+    const datasetIds = datasets.map((d: Dataset) => d.id);
+    dispatch(setDatasetIds(datasetIds));
     if (location.skip) {
       dispatch(setDatasets(datasets));
+      // fly map to first dataset's bbox
       return;
     }
     const [minLat, maxLat, minLon, maxLon] = location.boundingbox.map(parseFloat);
@@ -191,7 +199,7 @@ function Search({ className }: { className?: string }) {
     setOptions([]);
     dispatch(setLocation(null));
     dispatch(setLastZoom(null));
-    dispatch(setDatasets(null));
+    dispatch(resetDatasets());
   };
 
   useEffect(() => {
