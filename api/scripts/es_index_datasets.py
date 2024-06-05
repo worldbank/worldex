@@ -48,7 +48,6 @@ def main():
         ))
         for idx, row in enumerate(result):
             dataset = row._mapping
-            print(type(dataset["bbox"]), dataset["bbox"])
             doc = DatasetDocument(
                 pg_id = dataset["id"],
                 uid = dataset["uid"],
@@ -65,7 +64,6 @@ def main():
                 properties = dataset["properties"],
                 bbox = dataset["bbox"],
             )
-            print(doc)
             doc.save()
             if (idx > 0 and idx % 100 == 0):
                 print(f"{idx} documents indexed")
