@@ -36,15 +36,18 @@ def build_dataset_count_tiles_query(z: int, x: int, y: int, resolution: int, loc
     dataset_counts_query = DATASET_COUNTS_FILTERED if filters else DATASET_COUNTS
 
     candidate_datasets_stmt = select(Dataset.id)
-    if source_org := filters.get("source_org"):
-        candidate_datasets_stmt = candidate_datasets_stmt.where(Dataset.source_org.in_(source_org))
-    if accessibility := filters.get("accessibility"):
-        conditions = []
-        if "Others" in accessibility:
-            conditions.append(Dataset.accessibility == None)
-            accessibility.remove("Others")
-        conditions.append(Dataset.accessibility.in_(accessibility))
-        candidate_datasets_stmt = candidate_datasets_stmt.where(or_(*conditions))
+    if dataset_ids := filters.get("dataset_ids"):
+        candidate_datasets_stmt = candidate_datasets_stmt.where(Dataset.id.in_(dataset_ids))
+    else:
+        if source_org := filters.get("source_org"):
+            candidate_datasets_stmt = candidate_datasets_stmt.where(Dataset.source_org.in_(source_org))
+        if accessibility := filters.get("accessibility"):
+            conditions = []
+            if "Others" in accessibility:
+                conditions.append(Dataset.accessibility == None)
+                accessibility.remove("Others")
+            conditions.append(Dataset.accessibility.in_(accessibility))
+            candidate_datasets_stmt = candidate_datasets_stmt.where(or_(*conditions))
 
     compiled = candidate_datasets_stmt.compile(compile_kwargs={"literal_binds": True})
     filter_kwargs = { "candidate_datasets_query": compiled } if filters else {}

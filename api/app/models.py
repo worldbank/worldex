@@ -38,6 +38,7 @@ class DatasetCountsRequest(BaseModel):
     location: str | None = None
     source_org: Optional[List[str]] = []
     accessibility: Optional[List[str]] = []
+    dataset_ids: Optional[List[int]] = []
     debug_json_response: bool = False
     ignore_cache: bool = False
 

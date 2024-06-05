@@ -34,12 +34,11 @@ async def get_dataset_counts(
     y: int,
     session: AsyncSession = Depends(get_async_session),
 ):
-    # needs to be filterable with dataset ids
-    filters = {}
-    if payload.source_org:
-        filters["source_org"] = payload.source_org
-    if payload.accessibility:
-        filters["accessibility"] = payload.accessibility
+    filters = {
+        attr: getattr(payload, attr)
+        for attr in ["source_org", "accessibility", "dataset_ids"]
+        if getattr(payload, attr)
+    }
     location = payload.location
     should_hit_cache = not (payload.ignore_cache or location or filters)
     dataset_count_bytes = None
@@ -99,7 +98,7 @@ async def get_dataset_coverage(
 
 
 # only called if keyword search is not used so we
-# do not need the option to filter by dataset_ids
+# do not yet need the option to filter by dataset_ids
 @router.post("/dataset_count/")
 async def get_dataset_count(
     payload: IndexedDatasetCountRequest,
@@ -147,6 +146,7 @@ async def get_dataset_metadata(
     payload: DatasetMetadataRequest,
     session: AsyncSession = Depends(get_async_session),
 ):
+    # TODO: further by dataset_ids if available
     filters = {
         attr: getattr(payload, attr)
         for attr in ["source_org", "accessibility"]
