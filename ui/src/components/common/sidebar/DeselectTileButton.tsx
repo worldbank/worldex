@@ -12,7 +12,6 @@ const DeselectTileButton = ({ className }: { className?: string }) => {
       className={`uppercase hover:bg-transparent ${className}`}
       onClick={() => {
         dispatch(setSelectedH3Index(null));
-        // TODO: reset dataset to previous state instead
         dispatch(setH3IndexedDatasets([]));
       }}
     >

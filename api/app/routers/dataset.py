@@ -139,14 +139,13 @@ async def get_datasets_by_location(
     ]
 
 
-# rename endpoint to datasets_by_h3_index
+# TODO: rename endpoint to datasets_by_h3_index
 @router.post("/dataset_metadata/{index}")
 async def get_dataset_metadata(
     index: str,
     payload: DatasetMetadataRequest,
     session: AsyncSession = Depends(get_async_session),
 ):
-    # TODO: further by dataset_ids if available
     filters = {
         attr: getattr(payload, attr)
         for attr in ["source_org", "accessibility", "dataset_ids"]
