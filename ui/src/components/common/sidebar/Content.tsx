@@ -48,6 +48,7 @@ const Content = () => {
         body: JSON.stringify({
           source_org: sourceOrgs,
           accessibility: accessibilities,
+          dataset_ids: datasetIds,
         }),
       })
       .then((resp: Response) => resp.json())

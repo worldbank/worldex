@@ -22,7 +22,12 @@ import {
   setDatasetIds,
   setH3IndexedDatasets,
 } from 'store/selectedFiltersSlice';
-import { resetDatasets, setDatasets, setH3Index as setSelectedH3Index } from 'store/selectedSlice';
+import {
+  resetDatasets,
+  setDatasets,
+  setSelectedDataset,
+  setH3Index as setSelectedH3Index,
+} from 'store/selectedSlice';
 import { RootState } from 'store/store';
 import getSteppedZoomResolutionPair from 'utils/getSteppedZoomResolutionPair';
 import moveViewportToBbox from 'utils/moveViewportToBbox';
@@ -106,7 +111,6 @@ function Search({ className }: { className?: string }) {
     setIsLoading(true);
     const encodedQuery = new URLSearchParams(query).toString();
 
-    // add source org and accessibility filters
     try {
       const keywordPayload_: any = {
         query: encodedQuery,
@@ -160,6 +164,8 @@ function Search({ className }: { className?: string }) {
       }
 
       const { hits: datasets } = await getDatasetsByKeyword(keywordPayload_);
+      dispatch(setSelectedDataset(null));
+      dispatch(setSelectedH3Index(null));
       dispatch(setDatasetIds(datasets.map((d: Dataset) => d.id)));
       dispatch(setDatasets(datasets));
     } catch (err) {
@@ -180,6 +186,8 @@ function Search({ className }: { className?: string }) {
   const selectLocation = async (event: React.ChangeEvent<HTMLInputElement>, location: any | null) => {
     const { hits: datasets } = await getDatasetsByKeyword();
     const datasetIds = datasets.map((d: Dataset) => d.id);
+    dispatch(setSelectedDataset(null));
+    dispatch(setSelectedH3Index(null));
     dispatch(setDatasetIds(datasetIds));
     if (location.skip) {
       dispatch(setDatasets(datasets));
