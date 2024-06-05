@@ -1,5 +1,3 @@
-from app.services import build_h3_parents_expression
-
 _bounds_query = "SELECT ST_GeomFromGeoJSON(CAST(:location AS TEXT)) bounds"
 
 # TODO: make this less redundant
@@ -47,6 +45,8 @@ FROM datasets JOIN located_datasets USING (id)
 """
 
 def get_datasets_by_location_query(resolution: int, candidate_datasets_cte=None, has_ordinality=False) -> str:
+    from app.services import build_h3_parents_expression
+
     # jerryrig
     candidate_datasets_join = ""
     if candidate_datasets_cte:

@@ -9,7 +9,7 @@ import { cellToLatLng, getResolution } from 'h3-js';
 import React, { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import {
-  setFilteredDatasets, setLastZoom, setLocation, setPendingLocationCheck,
+  setLastZoom, setLocation, setPendingLocationCheck,
 } from 'store/searchSlice';
 import { setDatasets, setH3Index as setSelectedH3Index } from 'store/selectedSlice';
 import { RootState } from 'store/store';
@@ -100,20 +100,18 @@ function Search({ className }: { className?: string }) {
     event.preventDefault();
     setIsLoading(true);
     const encodedQuery = new URLSearchParams(query).toString();
-    let parseResults;
-    let entities;
 
     // add source org and accessibility filters
-    const keywordPayload_: any = {
-      query: encodedQuery,
-      size: 999,
-      source_org: sourceOrgs,
-      accessibility: accessibilities,
-    };
     try {
+      const keywordPayload_: any = {
+        query: encodedQuery,
+        size: 999,
+        source_org: sourceOrgs,
+        accessibility: accessibilities,
+      };
       const { data: parseResults } = await axios.get(
         `${import.meta.env.VITE_API_URL}/search/parse`,
-        { params: { query: encodedQuery } },
+        { params: { query: encodedQuery }, timeout: 6000 },
       );
       const { entities } = parseResults || [];
 
@@ -129,6 +127,7 @@ function Search({ className }: { className?: string }) {
 
       setKeywordPayload(keywordPayload_);
       if (regionEntity || countryEntity || entities.length === 0) {
+        console.log(regionEntity, countryEntity, encodedQuery);
         const locationQ = regionEntity?.text || countryEntity?.text || encodedQuery;
         const { data: nominatimResults } = await axios.get(
           'https://nominatim.openstreetmap.org/search',
@@ -150,12 +149,8 @@ function Search({ className }: { className?: string }) {
         }
       }
 
-      // use getDatasetsByKeyword()?
-      const { data } = await axios.get(
-        `${import.meta.env.VITE_API_URL}/search/keyword`,
-        { params: keywordPayload_ },
-      );
-      dispatch(setDatasets(data.hits));
+      const { hits: datasets } = await getDatasetsByKeyword(keywordPayload_);
+      dispatch(setDatasets(datasets));
     } catch (err) {
       console.error(err.toJSON());
     } finally {
@@ -163,13 +158,12 @@ function Search({ className }: { className?: string }) {
     }
   };
 
-  const getDatasetsByKeyword = async () => {
+  const getDatasetsByKeyword = async (params?: any) => {
     const { data } = await axios.get(
       `${import.meta.env.VITE_API_URL}/search/keyword`,
-      { params: keywordPayload },
+      { params: params ?? keywordPayload },
     );
     return data;
-    // dispatch(setDatasets(data.hits));
   };
 
   const selectLocation = async (event: React.ChangeEvent<HTMLInputElement>, location: any | null) => {
@@ -191,13 +185,13 @@ function Search({ className }: { className?: string }) {
     }
   };
 
-  const clearLocation = () => {
+  const resetSearch = () => {
     setQuery('');
     setIsError(false);
     setOptions([]);
     dispatch(setLocation(null));
     dispatch(setLastZoom(null));
-    dispatch(setFilteredDatasets(null));
+    dispatch(setDatasets(null));
   };
 
   useEffect(() => {
@@ -210,7 +204,7 @@ function Search({ className }: { className?: string }) {
   // combines free text search and dropdown functionalities
 
   return (
-    <form className={`w-full ${className}`} onSubmit={handleSubmit} onReset={clearLocation}>
+    <form className={`w-full ${className}`} onSubmit={handleSubmit} onReset={resetSearch}>
       <Autocomplete
         id="location-search"
         options={options}

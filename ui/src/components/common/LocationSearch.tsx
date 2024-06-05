@@ -6,7 +6,7 @@ import { multiPolygon, point, polygon } from "@turf/helpers";
 import { cellToLatLng, getResolution } from "h3-js";
 import React, { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { setFilteredDatasets, setLastZoom, setLocation, setPendingLocationCheck } from 'store/searchSlice';
+import { setLastZoom, setLocation, setPendingLocationCheck } from 'store/searchSlice';
 import { setH3Index as setSelectedH3Index } from 'store/selectedSlice';
 import { RootState } from "store/store";
 import getSteppedZoomResolutionPair from 'utils/getSteppedZoomResolutionPair';
@@ -64,7 +64,7 @@ const LocationSearch = ({ className }: { className?: string }) => {
     });
     const datasetsResults = await datasetsResp.json();
     if (datasetsResults) {
-      dispatch(setFilteredDatasets(datasetsResults));
+      // dispatch(setFilteredDatasets(datasetsResults));
     }
 
     dispatch(setPendingLocationCheck(true));
@@ -118,7 +118,7 @@ const LocationSearch = ({ className }: { className?: string }) => {
     setOptions([]);
     dispatch(setLocation(null));
     dispatch(setLastZoom(null));
-    dispatch(setFilteredDatasets(null));
+    // dispatch(setFilteredDatasets(null));
   }
 
   useEffect(() => {
