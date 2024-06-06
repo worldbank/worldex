@@ -14,6 +14,9 @@ import uniqWith from 'lodash.uniqwith';
 import React, { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import {
+  resetByKey as resetPreviewByKey,
+} from 'store/previewSlice';
+import {
   resetByKey as resetSearchByKey,
   setLastZoom,
   setLocation,
@@ -140,7 +143,6 @@ function Search({ className }: { className?: string }) {
 
       setKeywordPayload(keywordPayload_);
       if (regionEntity || countryEntity || entities.length === 0) {
-        // console.log(regionEntity, countryEntity, query);
         const locationQ = regionEntity?.text || countryEntity?.text || query;
         const { data: nominatimResults } = await axios.get(
           'https://nominatim.openstreetmap.org/search',
@@ -190,6 +192,7 @@ function Search({ className }: { className?: string }) {
     dispatch(setDatasetIds(datasetIds));
     if (location.skip) {
       dispatch(setDatasets(datasets));
+      // we fly the map to the first ranked dataset
       if (datasets[0]?.bbox) {
         const [w, s, e, n] = datasets[0].bbox;
         const bbox = {
@@ -197,7 +200,6 @@ function Search({ className }: { className?: string }) {
         };
         moveViewportToBbox(bbox, viewState, dispatch);
       }
-      // fly map to first dataset's bbox
       return;
     }
     const [minLat, maxLat, minLon, maxLon] = location.boundingbox.map(parseFloat);
@@ -216,6 +218,7 @@ function Search({ className }: { className?: string }) {
     setQuery('');
     setIsError(false);
     setOptions([]);
+    dispatch(resetPreviewByKey('fileUrl', 'isLoadingPreview', 'errorMessage'));
     dispatch(resetSearchByKey('location', 'lastZoom'));
     dispatch(resetSelectedByKey('datasets'));
     dispatch(resetSelectedFiltersByKey('datasetIds', 'h3IndexedDatasets'));
