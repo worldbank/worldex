@@ -237,9 +237,13 @@ function Search({ className }: { className?: string }) {
       if (hasNoEntities) {
         keywordQ = query;
       } else {
-        keywordQ = [regionEntity?.text, countryEntity?.text].filter((e: string) => e).join(',');
+        // eslint-disable-next-line no-lonely-if
         if (hasStatIndicator) {
-          keywordQ += `,${statIndicatorEntity.text}`;
+          keywordQ = [regionEntity?.text, countryEntity?.text, statIndicatorEntity?.text].filter((e: string) => e).join(',');
+        } else {
+          // if no explicit stat indicator is detected,
+          // repass the raw query
+          keywordQ = query;
         }
       }
       params = { ...keywordPayload, query: keywordQ };
