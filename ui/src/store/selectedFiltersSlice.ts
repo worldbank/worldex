@@ -2,15 +2,17 @@ import { createSelector, createSlice } from '@reduxjs/toolkit';
 import { Dataset } from 'components/common/types';
 import { RootState } from './store';
 
+const initialState: any = {
+  sourceOrgs: {},
+  accessibilities: {},
+  // TODO: rename to candidate dataset ids
+  datasetIds: [],
+  h3IndexedDatasets: [],
+};
+
 const slice = createSlice({
   name: 'selectedFilters',
-  initialState: {
-    sourceOrgs: {},
-    accessibilities: {},
-    datasetIds: [],
-    h3IndexedDatasets: [],
-  },
-
+  initialState,
   reducers: {
     setSourceOrgs: (state, action) => {
       state.sourceOrgs = action.payload;
@@ -39,6 +41,11 @@ const slice = createSlice({
     // move this elsewhere
     setH3IndexedDatasets: (state, action) => {
       state.h3IndexedDatasets = action.payload;
+    },
+    resetByKey: (state, action) => {
+      action.payload.forEach((key: string) => {
+        state[key] = initialState[key];
+      });
     },
   },
 });
@@ -98,5 +105,10 @@ export const setDatasetIds = (payload: number[]) => ({
 
 export const setH3IndexedDatasets = (payload: Dataset[]) => ({
   type: 'selectedFilters/setH3IndexedDatasets',
+  payload,
+});
+
+export const resetByKey = (...payload: string[]) => ({
+  type: 'selectedFilters/resetByKey',
   payload,
 });

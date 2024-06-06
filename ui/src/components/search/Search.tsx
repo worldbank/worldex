@@ -14,19 +14,20 @@ import uniqWith from 'lodash.uniqwith';
 import React, { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import {
-  setLastZoom, setLocation, setPendingLocationCheck,
+  resetByKey as resetSearchByKey,
+  setLastZoom,
+  setLocation,
+  setPendingLocationCheck,
 } from 'store/searchSlice';
 import {
+  resetByKey as resetSelectedFiltersByKey,
   selectAccessibilities,
   selectSourceOrgFilters,
   setDatasetIds,
-  setH3IndexedDatasets,
 } from 'store/selectedFiltersSlice';
 import {
-  resetDatasets,
+  resetByKey as resetSelectedByKey,
   setDatasets,
-  setSelectedDataset,
-  setH3Index as setSelectedH3Index,
 } from 'store/selectedSlice';
 import { RootState } from 'store/store';
 import getSteppedZoomResolutionPair from 'utils/getSteppedZoomResolutionPair';
@@ -101,7 +102,7 @@ function Search({ className }: { className?: string }) {
       const locationFeature = (location.geojson.type === 'Polygon' ? polygon : multiPolygon)(location.geojson.coordinates);
       const selectedTilePoint = point(cellToLatLng(selectedH3Index).reverse());
       if (getResolution(selectedH3Index) !== resolution || !booleanWithin(selectedTilePoint, locationFeature)) {
-        dispatch(setSelectedH3Index(null));
+        dispatch(resetSelectedByKey('h3Index'));
       }
     }
   };
@@ -109,28 +110,26 @@ function Search({ className }: { className?: string }) {
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     setIsLoading(true);
-    const encodedQuery = new URLSearchParams(query).toString();
 
     try {
-      const keywordPayload_: any = {
-        query: encodedQuery,
-        size: 999,
-        source_org: sourceOrgs,
-        accessibility: accessibilities,
-      };
       let entities: any[] = [];
       try {
         const { data: parseResults } = await axios.get(
           `${import.meta.env.VITE_API_URL}/search/parse`,
-          { params: { query: encodedQuery }, timeout: 6000 },
+          { params: { query }, timeout: 6000 },
         );
         entities = parseResults.entities;
       } catch (err) {
         console.error(err.toJSON());
       }
 
-      keywordPayload_.query = encodedQuery;
-      // single pass only
+      const keywordPayload_: any = {
+        query,
+        size: 999,
+        source_org: sourceOrgs,
+        accessibility: accessibilities,
+      };
+      // consider single pass
       const yearEntity = entities.find((e: any) => e.label === 'year');
       const regionEntity = entities.find((e: any) => e.label === 'region');
       const countryEntity = entities.find((e: any) => e.label === 'country');
@@ -141,8 +140,8 @@ function Search({ className }: { className?: string }) {
 
       setKeywordPayload(keywordPayload_);
       if (regionEntity || countryEntity || entities.length === 0) {
-        console.log(regionEntity, countryEntity, encodedQuery);
-        const locationQ = regionEntity?.text || countryEntity?.text || encodedQuery;
+        // console.log(regionEntity, countryEntity, query);
+        const locationQ = regionEntity?.text || countryEntity?.text || query;
         const { data: nominatimResults } = await axios.get(
           'https://nominatim.openstreetmap.org/search',
           {
@@ -164,8 +163,8 @@ function Search({ className }: { className?: string }) {
       }
 
       const { hits: datasets } = await getDatasetsByKeyword(keywordPayload_);
-      dispatch(setSelectedDataset(null));
-      dispatch(setSelectedH3Index(null));
+      dispatch(resetSelectedByKey('selectedDataset', 'h3Index'));
+      dispatch(resetSearchByKey('location', 'lastZoom'));
       dispatch(setDatasetIds(datasets.map((d: Dataset) => d.id)));
       dispatch(setDatasets(datasets));
     } catch (err) {
@@ -186,8 +185,8 @@ function Search({ className }: { className?: string }) {
   const selectLocation = async (event: React.ChangeEvent<HTMLInputElement>, location: any | null) => {
     const { hits: datasets } = await getDatasetsByKeyword();
     const datasetIds = datasets.map((d: Dataset) => d.id);
-    dispatch(setSelectedDataset(null));
-    dispatch(setSelectedH3Index(null));
+    dispatch(resetSelectedByKey('selectedDataset', 'h3Index'));
+    dispatch(resetSearchByKey('location', 'lastZoom'));
     dispatch(setDatasetIds(datasetIds));
     if (location.skip) {
       dispatch(setDatasets(datasets));
@@ -217,11 +216,9 @@ function Search({ className }: { className?: string }) {
     setQuery('');
     setIsError(false);
     setOptions([]);
-    dispatch(setLocation(null));
-    dispatch(setLastZoom(null));
-    dispatch(resetDatasets());
-    dispatch(setDatasetIds([]));
-    dispatch(setH3IndexedDatasets([]));
+    dispatch(resetSearchByKey('location', 'lastZoom'));
+    dispatch(resetSelectedByKey('datasets'));
+    dispatch(resetSelectedFiltersByKey('datasetIds', 'h3IndexedDatasets'));
   };
 
   useEffect(() => {

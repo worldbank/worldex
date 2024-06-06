@@ -10,7 +10,7 @@ import { DatasetCount } from 'components/common/types';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { useDispatch, useSelector } from 'react-redux';
 import { selectAccessibilities, selectSourceOrgFilters } from 'store/selectedFiltersSlice';
-import { setH3Index as setSelectedH3Index } from 'store/selectedSlice';
+import { resetByKey as resetSelectedByKeys, setH3Index as setSelectedH3Index } from 'store/selectedSlice';
 import { RootState } from 'store/store';
 import getSteppedZoomResolutionPair from 'utils/getSteppedZoomResolutionPair';
 import {
@@ -144,9 +144,7 @@ export default function DatasetCountLayer() {
       onClick: async (info: any, event: object) => {
         const targetIndex = info.object.index;
         if (selectedH3Index === targetIndex) {
-          dispatch(setSelectedH3Index(null));
-          // should have dedicated datasets for selected?
-          // dispatch(resetDatasets());
+          dispatch(resetSelectedByKeys('h3Index'));
           return;
         }
         dispatch(setSelectedH3Index(targetIndex));

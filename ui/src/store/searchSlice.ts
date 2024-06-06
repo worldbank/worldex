@@ -1,18 +1,20 @@
 /* eslint-disable no-param-reassign */
 import { createSlice } from '@reduxjs/toolkit';
 
+const initialState: any = {
+  // query: null,
+  location: null,
+  lastZoom: null,
+  pendingLocationCheck: false,
+};
+
 const slice = createSlice({
   name: 'search',
-  initialState: {
-    query: null,
-    location: null,
-    lastZoom: null,
-    pendingLocationCheck: false,
-  },
+  initialState,
   reducers: {
-    setQuery: (state, action) => {
-      state.query = action.payload;
-    },
+    // setQuery: (state, action) => {
+    //   state.query = action.payload;
+    // },
     setLocation: (state, action) => {
       state.location = action.payload;
     },
@@ -22,15 +24,20 @@ const slice = createSlice({
     setPendingLocationCheck: (state, action) => {
       state.pendingLocationCheck = action.payload;
     },
+    resetByKey: (state, action) => {
+      action.payload.forEach((key: string) => {
+        state[key] = initialState[key];
+      });
+    },
   },
 });
 
 export default slice.reducer;
 
-export const setQuery = (payload: string | null) => ({
-  type: 'search/setQuery',
-  payload,
-});
+// export const setQuery = (payload: string | null) => ({
+//   type: 'search/setQuery',
+//   payload,
+// });
 export const setLocation = (payload: any) => ({
   type: 'search/setLocation',
   payload,
@@ -41,5 +48,9 @@ export const setLastZoom = (payload: any) => ({
 });
 export const setPendingLocationCheck = (payload: boolean) => ({
   type: 'search/setPendingLocationCheck',
+  payload,
+});
+export const resetByKey = (...payload: string[]) => ({
+  type: 'search/resetByKey',
   payload,
 });
