@@ -62,16 +62,20 @@ function ClearButton() {
 
 function Search({ className }: { className?: string }) {
   const [query, setQuery] = useState('');
+  // const [strippedQuery ,setStrippedQuery] = useState('');
   const [options, setOptions] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
-  const [isError, setIsError] = useState(false);
+  const [error, setError] = useState(null);
+  const [entities, setEntities] = useState([]);
   const [keywordPayload, setKeywordPayload] = useState({});
-  const dispatch = useDispatch();
-  const { h3Index: selectedH3Index }: { h3Index: string } = useSelector((state: RootState) => state.selected);
+
   const viewState = useSelector((state: RootState) => state.carto.viewState);
   const { location, lastZoom } = useSelector((state: RootState) => state.search);
+  const { h3Index: selectedH3Index }: { h3Index: string } = useSelector((state: RootState) => state.selected);
   const sourceOrgs = useSelector(selectSourceOrgFilters);
   const accessibilities = useSelector(selectAccessibilities);
+
+  const dispatch = useDispatch();
 
   const getDatasets = async ({ location, zoom, datasetIds }: { location: any, zoom: number, datasetIds?: number[] }) => {
     const [_, resolution] = getSteppedZoomResolutionPair(zoom);
@@ -113,6 +117,7 @@ function Search({ className }: { className?: string }) {
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     setIsLoading(true);
+    setError(null);
 
     try {
       let entities: any[] = [];
@@ -122,6 +127,7 @@ function Search({ className }: { className?: string }) {
           { params: { query }, timeout: 6000 },
         );
         entities = parseResults.entities;
+        setEntities(entities);
       } catch (err) {
         console.error(err.toJSON());
       }
@@ -133,6 +139,10 @@ function Search({ className }: { className?: string }) {
         accessibility: accessibilities,
       };
       // consider single pass
+      const statIndicatorEntity = entities.find((e: any) => e.label === 'statistical indicator');
+      if (statIndicatorEntity) {
+        keywordPayload_.query = statIndicatorEntity.text;
+      }
       const yearEntity = entities.find((e: any) => e.label === 'year');
       const regionEntity = entities.find((e: any) => e.label === 'region');
       const countryEntity = entities.find((e: any) => e.label === 'country');
@@ -143,7 +153,12 @@ function Search({ className }: { className?: string }) {
 
       setKeywordPayload(keywordPayload_);
       if (regionEntity || countryEntity || entities.length === 0) {
-        const locationQ = regionEntity?.text || countryEntity?.text || query;
+        let locationQ;
+        if (regionEntity || countryEntity) {
+          locationQ = [regionEntity?.text, countryEntity?.text].filter((e: string) => e).join(',');
+        } else {
+          locationQ = query;
+        }
         const { data: nominatimResults } = await axios.get(
           'https://nominatim.openstreetmap.org/search',
           {
@@ -165,10 +180,14 @@ function Search({ className }: { className?: string }) {
       }
 
       const { hits: datasets } = await getDatasetsByKeyword(keywordPayload_);
-      dispatch(resetSelectedByKey('selectedDataset', 'h3Index'));
-      dispatch(resetSearchByKey('location', 'lastZoom'));
-      dispatch(setDatasetIds(datasets.map((d: Dataset) => d.id)));
-      dispatch(setDatasets(datasets));
+      if (Array.isArray(datasets) && datasets.length === 0) {
+        setError('No dataset results');
+      } else {
+        dispatch(resetSelectedByKey('selectedDataset', 'h3Index'));
+        dispatch(resetSearchByKey('location', 'lastZoom'));
+        dispatch(setDatasetIds(datasets.map((d: Dataset) => d.id)));
+        dispatch(setDatasets(datasets));
+      }
     } catch (err) {
       console.error(err.toJSON());
     } finally {
@@ -177,6 +196,7 @@ function Search({ className }: { className?: string }) {
   };
 
   const getDatasetsByKeyword = async (params?: any) => {
+    console.log('getting datasets');
     const { data } = await axios.get(
       `${import.meta.env.VITE_API_URL}/search/keyword`,
       { params: params ?? keywordPayload },
@@ -184,24 +204,84 @@ function Search({ className }: { className?: string }) {
     return data;
   };
 
+  const stripEntities = (query: string, entities: any[]): string => {
+    let strippedQ = '';
+    entities.forEach((entity, idx) => {
+      const prevEntity = entities[idx - 1];
+      const nextEntity = entities[idx + 1];
+      if (!prevEntity) {
+        strippedQ += query.slice(0, entity.start);
+      } else {
+        strippedQ += query.slice(prevEntity.end, entity.start);
+      }
+      if (!nextEntity) {
+        strippedQ += query.slice(entity.end);
+      }
+    });
+    return strippedQ;
+  };
+
   const selectLocation = async (event: React.ChangeEvent<HTMLInputElement>, location: any | null) => {
-    const { hits: datasets } = await getDatasetsByKeyword();
-    const datasetIds = datasets.map((d: Dataset) => d.id);
+    const hasStatIndicator = entities.some((e) => e.label === 'statistical indicator');
+
+    const hasNoEntities = Array.isArray(entities) && entities.length === 0;
+    const statIndicatorEntity = entities.find((e: any) => e.label === 'statistical indicator');
+    const regionEntity = entities.find((e: any) => e.label === 'region');
+    const countryEntity = entities.find((e: any) => e.label === 'country');
+
+    let fetched = false;
+    let candidateDatasets;
+    let params = keywordPayload;
+    if (location.skip) {
+      let keywordQ;
+      if (hasNoEntities) {
+        keywordQ = query;
+      } else {
+        keywordQ = [regionEntity?.text, countryEntity?.text].filter((e: string) => e).join(',');
+        if (hasStatIndicator) {
+          keywordQ += `,${statIndicatorEntity.text}`;
+        }
+      }
+      params = { ...keywordPayload, query: keywordQ };
+      const { hits } = await getDatasetsByKeyword(params);
+      candidateDatasets = hits;
+      fetched = true;
+    } else {
+      // eslint-disable-next-line no-lonely-if
+      if (hasStatIndicator) {
+        const { hits } = await getDatasetsByKeyword();
+        candidateDatasets = hits;
+        fetched = true;
+      }
+      // do nothing if location is chosen and there's no stat indicator keyword
+    }
+
+    const datasetIds = candidateDatasets ? candidateDatasets.map((d: Dataset) => d.id) : null;
+
     dispatch(resetSelectedByKey('selectedDataset', 'h3Index'));
     dispatch(resetSearchByKey('location', 'lastZoom'));
     dispatch(setDatasetIds(datasetIds));
-    if (location.skip) {
-      dispatch(setDatasets(datasets));
-      // we fly the map to the first ranked dataset
-      if (datasets[0]?.bbox) {
-        const [w, s, e, n] = datasets[0].bbox;
-        const bbox = {
-          minLat: s, maxLat: n, minLon: w, maxLon: e,
-        };
-        moveViewportToBbox(bbox, viewState, dispatch);
+
+    if (fetched) {
+      if (datasetIds.length === 0) {
+        setError('No dataset results');
+        return;
+      } else if (location.skip) {
+        dispatch(setDatasets(candidateDatasets));
+        return;
+      } else {
+        // we fly the map to the first ranked dataset
+        if (candidateDatasets[0]?.bbox) {
+          const [w, s, e, n] = candidateDatasets[0].bbox;
+          const bbox = {
+            minLat: s, maxLat: n, minLon: w, maxLon: e,
+          };
+          moveViewportToBbox(bbox, viewState, dispatch);
+        }
+        return;
       }
-      return;
     }
+
     const [minLat, maxLat, minLon, maxLon] = location.boundingbox.map(parseFloat);
     const bbox = {
       minLat, maxLat, minLon, maxLon,
@@ -215,8 +295,9 @@ function Search({ className }: { className?: string }) {
   };
 
   const resetSearch = () => {
+    setEntities([]);
     setQuery('');
-    setIsError(false);
+    setError('');
     setOptions([]);
     dispatch(resetPreviewByKey('fileUrl', 'isLoadingPreview', 'errorMessage'));
     dispatch(resetSearchByKey('location', 'lastZoom'));
@@ -249,13 +330,13 @@ function Search({ className }: { className?: string }) {
             // eslint-disable-next-line react/jsx-props-no-spreading
             {...params}
             label="Search for datasets"
-            error={isError}
-            helperText={isError && 'No results.'}
+            error={!!error}
+            helperText={error}
             variant="outlined"
             value={query}
             onChange={
               (event: React.ChangeEvent<HTMLInputElement>) => {
-                setIsError(false);
+                setError('');
                 setQuery(event.target.value);
               }
             }
