@@ -233,6 +233,7 @@ function Search({ className }: { className?: string }) {
     let candidateDatasets;
     let params = keywordPayload;
     if (location.skip) {
+      console.log('skipping');
       let keywordQ;
       if (hasNoEntities) {
         keywordQ = query;
@@ -251,6 +252,7 @@ function Search({ className }: { className?: string }) {
       candidateDatasets = hits;
       fetched = true;
     } else {
+      console.log(hasStatIndicator);
       // eslint-disable-next-line no-lonely-if
       if (hasStatIndicator) {
         const { hits } = await getDatasetsByKeyword();
@@ -272,8 +274,6 @@ function Search({ className }: { className?: string }) {
         return;
       } else if (location.skip) {
         dispatch(setDatasets(candidateDatasets));
-        return;
-      } else {
         // we fly the map to the first ranked dataset
         if (candidateDatasets[0]?.bbox) {
           const [w, s, e, n] = candidateDatasets[0].bbox;
