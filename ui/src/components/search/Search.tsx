@@ -99,8 +99,11 @@ function Search({ className }: { className?: string }) {
         },
       },
     );
-    if (datasetsResults) {
+    if (Array.isArray(datasetsResults) && datasetsResults.length > 0) {
       dispatch(setDatasets(datasetsResults));
+    } else {
+      setError('No dataset results');
+      return;
     }
 
     dispatch(setPendingLocationCheck(true));

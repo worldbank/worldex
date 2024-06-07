@@ -48,7 +48,7 @@ const Overview = () => {
       <Typography className="text-md font-bold">
         <span>
           Total datasets indexed
-          { isFiltered && ' (filtered)' }:{' '}
+          { isFiltered && locationFilteredDatasets.length && ' (filtered)' }:{' '}
         </span>
         <span className="text-lg">{locationFilteredDatasets ? locationFilteredDatasets.length : datasetCount}</span>
       </Typography>
