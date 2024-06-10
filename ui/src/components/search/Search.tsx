@@ -242,6 +242,9 @@ function Search({ className }: { className?: string }) {
   };
 
   const stripEntities = (query: string, entities: any[]): string => {
+    if (!Array.isArray(entities) || entities.length === 0) {
+      return query;
+    }
     let strippedQ = '';
     entities.forEach((entity, idx) => {
       const prevEntity = entities[idx - 1];
@@ -255,16 +258,12 @@ function Search({ className }: { className?: string }) {
         strippedQ += query.slice(entity.end);
       }
     });
-    console.debug('stripped entities into', strippedQ);
     return strippedQ.trim();
   };
 
   const selectLocation = async (event: React.ChangeEvent<HTMLInputElement>, location: any | null) => {
     setIsLoading(true);
-    const hasStatIndicator = entities.some((e) => e.label === 'statistical indicator');
-
     const hasNoEntities = Array.isArray(entities) && entities.length === 0;
-    const statIndicatorEntity = entities.find((e: any) => e.label === 'statistical indicator');
 
     let fetched = false;
     let params = keywordPayload;
@@ -275,10 +274,26 @@ function Search({ className }: { className?: string }) {
       console.info('No entities');
       keywordQ = query;
     } else {
-      keywordQ = hasStatIndicator ? statIndicatorEntity?.text : stripEntities(query, entities);
+      let labelWhitelist = ['statistical indicator'];
+      if (location.skip) {
+        labelWhitelist = [...labelWhitelist, 'region', 'country'];
+      }
+      const entitiesToStrip = entities.filter((e) => !labelWhitelist.includes(e.label));
+      keywordQ = stripEntities(query, entitiesToStrip);
+      try {
+        const { data } = await axios.get(
+          `${import.meta.env.VITE_API_URL}/search/strip_stop_words`,
+          { params: { query: keywordQ } },
+        );
+        const { tokens } = data;
+        keywordQ = tokens.map((t: any) => t.token).join(' ');
+      } catch (err) {
+        console.error(err.toJSON());
+      }
     }
 
     let [candidateDatasets, candidateDatasetIds] = [[] as any[], [] as number[]];
+
     if (keywordQ) {
       // TODO: consider skipping keyword search if
       // entity-stripped keyword query only has stop words left

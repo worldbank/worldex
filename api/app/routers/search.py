@@ -1,13 +1,35 @@
+import os
 from typing import Union
 
 from app.search.es import keyword_search
 from app.search.parser import parse_query
+from elasticsearch.client import IndicesClient
 from fastapi import APIRouter, Query
+
+from elasticsearch import Elasticsearch
 
 router = APIRouter(
     prefix="/search",
     tags=["search"]
 )
+
+ELASTICSEARCH_CONNECTION = os.getenv("ELASTICSEARCH_URL_SYNC")
+client = Elasticsearch(ELASTICSEARCH_CONNECTION)
+indices_client = IndicesClient(client)
+
+
+@router.get("/strip_stop_words")
+def strip_stop_words(
+    query: str
+):
+    return indices_client.analyze(
+        body={
+            "tokenizer": "standard",
+            "filter": ["stop"],
+            "text": query,
+        }
+    )
+
 
 @router.get("/parse")
 def parse(
@@ -35,5 +57,4 @@ def search_keyword(
     from_result: int = Query(0, description="The starting index"),
     size: int = Query(10, description="The number of results to return"),
 ):
-
     return keyword_search(query, source_org, accessibility, projection, min_year, max_year, from_result, size)
