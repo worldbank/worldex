@@ -36,12 +36,12 @@ import { RootState } from 'store/store';
 import getSteppedZoomResolutionPair from 'utils/getSteppedZoomResolutionPair';
 import moveViewportToBbox from 'utils/moveViewportToBbox';
 
-function SearchButton({ isLoading }: { isLoading: boolean }) {
+function SearchButton({ isLoading, disabled }: { isLoading: boolean, disabled?: boolean }) {
   return (
     <div className="flex justify-center items-center w-[2em] mr-[-8px]">
       {
       isLoading ? <CircularProgress size="1em" /> : (
-        <IconButton aria-label="search" type="submit">
+        <IconButton aria-label="search" type="submit" disabled={disabled}>
           <SearchIcon />
         </IconButton>
       )
@@ -278,18 +278,23 @@ function Search({ className }: { className?: string }) {
     } else {
       keywordQ = hasStatIndicator ? statIndicatorEntity?.text : stripEntities(query, entities);
     }
-    params = { ...keywordPayload, query: keywordQ };
-    const { hits: candidateDatasets } = await getDatasetsByKeyword(params);
-    fetched = true;
-    // do nothing if location is chosen and there's no stat indicator keyword
-    // this might still be relevant if there are only stop words left
-    if (candidateDatasets.length === 0) {
-      setError('No dataset results');
-      setIsLoading(false);
-      return;
+
+    let [candidateDatasets, candidateDatasetIds] = [[] as any[], [] as number[]];
+    if (keywordQ) {
+      params = { ...keywordPayload, query: keywordQ };
+      const { hits } = await getDatasetsByKeyword(params);
+      candidateDatasets = hits;
+      fetched = true;
+      // do nothing if location is chosen and there's no stat indicator keyword
+      // this might still be relevant if there are only stop words left
+      if (candidateDatasets.length === 0) {
+        setError('No dataset results');
+        setIsLoading(false);
+        return;
+      }
+      candidateDatasetIds = candidateDatasets ? candidateDatasets.map((d: Dataset) => d.id) : null;
     }
 
-    const candidateDatasetIds = candidateDatasets ? candidateDatasets.map((d: Dataset) => d.id) : null;
     dispatch(resetSelectedByKey('selectedDataset', 'h3Index'));
     dispatch(resetSearchByKey('location', 'lastZoom'));
 
@@ -372,7 +377,7 @@ function Search({ className }: { className?: string }) {
               ...params.InputProps,
               endAdornment: (
                 <>
-                  <SearchButton isLoading={isLoading} />
+                  <SearchButton isLoading={isLoading} disabled={query.trim() === ''} />
                   <ClearButton />
                 </>
               ),
