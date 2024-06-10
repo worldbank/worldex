@@ -1,3 +1,4 @@
+import { setViewState } from '@carto/react-redux';
 import ClearIcon from '@mui/icons-material/Clear';
 import SearchIcon from '@mui/icons-material/Search';
 import {
@@ -264,8 +265,6 @@ function Search({ className }: { className?: string }) {
 
     const hasNoEntities = Array.isArray(entities) && entities.length === 0;
     const statIndicatorEntity = entities.find((e: any) => e.label === 'statistical indicator');
-    const regionEntity = entities.find((e: any) => e.label === 'region');
-    const countryEntity = entities.find((e: any) => e.label === 'country');
 
     let fetched = false;
     let params = keywordPayload;
@@ -281,12 +280,12 @@ function Search({ className }: { className?: string }) {
 
     let [candidateDatasets, candidateDatasetIds] = [[] as any[], [] as number[]];
     if (keywordQ) {
+      // TODO: consider skipping keyword search if
+      // entity-stripped keyword query only has stop words left
       params = { ...keywordPayload, query: keywordQ };
       const { hits } = await getDatasetsByKeyword(params);
       candidateDatasets = hits;
       fetched = true;
-      // do nothing if location is chosen and there's no stat indicator keyword
-      // this might still be relevant if there are only stop words left
       if (candidateDatasets.length === 0) {
         setError('No dataset results');
         setIsLoading(false);
@@ -301,14 +300,10 @@ function Search({ className }: { className?: string }) {
     if (location.skip) {
       dispatch(setDatasetIds(candidateDatasetIds));
       dispatch(setDatasets(candidateDatasets));
-      // we fly the map to the first ranked dataset
-      if (candidateDatasets[0]?.bbox) {
-        const [w, s, e, n] = candidateDatasets[0].bbox;
-        const bbox = {
-          minLat: s, maxLat: n, minLon: w, maxLon: e,
-        };
-        moveViewportToBbox(bbox, viewState, dispatch);
-      }
+      // temporary ux hack: reset map view for faster load time
+      // instead of flying to the first ranked dataset
+      // @ts-ignore
+      dispatch(setViewState({ latitude: 0, longitude: 0, zoom: 2 }));
     } else {
       const [minLat, maxLat, minLon, maxLon] = location.boundingbox.map(parseFloat);
       const bbox = {
