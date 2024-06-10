@@ -175,11 +175,7 @@ function Search({ className }: { className?: string }) {
         source_org: sourceOrgs,
         accessibility: accessibilities,
       };
-      // consider single pass
-      const statIndicatorEntity = entities.find((e: any) => e.label === 'statistical indicator');
-      if (Array.isArray(entities) && entities.length > 0) {
-        keywordPayload_.query = statIndicatorEntity ? statIndicatorEntity.text : stripEntities(query, entities);
-      }
+
       const yearEntity = entities.find((e: any) => e.label === 'year');
       const regionEntity = entities.find((e: any) => e.label === 'region');
       const countryEntity = entities.find((e: any) => e.label === 'country');
@@ -217,6 +213,18 @@ function Search({ className }: { className?: string }) {
       }
 
       setIsLoading(true);
+      const entitiesToStrip = entities.filter((e) => !['year'].includes(e.label));
+      keywordPayload_.query = stripEntities(query, entitiesToStrip);
+      try {
+        const { data } = await axios.get(
+          `${import.meta.env.VITE_API_URL}/search/strip_stop_words`,
+          { params: { query: keywordPayload_.query } },
+        );
+        const { tokens } = data;
+        keywordPayload_.query = tokens.map((t: any) => t.token).join(' ');
+      } catch (err) {
+        console.error(err.toJSON());
+      }
       const { hits: datasets } = await getDatasetsByKeyword(keywordPayload_);
       if (Array.isArray(datasets) && datasets.length === 0) {
         setError('No dataset results');
@@ -264,8 +272,6 @@ function Search({ className }: { className?: string }) {
   const selectLocation = async (event: React.ChangeEvent<HTMLInputElement>, location: any | null) => {
     setIsLoading(true);
     const hasNoEntities = Array.isArray(entities) && entities.length === 0;
-
-    let fetched = false;
     let params = keywordPayload;
 
     console.info('Location skipped?', location.skip);
@@ -300,7 +306,6 @@ function Search({ className }: { className?: string }) {
       params = { ...keywordPayload, query: keywordQ };
       const { hits } = await getDatasetsByKeyword(params);
       candidateDatasets = hits;
-      fetched = true;
       if (candidateDatasets.length === 0) {
         setError('No dataset results');
         setIsLoading(false);
