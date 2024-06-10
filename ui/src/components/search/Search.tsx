@@ -176,8 +176,8 @@ function Search({ className }: { className?: string }) {
       };
       // consider single pass
       const statIndicatorEntity = entities.find((e: any) => e.label === 'statistical indicator');
-      if (statIndicatorEntity) {
-        keywordPayload_.query = statIndicatorEntity.text;
+      if (Array.isArray(entities) && entities.length > 0) {
+        keywordPayload_.query = statIndicatorEntity ? statIndicatorEntity.text : stripEntities(query, entities);
       }
       const yearEntity = entities.find((e: any) => e.label === 'year');
       const regionEntity = entities.find((e: any) => e.label === 'region');
@@ -215,6 +215,7 @@ function Search({ className }: { className?: string }) {
         }
       }
 
+      setIsLoading(true);
       const { hits: datasets } = await getDatasetsByKeyword(keywordPayload_);
       if (Array.isArray(datasets) && datasets.length === 0) {
         setError('No dataset results');
@@ -232,7 +233,6 @@ function Search({ className }: { className?: string }) {
   };
 
   const getDatasetsByKeyword = async (params?: any) => {
-    console.log('getting datasets');
     const { data } = await axios.get(
       `${import.meta.env.VITE_API_URL}/search/keyword`,
       { params: params ?? keywordPayload },
@@ -254,10 +254,12 @@ function Search({ className }: { className?: string }) {
         strippedQ += query.slice(entity.end);
       }
     });
-    return strippedQ;
+    console.debug('stripped entities into', strippedQ);
+    return strippedQ.trim();
   };
 
   const selectLocation = async (event: React.ChangeEvent<HTMLInputElement>, location: any | null) => {
+    setIsLoading(true);
     const hasStatIndicator = entities.some((e) => e.label === 'statistical indicator');
 
     const hasNoEntities = Array.isArray(entities) && entities.length === 0;
@@ -266,78 +268,58 @@ function Search({ className }: { className?: string }) {
     const countryEntity = entities.find((e: any) => e.label === 'country');
 
     let fetched = false;
-    let candidateDatasets;
     let params = keywordPayload;
-    if (location.skip) {
-      console.log('skipping');
-      let keywordQ;
-      if (hasNoEntities) {
-        keywordQ = query;
-      } else {
-        // eslint-disable-next-line no-lonely-if
-        if (hasStatIndicator) {
-          keywordQ = [regionEntity?.text, countryEntity?.text, statIndicatorEntity?.text].filter((e: string) => e).join(',');
-        } else {
-          // if no explicit stat indicator is detected,
-          // repass the raw query
-          keywordQ = query;
-        }
-      }
-      params = { ...keywordPayload, query: keywordQ };
-      const { hits } = await getDatasetsByKeyword(params);
-      candidateDatasets = hits;
-      fetched = true;
+
+    console.info('Location skipped?', location.skip);
+    let keywordQ;
+    if (hasNoEntities) {
+      console.info('No entities');
+      keywordQ = query;
     } else {
-      console.log(hasStatIndicator);
-      // eslint-disable-next-line no-lonely-if
-      if (hasStatIndicator) {
-        const { hits } = await getDatasetsByKeyword();
-        candidateDatasets = hits;
-        fetched = true;
-      }
-      // do nothing if location is chosen and there's no stat indicator keyword
+      keywordQ = hasStatIndicator ? statIndicatorEntity?.text : stripEntities(query, entities);
+    }
+    params = { ...keywordPayload, query: keywordQ };
+    const { hits: candidateDatasets } = await getDatasetsByKeyword(params);
+    fetched = true;
+    // do nothing if location is chosen and there's no stat indicator keyword
+    // this might still be relevant if there are only stop words left
+    if (candidateDatasets.length === 0) {
+      setError('No dataset results');
+      setIsLoading(false);
+      return;
     }
 
-    const datasetIds = candidateDatasets ? candidateDatasets.map((d: Dataset) => d.id) : null;
-
+    const candidateDatasetIds = candidateDatasets ? candidateDatasets.map((d: Dataset) => d.id) : null;
     dispatch(resetSelectedByKey('selectedDataset', 'h3Index'));
     dispatch(resetSearchByKey('location', 'lastZoom'));
 
-    if (fetched) {
-      if (datasetIds.length === 0) {
-        setError('No dataset results');
-        return;
-      } else if (location.skip) {
-        dispatch(setDatasetIds(datasetIds));
-        dispatch(setDatasets(candidateDatasets));
-        // we fly the map to the first ranked dataset
-        if (candidateDatasets[0]?.bbox) {
-          const [w, s, e, n] = candidateDatasets[0].bbox;
-          const bbox = {
-            minLat: s, maxLat: n, minLon: w, maxLon: e,
-          };
-          moveViewportToBbox(bbox, viewState, dispatch);
-        }
-        return;
-      }
-    }
-
-    const [minLat, maxLat, minLon, maxLon] = location.boundingbox.map(parseFloat);
-    const bbox = {
-      minLat, maxLat, minLon, maxLon,
-    };
-    const { zoom } = moveViewportToBbox(bbox, viewState, dispatch, true);
-    if (['Polygon', 'MultiPolygon'].includes(location.geojson.type)) {
-      // should return something to indicate whether
-      // no data results could we found, at which point
-      // we skip setting location and zoom
-      const datasets = await getDatasets({ location, zoom, datasetIds });
-      if (Array.isArray(datasets) && datasets.length > 0) {
-        dispatch(setLocation(location));
+    if (location.skip) {
+      dispatch(setDatasetIds(candidateDatasetIds));
+      dispatch(setDatasets(candidateDatasets));
+      // we fly the map to the first ranked dataset
+      if (candidateDatasets[0]?.bbox) {
+        const [w, s, e, n] = candidateDatasets[0].bbox;
+        const bbox = {
+          minLat: s, maxLat: n, minLon: w, maxLon: e,
+        };
         moveViewportToBbox(bbox, viewState, dispatch);
-        dispatch(setLastZoom(zoom));
+      }
+    } else {
+      const [minLat, maxLat, minLon, maxLon] = location.boundingbox.map(parseFloat);
+      const bbox = {
+        minLat, maxLat, minLon, maxLon,
+      };
+      const { zoom } = moveViewportToBbox(bbox, viewState, dispatch, true);
+      if (['Polygon', 'MultiPolygon'].includes(location.geojson.type)) {
+        const datasets = await getDatasets({ location, zoom, datasetIds: candidateDatasetIds });
+        if (Array.isArray(datasets) && datasets.length > 0) {
+          dispatch(setLocation(location));
+          moveViewportToBbox(bbox, viewState, dispatch);
+          dispatch(setLastZoom(zoom));
+        }
       }
     }
+    setIsLoading(false);
   };
 
   const resetSearch = () => {
