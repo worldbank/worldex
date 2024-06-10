@@ -63,7 +63,6 @@ function ClearButton() {
 
 function Search({ className }: { className?: string }) {
   const [query, setQuery] = useState('');
-  // const [strippedQuery ,setStrippedQuery] = useState('');
   const [options, setOptions] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -77,37 +76,6 @@ function Search({ className }: { className?: string }) {
   const accessibilities = useSelector(selectAccessibilities);
 
   const dispatch = useDispatch();
-
-  const onlyGetDatasets = async ({ location, zoom, candidateDatasetIds }: { location: any, zoom: number, candidateDatasetIds?: number[] }) => {
-    const [_, resolution] = getSteppedZoomResolutionPair(zoom);
-    const body: any = {
-      location: JSON.stringify(location.geojson),
-      resolution,
-    };
-    if (Array.isArray(candidateDatasetIds) && candidateDatasetIds.length > 0) {
-      body.dataset_ids = candidateDatasetIds;
-    } else {
-      body.source_org = sourceOrgs;
-      body.accessibility = accessibilities;
-    }
-    const { data } = await axios.post(
-      `${import.meta.env.VITE_API_URL}/datasets_by_location/`,
-      body,
-      {
-        headers: {
-          Accept: 'application/json',
-          'Content-Type': 'application/json',
-        },
-      },
-    );
-    return data;
-    // if (Array.isArray(datasetsResults) && datasetsResults.length > 0) {
-    //   dispatch(setDatasets(datasetsResults));
-    // } else {
-    //   setError('No dataset results');
-    //   return;
-    // }
-  };
 
   const getDatasets = async ({ location, zoom, datasetIds }: { location: any, zoom: number, datasetIds?: number[] }) => {
     // TODO: make this single purpose. lessen side effects and simply return datasets
