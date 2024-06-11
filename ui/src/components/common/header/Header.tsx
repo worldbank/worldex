@@ -46,18 +46,18 @@ export default function Header() {
       // brandLogo={<Logo />}
       brandText='WorldEx'
     >
+      <AboutModal open={aboutOpen} onClose={handleAboutClose} />
       {smDownHidden ? (
         <>
           <DrawerMenu
             drawerOpen={drawerOpen}
             handleDrawerToggle={handleDrawerToggle}
           />
-          <AboutButton onClick={handleAboutOpen} className='justify-items-end' />
+          <AboutButton onClick={handleAboutOpen} className='justify-end' />
         </>
       ) : (
         <>
           <StyledDivider orientation='vertical' flexItem light></StyledDivider>
-          <AboutModal open={aboutOpen} onClose={handleAboutClose} />
           <NavigationMenu />
           <Grid container item xs justifyContent='flex-end'>
             <UserMenu />
