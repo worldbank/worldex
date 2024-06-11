@@ -1,11 +1,10 @@
 from gradio_client import Client
 
-
 # Initialize the client
 client = Client("avsolatorio/query-parser")
 
 
-def parse_query(query: str, labels: list, threshold: float = 0.3, nested_ner: bool = False, model_name: str = "urchade/gliner_medium-v2.1"):
+def parse_query(query: str, labels: list, threshold: float = 0.3, nested_ner: bool = False, model_name: str = "urchade/gliner_base"):
     """Parse the query and extract entities. This function is a wrapper for the Gradio API
     running on the Hugging Face Space: https://huggingface.co/spaces/avsolatorio/query-parser.
 

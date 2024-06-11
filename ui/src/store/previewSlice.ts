@@ -1,13 +1,15 @@
 /* eslint-disable no-param-reassign */
 import { createSlice } from '@reduxjs/toolkit';
 
+const initialState: any = {
+  fileUrl: null,
+  isLoadingPreview: false,
+  errorMessage: null,
+};
+
 const slice = createSlice({
   name: 'preview',
-  initialState: {
-    fileUrl: null,
-    isLoadingPreview: false,
-    errorMessage: null,
-  },
+  initialState,
   reducers: {
     setFileUrl: (state, action) => {
       state.fileUrl = action.payload;
@@ -17,6 +19,11 @@ const slice = createSlice({
     },
     setErrorMessage: (state, action) => {
       state.errorMessage = action.payload;
+    },
+    resetByKey: (state, action) => {
+      action.payload.forEach((key: string) => {
+        state[key] = initialState[key];
+      });
     },
   },
 });
@@ -33,5 +40,9 @@ export const setIsLoadingPreview = (payload: boolean) => ({
 });
 export const setErrorMessage = (payload: string) => ({
   type: 'preview/setErrorMessage',
+  payload,
+});
+export const resetByKey = (...payload: string[]) => ({
+  type: 'preview/resetByKey',
   payload,
 });

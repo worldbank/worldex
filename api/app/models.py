@@ -38,6 +38,7 @@ class DatasetCountsRequest(BaseModel):
     location: str | None = None
     source_org: Optional[List[str]] = []
     accessibility: Optional[List[str]] = []
+    dataset_ids: Optional[List[int]] = []
     debug_json_response: bool = False
     ignore_cache: bool = False
 
@@ -50,6 +51,7 @@ class IndexedDatasetCountRequest(BaseModel):
 class DatasetMetadataRequest(BaseModel):
     source_org: Optional[List[str]] = []
     accessibility: Optional[List[str]] = []
+    dataset_ids: Optional[List[int]] = []
 
 
 class DatasetRequest(BaseModel):
@@ -63,6 +65,7 @@ class DatasetsByLocationRequest(BaseModel):
     resolution: int
     source_org: Optional[List[str]] = []
     accessibility: Optional[List[str]] = []
+    dataset_ids: Optional[List[int]] = []
 
 
 class TifAsPngRequest(BaseModel):

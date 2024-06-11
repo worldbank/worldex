@@ -68,7 +68,6 @@ export default function MapContainer() {
     <GridMapWrapper item isGmaps={isGmaps}>
       <Map layers={layers} />
       {!hidden && <StyledZoomControl showCurrentZoom className="zoomControl" />}
-      <LocationSearch className="absolute top-2.5 left-2.5 p-2 w-72" />
       <PreviewErrorSnackbar />
     </GridMapWrapper>
   );

@@ -7,7 +7,7 @@ import { TileLoadProps } from '@deck.gl/geo-layers/typed/tileset-2d';
 import { RootState } from 'store/store';
 import { hexToRgb } from 'utils/colors';
 import { setSelectedDataset } from 'store/selectedSlice';
-import { setPendingLocationCheck } from 'store/locationSlice';
+import { setPendingLocationCheck } from 'store/searchSlice';
 import { load } from '@loaders.gl/core';
 import getSteppedZoomResolutionPair from 'utils/getSteppedZoomResolutionPair';
 
@@ -18,7 +18,7 @@ export default function DatasetCoverageLayer() {
   const source = useSelector((state) => selectSourceById(state, datasetCoverageLayer?.source));
   const { selectedDataset } = useSelector((state: RootState) => state.selected);
   const { steppedZoom } = useSelector((state: RootState) => state.app);
-  const { location, pendingLocationCheck } = useSelector((state: RootState) => state.location);
+  const { location, pendingLocationCheck } = useSelector((state: RootState) => state.search);
   const BLUE_600 = hexToRgb(blue['600']); // #1e88e5
   const dispatch = useDispatch();
 

@@ -1,25 +1,24 @@
 import { OR_YEL, SELECTED_OUTLINE } from 'constants/colors';
-import { selectSourceById } from '@carto/react-redux';
-import { useDispatch, useSelector } from 'react-redux';
-import { H3HexagonLayer, TileLayer } from '@deck.gl/geo-layers/typed';
-import { TileLoadProps, Tile2DHeader } from '@deck.gl/geo-layers/typed/tileset-2d';
-import { Typography } from '@mui/material';
-import { Dataset, DatasetCount } from 'components/common/types';
-import { renderToStaticMarkup } from 'react-dom/server';
-import { setDatasets, setH3Index as setSelectedH3Index } from 'store/selectedSlice';
-import { RootState } from 'store/store';
 import { colorBins, hexToRgb } from 'utils/colors';
+import { selectSourceById } from '@carto/react-redux';
+import { H3HexagonLayer, TileLayer } from '@deck.gl/geo-layers/typed';
+import { Tile2DHeader, TileLoadProps } from '@deck.gl/geo-layers/typed/tileset-2d';
+import { ArrowLoader } from '@loaders.gl/arrow';
+import { load } from '@loaders.gl/core';
+import { Typography } from '@mui/material';
+import { DatasetCount } from 'components/common/types';
+import { renderToStaticMarkup } from 'react-dom/server';
+import { useDispatch, useSelector } from 'react-redux';
+import { selectAccessibilities, selectSourceOrgFilters } from 'store/selectedFiltersSlice';
+import { resetByKey as resetSelectedByKeys, setH3Index as setSelectedH3Index } from 'store/selectedSlice';
+import { RootState } from 'store/store';
+import getSteppedZoomResolutionPair from 'utils/getSteppedZoomResolutionPair';
 import {
   TILE_STATE_VISIBLE,
   TILE_STATE_VISITED,
   getPlaceholderInAncestors,
   getPlaceholderInChildren,
 } from 'utils/tileRefinement';
-import { load } from '@loaders.gl/core';
-import getSteppedZoomResolutionPair from 'utils/getSteppedZoomResolutionPair';
-import { ArrowLoader } from '@loaders.gl/arrow';
-import { selectAccessibilities, selectSourceOrgFilters } from 'store/selectedFiltersSlice';
-import { useEffect } from 'react';
 
 export const DATASET_COUNT_LAYER_ID = 'datasetCountLayer';
 
@@ -84,11 +83,12 @@ export default function DatasetCountLayer() {
   const source = useSelector((state: RootState) => selectSourceById(state, datasetH3Layer?.source));
   const { selectedDataset, h3Index: selectedH3Index } = useSelector((state: RootState) => state.selected);
   const { steppedZoom } = useSelector((state: RootState) => state.app);
-  const { location } = useSelector((state: RootState) => state.location);
+  const { location } = useSelector((state: RootState) => state.search);
   const { fileUrl } = useSelector((state: RootState) => state.preview);
   const dispatch = useDispatch();
   const sourceOrgs = useSelector(selectSourceOrgFilters);
   const accessibilities = useSelector(selectAccessibilities);
+  const { datasetIds } = useSelector((state: RootState) => state.selectedFilters);
 
   const domains = (import.meta.env.VITE_DATASET_COUNT_BINS).split(',').map(Number);
   const getColor = colorBins({
@@ -126,6 +126,7 @@ export default function DatasetCountLayer() {
                   ? JSON.stringify(location.geojson)
                   : null
               ),
+              dataset_ids: datasetIds,
               source_org: sourceOrgs,
               accessibility: accessibilities,
             }),
@@ -143,8 +144,7 @@ export default function DatasetCountLayer() {
       onClick: async (info: any, event: object) => {
         const targetIndex = info.object.index;
         if (selectedH3Index === targetIndex) {
-          dispatch(setSelectedH3Index(null));
-          dispatch(setDatasets(null));
+          dispatch(resetSelectedByKeys('h3Index'));
           return;
         }
         dispatch(setSelectedH3Index(targetIndex));
@@ -209,7 +209,7 @@ export default function DatasetCountLayer() {
         getLineColor: [selectedH3Index, shouldDim],
         getFillColor: [selectedH3Index, shouldDim],
         getLineWidth: [selectedH3Index, shouldDim],
-        getTileData: [sourceOrgs, accessibilities],
+        getTileData: [sourceOrgs, accessibilities, datasetIds],
       },
     });
   }

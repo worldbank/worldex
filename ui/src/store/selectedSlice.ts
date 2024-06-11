@@ -1,19 +1,22 @@
 /* eslint-disable no-param-reassign */
-import { createSlice } from '@reduxjs/toolkit';
+import { createSelector, createSlice } from '@reduxjs/toolkit';
 import { Dataset } from 'components/common/types';
+
+const initialState: any = {
+  h3Index: null,
+  datasets: [],
+  datasetCount: null,
+  selectedDataset: null,
+};
 
 const slice = createSlice({
   name: 'selected',
-  initialState: {
-    h3Index: null,
-    datasets: null,
-    datasetCount: null,
-    selectedDataset: null,
-  },
+  initialState,
   reducers: {
     setH3Index: (state, action) => {
       state.h3Index = action.payload;
     },
+    // should be on a different slice
     setDatasets: (state, action) => {
       state.datasets = action.payload;
     },
@@ -22,6 +25,11 @@ const slice = createSlice({
     },
     setSelectedDataset: (state, action) => {
       state.selectedDataset = action.payload;
+    },
+    resetByKey: (state, action) => {
+      action.payload.forEach((key: string) => {
+        state[key] = initialState[key];
+      });
     },
   },
 });
@@ -42,5 +50,9 @@ export const setDatasetCount = (payload: number) => ({
 });
 export const setSelectedDataset = (payload: number) => ({
   type: 'selected/setSelectedDataset',
+  payload,
+});
+export const resetByKey = (...payload: string[]) => ({
+  type: 'selected/resetByKey',
   payload,
 });

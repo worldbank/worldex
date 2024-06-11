@@ -13,10 +13,10 @@ from app.services import (
     dataset_count_to_bytes,
     get_dataset_count_tiles_async,
     get_dataset_metadata_results,
+    get_datasets_by_location_results,
 )
 from app.sql.bounds_fill import FILL, FILL_RES2
 from app.sql.dataset_coverage import DATASET_COVERAGE
-from app.sql.datasets_by_location import get_datasets_by_location_query
 from fastapi import APIRouter, Depends, Response
 from shapely import wkt
 from sqlalchemy import func, or_, select, text
@@ -34,11 +34,11 @@ async def get_dataset_counts(
     y: int,
     session: AsyncSession = Depends(get_async_session),
 ):
-    filters = {}
-    if payload.source_org:
-        filters["source_org"] = payload.source_org
-    if payload.accessibility:
-        filters["accessibility"] = payload.accessibility
+    filters = {
+        attr: getattr(payload, attr)
+        for attr in ["source_org", "accessibility", "dataset_ids"]
+        if getattr(payload, attr)
+    }
     location = payload.location
     should_hit_cache = not (payload.ignore_cache or location or filters)
     dataset_count_bytes = None
@@ -93,10 +93,12 @@ async def get_dataset_coverage(
     location = payload.location
     query = DATASET_COVERAGE.format(fill_query=FILL_RES2 if resolution == 2 else FILL)
     query = text(query).bindparams(z=z, x=x, y=y, location=location, resolution=resolution, dataset_id=payload.dataset_id)
-    results = await session.execute(query)
-    return [row[0] for row in results.fetchall()]
+    results = await session.scalars(query)
+    return [h3_index for h3_index in results.fetchall()]
 
 
+# only called if keyword search is not used so we
+# do not yet need the option to filter by dataset_ids
 @router.post("/dataset_count/")
 async def get_dataset_count(
     payload: IndexedDatasetCountRequest,
@@ -122,50 +124,33 @@ async def get_datasets_by_location(
     payload: DatasetsByLocationRequest,
     session: AsyncSession = Depends(get_async_session),
 ):
-    location = payload.location
-    resolution = payload.resolution
-    source_org = payload.source_org
-    accessibility = payload.accessibility
-    has_filters = source_org or accessibility
-    candidate_datasets_stmt = None
-    kwargs = { "resolution": resolution }
-    # TODO: move to a service
-    if has_filters:
-        candidate_datasets_stmt = select(Dataset.id)
-        if source_org:
-            candidate_datasets_stmt = candidate_datasets_stmt.where(Dataset.source_org.in_(source_org))
-        if accessibility:
-            conditions = []
-            if "Others" in accessibility:
-                conditions.append(Dataset.accessibility == None)
-                accessibility.remove("Others")
-            conditions.append(Dataset.accessibility.in_(accessibility))
-            candidate_datasets_stmt = candidate_datasets_stmt.where(or_(*conditions))
-        candidate_datasets_stmt = candidate_datasets_stmt.compile(compile_kwargs={"literal_binds": True})
-        kwargs["candidate_datasets_cte"] = f"candidate_datasets AS ({candidate_datasets_stmt}),"
-    query = get_datasets_by_location_query(**kwargs)
-    query = text(query).bindparams(location=location, resolution=resolution)
-    results = await session.execute(query)
+    filters = {
+        attr: getattr(payload, attr)
+        for attr in ["location", "source_org", "accessibility", "dataset_ids"]
+        if getattr(payload, attr)
+    }
+    results = await get_datasets_by_location_results(session, payload.location, payload.resolution, filters)
     return [
         dict(
             row._mapping,
             bbox=wkt.loads(row._mapping['bbox']).bounds
         )
-        for row in results.fetchall()
+        for row in results
     ]
 
 
+# TODO: rename endpoint to datasets_by_h3_index
 @router.post("/dataset_metadata/{index}")
 async def get_dataset_metadata(
     index: str,
     payload: DatasetMetadataRequest,
     session: AsyncSession = Depends(get_async_session),
 ):
-    filters = {}
-    if payload.source_org:
-        filters["source_org"] = payload.source_org
-    if payload.accessibility:
-        filters["accessibility"] = payload.accessibility
+    filters = {
+        attr: getattr(payload, attr)
+        for attr in ["source_org", "accessibility", "dataset_ids"]
+        if getattr(payload, attr)
+    }
     results = await get_dataset_metadata_results(session, target=index, filters=filters)
     return [
         dict(

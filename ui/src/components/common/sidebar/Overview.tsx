@@ -8,6 +8,7 @@ import HidePreviewButton from "./HidePreviewButton";
 import { selectAccessibilities, selectSourceOrgFilters } from "store/selectedFiltersSlice";
 import { Dataset } from "../types";
 
+// TODO: repurpose as diagnostics component
 const Overview = () => {
   const { datasetCount }: { datasetCount: number } = useSelector((state: RootState) => state.selected);
   const dispatch = useDispatch();
@@ -17,7 +18,7 @@ const Overview = () => {
   const { fileUrl: previewFileUrl, isLoadingPreview } = useSelector((state: RootState) => state.preview);
   const sourceOrgs = useSelector(selectSourceOrgFilters);
   const accessibilities = useSelector(selectAccessibilities);
-  const { filteredDatasets: locationFilteredDatasets }: { filteredDatasets: Dataset[] } = useSelector((state: RootState) => state.location);
+  const { filteredDatasets: locationFilteredDatasets }: { filteredDatasets: Dataset[] } = useSelector((state: RootState) => state.search);
   const isFiltered = (
     locationFilteredDatasets
     || (Array.isArray(sourceOrgs) && sourceOrgs.length > 0)
@@ -47,7 +48,7 @@ const Overview = () => {
       <Typography className="text-md font-bold">
         <span>
           Total datasets indexed
-          { isFiltered && ' (filtered)' }:{' '}
+          { isFiltered && locationFilteredDatasets.length && ' (filtered)' }:{' '}
         </span>
         <span className="text-lg">{locationFilteredDatasets ? locationFilteredDatasets.length : datasetCount}</span>
       </Typography>

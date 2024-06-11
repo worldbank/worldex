@@ -14,7 +14,7 @@ const DatasetItem = ({idx, dataset}: {idx: number, dataset: Dataset}) => {
   const [anchor, setAnchor] = useState(null);
   const { selectedDataset } = useSelector((state: RootState) => state.selected);
   const viewState = useSelector((state: RootState) => state.carto.viewState);
-  const { location } = useSelector((state: RootState) => state.location);
+  const { location } = useSelector((state: RootState) => state.search);
   const dispatch = useDispatch();
   const toggleVisibility = (datasetId: number, bbox: BoundingBox) => {
     if (anchor) {
@@ -65,14 +65,30 @@ const DatasetItem = ({idx, dataset}: {idx: number, dataset: Dataset}) => {
   )
 }
 
-const Datasets = ({ datasetsByOrgs, header }: { datasetsByOrgs: { [source_org: string]: Dataset[]; }, header?: string }) => (
+const Datasets = ({ datasets }: { datasets: Dataset[] }) => {
+  return (
+    <List className="m-0 p-0 max-h-[60vh] overflow-y-scroll">
+      {
+        datasets.map((dataset: Dataset, idx: number) => (
+            <ListItem
+              key={idx}
+              className="p-0"
+            >
+              {/* TODO: consider semantic usage of ListItemX components */}
+              <Stack direction="column" className="w-full">
+                <DatasetItem idx={idx} dataset={dataset} />
+                {idx + 1 < datasets.length && <Divider />}
+              </Stack>
+            </ListItem>
+        ))
+      }
+    </List>
+  );
+};
+
+// TODO: rm component
+const DatasetsByOrgs = ({ datasetsByOrgs, header }: { datasetsByOrgs: { [source_org: string]: Dataset[]; }, header?: string }) => (
   <div>
-    { header && (
-      <>
-        <Typography className="px-4 py-3.5 font-bold">{header}</Typography>
-        <Divider />
-      </>
-    )}
     {
       Object.entries(datasetsByOrgs).map(([org, datasets]) => (
         <Accordion

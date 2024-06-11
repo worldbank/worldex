@@ -7,6 +7,7 @@ from app.models import Dataset
 from app.sql.bounds_fill import FILL, FILL_RES2
 from app.sql.dataset_counts import DATASET_COUNTS, DATASET_COUNTS_FILTERED
 from app.sql.dataset_metadata import DATASET_METADATA, DATASET_METADATA_FILTERED
+from app.sql.datasets_by_location import get_datasets_by_location_query
 from sqlalchemy import or_, select, text
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import Session
@@ -35,15 +36,18 @@ def build_dataset_count_tiles_query(z: int, x: int, y: int, resolution: int, loc
     dataset_counts_query = DATASET_COUNTS_FILTERED if filters else DATASET_COUNTS
 
     candidate_datasets_stmt = select(Dataset.id)
-    if source_org := filters.get("source_org"):
-        candidate_datasets_stmt = candidate_datasets_stmt.where(Dataset.source_org.in_(source_org))
-    if accessibility := filters.get("accessibility"):
-        conditions = []
-        if "Others" in accessibility:
-            conditions.append(Dataset.accessibility == None)
-            accessibility.remove("Others")
-        conditions.append(Dataset.accessibility.in_(accessibility))
-        candidate_datasets_stmt = candidate_datasets_stmt.where(or_(*conditions))
+    if dataset_ids := filters.get("dataset_ids"):
+        candidate_datasets_stmt = candidate_datasets_stmt.where(Dataset.id.in_(dataset_ids))
+    else:
+        if source_org := filters.get("source_org"):
+            candidate_datasets_stmt = candidate_datasets_stmt.where(Dataset.source_org.in_(source_org))
+        if accessibility := filters.get("accessibility"):
+            conditions = []
+            if "Others" in accessibility:
+                conditions.append(Dataset.accessibility == None)
+                accessibility.remove("Others")
+            conditions.append(Dataset.accessibility.in_(accessibility))
+            candidate_datasets_stmt = candidate_datasets_stmt.where(or_(*conditions))
 
     compiled = candidate_datasets_stmt.compile(compile_kwargs={"literal_binds": True})
     filter_kwargs = { "candidate_datasets_query": compiled } if filters else {}
@@ -82,18 +86,52 @@ def dataset_count_to_bytes(dataset_counts):
     return serialized_data.to_pybytes()
 
 
+# add return type
+async def get_datasets_by_location_results(session: Session, location: str, resolution: int, filters: dict[str, List[str]]={}):
+    query_kwargs = { "resolution": resolution }
+    if dataset_ids := filters.get("dataset_ids"):
+        candidate_datasets_stmt = text(f"""
+           SELECT id, ordinality
+           FROM UNNEST(ARRAY[{','.join(str(id) for id in dataset_ids)}])
+           WITH ORDINALITY AS element_list(id, ordinality)
+        """)
+        candidate_datasets_stmt = candidate_datasets_stmt.compile(compile_kwargs={"literal_binds": True})
+        query_kwargs["candidate_datasets_cte"] = f"candidate_datasets AS ({candidate_datasets_stmt}),"
+        query_kwargs["has_ordinality"] = True
+    elif filters:
+        candidate_datasets_stmt = select(Dataset.id)
+        if source_org := filters.get("source_org"):
+            candidate_datasets_stmt = candidate_datasets_stmt.where(Dataset.source_org.in_(source_org))
+        if accessibility := filters.get("accessibility"):
+            conditions = []
+            if "Others" in accessibility:
+                conditions.append(Dataset.accessibility == None)
+                accessibility.remove("Others")
+            conditions.append(Dataset.accessibility.in_(accessibility))
+            candidate_datasets_stmt = candidate_datasets_stmt.where(or_(*conditions))
+        candidate_datasets_stmt = candidate_datasets_stmt.compile(compile_kwargs={"literal_binds": True})
+        query_kwargs["candidate_datasets_cte"] = f"candidate_datasets AS ({candidate_datasets_stmt}),"
+    query = get_datasets_by_location_query(**query_kwargs)
+    query = text(query).bindparams(location=location, resolution=resolution)
+    results = await session.execute(query)
+    return results.fetchall()
+
+
 async def get_dataset_metadata_results(session: Session, target: str, filters: dict[str, List[str]]={}):
     dataset_metadata_query = DATASET_METADATA_FILTERED if filters else DATASET_METADATA
     candidate_datasets_stmt = select(Dataset.id.label("dataset_id"))
-    if source_org := filters.get("source_org"):
-        candidate_datasets_stmt = candidate_datasets_stmt.where(Dataset.source_org.in_(source_org))
-    if accessibility := filters.get("accessibility"):
-        conditions = []
-        if "Others" in accessibility:
-            conditions.append(Dataset.accessibility == None)
-            accessibility.remove("Others")
-        conditions.append(Dataset.accessibility.in_(accessibility))
-        candidate_datasets_stmt = candidate_datasets_stmt.where(or_(*conditions))
+    if dataset_ids := filters.get("dataset_ids"):
+        candidate_datasets_stmt = candidate_datasets_stmt.where(Dataset.id.in_(dataset_ids))
+    else:
+        if source_org := filters.get("source_org"):
+            candidate_datasets_stmt = candidate_datasets_stmt.where(Dataset.source_org.in_(source_org))
+        if accessibility := filters.get("accessibility"):
+            conditions = []
+            if "Others" in accessibility:
+                conditions.append(Dataset.accessibility == None)
+                accessibility.remove("Others")
+            conditions.append(Dataset.accessibility.in_(accessibility))
+            candidate_datasets_stmt = candidate_datasets_stmt.where(or_(*conditions))
     compiled = candidate_datasets_stmt.compile(compile_kwargs={"literal_binds": True})
     filter_kwargs = { "candidate_datasets_query": compiled } if filters else {}
     query = dataset_metadata_query.format(

@@ -1,13 +1,18 @@
 import { createSelector, createSlice } from '@reduxjs/toolkit';
+import { Dataset } from 'components/common/types';
 import { RootState } from './store';
+
+const initialState: any = {
+  sourceOrgs: {},
+  accessibilities: {},
+  // TODO: rename to candidate dataset ids
+  datasetIds: [],
+  h3IndexedDatasets: [],
+};
 
 const slice = createSlice({
   name: 'selectedFilters',
-  initialState: {
-    sourceOrgs: {},
-    accessibilities: {},
-  },
-
+  initialState,
   reducers: {
     setSourceOrgs: (state, action) => {
       state.sourceOrgs = action.payload;
@@ -26,6 +31,21 @@ const slice = createSlice({
         ...state.accessibilities,
         ...action.payload,
       };
+    },
+    // not to be confused with the selected.datasets
+    // this are keyword-search-derived ids and needs
+    // to be a separate state for filtering purposes
+    setDatasetIds: (state, action) => {
+      state.datasetIds = action.payload;
+    },
+    // move this elsewhere
+    setH3IndexedDatasets: (state, action) => {
+      state.h3IndexedDatasets = action.payload;
+    },
+    resetByKey: (state, action) => {
+      action.payload.forEach((key: string) => {
+        state[key] = initialState[key];
+      });
     },
   },
 });
@@ -77,3 +97,18 @@ export const selectAccessibilities = createSelector(
     return selectedAccessibilities;
   },
 );
+
+export const setDatasetIds = (payload: number[]) => ({
+  type: 'selectedFilters/setDatasetIds',
+  payload,
+});
+
+export const setH3IndexedDatasets = (payload: Dataset[]) => ({
+  type: 'selectedFilters/setH3IndexedDatasets',
+  payload,
+});
+
+export const resetByKey = (...payload: string[]) => ({
+  type: 'selectedFilters/resetByKey',
+  payload,
+});

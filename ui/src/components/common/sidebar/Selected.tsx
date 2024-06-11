@@ -1,7 +1,7 @@
 import { Button, Stack, Typography } from "@mui/material";
 import { UNITS, cellArea, getResolution } from "h3-js";
 import { useDispatch, useSelector } from "react-redux";
-import { setDatasets, setH3Index as setSelectedH3Index } from 'store/selectedSlice';
+import { resetByKey as resetSelectedByKey, setH3Index as setSelectedH3Index } from 'store/selectedSlice';
 import { RootState } from "store/store";
 import { Dataset } from "../types";
 import DeselectDatasetButton from "./DeselectDatasetButton";
@@ -14,7 +14,7 @@ const Selected = () => {
   const dispatch = useDispatch();
   const handleDeselectClick = () => {
     dispatch(setSelectedH3Index(null));
-    dispatch(setDatasets(null));
+    dispatch(resetSelectedByKey('h3Index', 'datasets'));
   }
 
   return (
