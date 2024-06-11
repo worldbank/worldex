@@ -152,6 +152,7 @@ function Search({ className }: { className?: string }) {
         keywordPayload_.max_year = yearEntity.text;
       }
 
+      let labelWhitelist = ['statistical indicator'] as string[];
       setKeywordPayload(keywordPayload_);
       if (regionEntity || countryEntity || entities.length === 0) {
         let locationQ;
@@ -177,11 +178,13 @@ function Search({ className }: { className?: string }) {
           );
           setOptions([{ display_name: 'Skip geography filtering', name: 'Skip geography filtering', skip: true }, ...dedupedResults]);
           return;
+        } else {
+          labelWhitelist = [...labelWhitelist, 'region', 'country'];
         }
       }
 
       setIsLoading(true);
-      const entitiesToStrip = entities.filter((e) => !['year'].includes(e.label));
+      const entitiesToStrip = entities.filter((e) => !labelWhitelist.includes(e.label));
       keywordPayload_.query = stripEntities(query, entitiesToStrip);
       try {
         const { data } = await axios.get(
@@ -242,7 +245,6 @@ function Search({ className }: { className?: string }) {
     const hasNoEntities = Array.isArray(entities) && entities.length === 0;
     let params = keywordPayload;
 
-    console.info('Location skipped?', location.skip);
     let keywordQ;
     if (hasNoEntities) {
       console.info('No entities');
