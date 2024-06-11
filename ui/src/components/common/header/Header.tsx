@@ -52,8 +52,10 @@ export default function Header() {
           <DrawerMenu
             drawerOpen={drawerOpen}
             handleDrawerToggle={handleDrawerToggle}
-          />
-          <AboutButton onClick={handleAboutOpen} className='justify-end' />
+            />
+          {/* dummy element to move about button to the right*/}
+          <span></span>
+          <AboutButton onClick={handleAboutOpen} />
         </>
       ) : (
         <>
