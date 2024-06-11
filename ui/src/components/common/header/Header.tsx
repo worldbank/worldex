@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
-import { Divider, Grid, IconButton, Modal, Typography, useMediaQuery } from '@mui/material';
+import { Divider, Grid, IconButton, useMediaQuery } from '@mui/material';
 import { AppBar } from '@carto/react-ui';
 import DrawerMenu from './DrawerMenu';
 import NavigationMenu from './NavigationMenu';
@@ -8,6 +8,7 @@ import UserMenu from './UserMenu';
 import { styled, Theme } from '@mui/material/styles';
 import { useLocation } from 'react-router-dom';
 import AboutModal from 'components/common/AboutModal';
+import AboutButton from './AboutButton';
 
 export const StyledAppBar = styled(AppBar)(({ theme }) => ({
   zIndex: theme.zIndex.modal + 1,
@@ -46,10 +47,13 @@ export default function Header() {
       brandText='WorldEx'
     >
       {smDownHidden ? (
-        <DrawerMenu
-          drawerOpen={drawerOpen}
-          handleDrawerToggle={handleDrawerToggle}
-        />
+        <>
+          <DrawerMenu
+            drawerOpen={drawerOpen}
+            handleDrawerToggle={handleDrawerToggle}
+          />
+          <AboutButton onClick={handleAboutOpen} className='justify-items-end' />
+        </>
       ) : (
         <>
           <StyledDivider orientation='vertical' flexItem light></StyledDivider>
@@ -57,10 +61,7 @@ export default function Header() {
           <NavigationMenu />
           <Grid container item xs justifyContent='flex-end'>
             <UserMenu />
-              <IconButton onClick={handleAboutOpen} className='w-20 text-white' arial-label="about">
-                <InfoIcon className='mr-1' />
-                <span className="text-xs font-bold">About</span>
-              </IconButton>
+            <AboutButton onClick={handleAboutOpen} />
           </Grid>
         </>
       )}
