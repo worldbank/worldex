@@ -12,12 +12,22 @@ One of the main issues researchers face is the tremendous overhead involved in s
 
 ## Vision and Value Proposition
 
-Our vision for WorldEx is to become a catalog of socio-economic geospatial data, significantly accelerating the process of geospatial data stocktaking.
+We created WorldEx to showcase a solution for the data discoverability of socio-economic geospatial data, especially those with sub-national coverage. The vision is for catalogs to adopt solutions that WorldEx has to help significantly accelerate the process of geospatial data stocktaking.
 
-One of WorldEx’s key value propositions is its unique approach to data management. WorldEx does not host any geospatial data directly. Instead, the application functions as a gateway, enabling users to seamlessly navigate and access various data catalogs containing the actual geospatial datasets. This feature is particularly advantageous for data catalogs that require users to request permission before accessing data. By not hosting data, WorldEx eliminates the need for cumbersome data duplication and storage, focusing instead on enhancing data discoverability and accessibility.
+One of WorldEx’s key value propositions is its unique approach to data indexing. WorldEx does not host any geospatial data directly, similar to traditional data catalogs. However, it can still provide accurate data coverage information by allowing data owners to generate H3 indices of their data and submit it to WorldEx together with metadata. This federated framework is particularly advantageous for data catalogs that require users to request permission before accessing data. By not hosting data, WorldEx eliminates the need for cumbersome data duplication and storage, focusing instead on enhancing data discoverability and accessibility.
 
-Ultimately, WorldEx serves as a bridge that connects disparate geospatial data silos, providing users with a comprehensive and unified view of data availability across different geospatial levels. This holistic perspective empowers users to make more informed decisions, fostering greater efficiency and effectiveness in finding data for their research and analyses for policy-making efforts.
-## How it works
+Essentially, WorldEx demonstrates the feasibility of how a geospatially-aware data gateway can function, enabling users to seamlessly navigate and access various data catalogs containing the actual geospatial datasets. This gateway bridges disparate geospatial data silos, providing users with a comprehensive and unified view of data availability across different geospatial levels. This holistic perspective empowers users to make more informed decisions, fostering greater efficiency and effectiveness in finding data for their research and analyses for policy-making efforts.
+
+## What WorldEx is Not
+
+Before we dive into the details of WorldEx, it is essential to clarify what WorldEx is not.
+
+- WorldEx is not a data repository. It does not store any geospatial data. Instead, it indexes the H3 indices of geospatial data and metadata from various data catalogs.
+- WorldEx also does not attempt to augment or modify the metadata of the indexed data. It merely stores the metadata accessed from the catalogs where the data is hosted.
+- WorldEx does not provide data access. It only provides information on the availability of data and metadata. It is up to the user to access the data from the respective data catalogs.
+- WorldEx is not a "data catalog". It is a proof-of-concept to how subnational data discovery can be reimagined using H3 indexing augmented with simple keyword search and filtering capabilities.
+
+## How WorldEx works
 
 This section outlines the project flow and contains technical information, including the technology stack, components, and other details.
 
