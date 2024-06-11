@@ -25,9 +25,11 @@ with_parents AS (
 ),
 {candidate_datasets_cte}
 located_datasets AS (
-  SELECT DISTINCT(dataset_id) id FROM h3_data JOIN with_parents ON h3_index = ANY(parents)
-  UNION ALL
-  SELECT DISTINCT(dataset_id) id FROM h3_children_indicators JOIN fill ON h3_index = fill_index
+  SELECT DISTINCT(id) FROM (
+    SELECT dataset_id id FROM h3_data JOIN with_parents ON h3_index = ANY(parents)
+    UNION ALL
+    SELECT dataset_id id FROM h3_children_indicators JOIN fill ON h3_index = fill_index
+  ) parent_children_datasets
 )
 SELECT
   id,
@@ -41,21 +43,46 @@ SELECT
   date_start,
   date_end
 FROM datasets JOIN located_datasets USING (id)
-{candidate_datasets_join}
+"""
+
+# TODO: filter located_datasets by candidate_datasets_cte
+datasets_by_location_w_ordinality = """
+WITH fill AS ({fill_query}),
+with_parents AS (
+  SELECT fill_index, ARRAY[{parents_array}] parents FROM fill GROUP BY fill_index
+),
+{candidate_datasets_cte}
+located_datasets AS (
+  SELECT DISTINCT(id) FROM (
+    SELECT dataset_id id FROM h3_data JOIN with_parents ON h3_index = ANY(parents)
+    UNION ALL
+    SELECT dataset_id id FROM h3_children_indicators JOIN fill ON h3_index = fill_index
+  ) parent_children_datasets
+)
+SELECT * FROM (
+  SELECT
+    id,
+    name,
+    ST_AsEWKT(bbox) bbox,
+    source_org,
+    regexp_replace(description, '\n', '\n', 'g') description,
+    files,
+    url,
+    accessibility,
+    date_start,
+    date_end
+  FROM datasets JOIN located_datasets USING (id)
+) unfiltered
+JOIN candidate_datasets USING (id)
+ORDER BY ordinality
 """
 
 def get_datasets_by_location_query(resolution: int, candidate_datasets_cte=None, has_ordinality=False) -> str:
     from app.services import build_h3_parents_expression
 
-    # jerryrig
-    candidate_datasets_join = ""
-    if candidate_datasets_cte:
-        candidate_datasets_join = "JOIN candidate_datasets USING (id)"
-        if has_ordinality:
-            candidate_datasets_join += " ORDER BY ordinality"
-    return datasets_by_location.format(
+    q = datasets_by_location_w_ordinality if has_ordinality else datasets_by_location
+    return q.format(
         fill_query=location_fill_res2 if resolution == 2 else location_fill,
         parents_array=build_h3_parents_expression(resolution),
         candidate_datasets_cte=candidate_datasets_cte or "",
-        candidate_datasets_join=candidate_datasets_join
     )
