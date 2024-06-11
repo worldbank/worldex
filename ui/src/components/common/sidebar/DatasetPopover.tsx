@@ -55,7 +55,7 @@ const FilesTable = ({files}: {files: string[]}) => <>
     </Table>
   </TableContainer>
 </>;
-  
+
 const DatasetPopover = ({ dataset, anchor, setAnchor }: { dataset: Dataset, anchor: any, setAnchor: any }) => {
   const open = Boolean(anchor);
   const dateFormat = "yyyy MMM d";
@@ -86,11 +86,15 @@ const DatasetPopover = ({ dataset, anchor, setAnchor }: { dataset: Dataset, anch
             )
           }
           <Typography className="text-sm">
-            <strong>Accessibility:</strong>{" "}
-            <span className="capitalize">{dataset.accessibility}</span>
+            <strong>Source Organization:</strong>{" "}
+            <span>{dataset.source_org}</span>
           </Typography>
           <Typography className="text-sm">
-            <strong>Source:</strong>{" "}<Link href={dataset.url} target="_blank" rel="noopener noreferrer">{dataset.url}</Link>
+            <strong>Accessibility:</strong>{" "}
+            <span className="capitalize">{dataset.accessibility || "-"}</span>
+          </Typography>
+          <Typography className="text-sm">
+            <strong>URL:</strong>{" "}<Link href={dataset.url} target="_blank" rel="noopener noreferrer">{dataset.url}</Link>
           </Typography>
         </div>
         { dataset.files && <FilesTable files={dataset.files} />}
