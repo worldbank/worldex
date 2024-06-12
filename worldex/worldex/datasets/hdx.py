@@ -1,12 +1,14 @@
 """
 Automates indexing of hdx datasets
 """
+
 import os
 import zipfile
 from collections import Counter
 from datetime import datetime
 from pathlib import Path
 
+import dateparser
 import pandas as pd
 from hdx.data.dataset import Dataset
 from shapely import wkt
@@ -54,6 +56,17 @@ class HDXDataset(BaseDataset):
         if not dataset["has_geodata"]:
             raise Exception("No geodata found for this data")
         files = [r["download_url"] for r in dataset.resources]
+        dataset_date = dataset.get("dataset_date")
+        date_start = None
+        date_end = None
+        if dataset_date:
+            start, end = dataset_date.replace("[", "").replace("]", "").split("TO")
+            start_date = dateparser.parse(start)
+            if start_date:
+                date_start = start_date
+            end_date = dateparser.parse(end)
+            if end_date:
+                date_end = end_date
         obj = cls(
             name=dataset["title"],
             last_fetched=datetime.now().isoformat(),
@@ -67,6 +80,8 @@ class HDXDataset(BaseDataset):
             },
             keywords=[],
             accessibility="public/open",
+            date_start=date_start,
+            date_end=date_end,
         )
         # TODO: figure out a better way of keeping this
         obj._dataset = dataset
