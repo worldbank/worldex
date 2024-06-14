@@ -2,7 +2,6 @@ import { Divider, Typography } from "@mui/material";
 import Filters from "components/filters/Filters";
 import { useDispatch, useSelector } from "react-redux";
 import { RootState } from "store/store";
-import groupBy from "utils/groupBy";
 import { Dataset } from "../types";
 import Datasets from "./Datasets";
 import Overview from "./Overview";
