@@ -10,6 +10,7 @@ export interface Dataset {
   accessibility: string;
   date_start: Date;
   date_end: Date;
+  meta: any;
 }
 
 export interface DatasetCount {

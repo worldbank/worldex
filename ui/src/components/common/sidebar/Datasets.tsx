@@ -8,6 +8,7 @@ import { BoundingBox, Dataset } from "../types";
 import classNames from "classnames";
 import DatasetPopover from "./DatasetPopover";
 import moveViewportToBbox from "utils/moveViewportToBbox";
+import ReactMarkdown from 'react-markdown';
 
 
 const DatasetItem = ({idx, dataset}: {idx: number, dataset: Dataset}) => {
@@ -49,9 +50,24 @@ const DatasetItem = ({idx, dataset}: {idx: number, dataset: Dataset}) => {
         toggleVisibility(dataset.id, bbox);
       }}
     >
-      <Box className="m-0">
-        <Typography className="text-sm">{idx+1}. {dataset.name}</Typography>
-      </Box>
+      <Stack direction="column">
+        <Box className="m-0">
+          <Typography className="text-sm">{idx+1}. {dataset.name}</Typography>
+        </Box>
+        <Box>
+          {
+            dataset?.meta?.highlight
+              ? (
+                <article className="prose text-sm">
+                  <ReactMarkdown>
+                    {dataset.meta.highlight?.description?.join("...")}
+                  </ReactMarkdown>
+                </article>
+              )
+              : null
+          }
+        </Box>
+      </Stack>
       <IconButton onClick={
         (evt: React.MouseEvent<HTMLElement>) => {
           evt.stopPropagation();

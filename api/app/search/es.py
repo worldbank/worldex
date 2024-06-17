@@ -69,15 +69,18 @@ def keyword_search(
         h_dict = h.to_dict()
         h_dict["id"] = h_dict.pop("pg_id")
         h_dict["bbox"] = wkt.loads(h_dict.pop("bbox")).bounds
-        hits.append(h_dict)
+        h_dict["meta"] = {}
         result.append(dict(id=h.meta.id, rank=ix +
                       from_result, score=h.meta.score))
         try:
             highlight = h.meta.highlight.to_dict()
+            h_dict["meta"]["highlight"] = highlight
         except AttributeError:
             # 'HitMeta' object has no attribute 'highlight'
+            h_dict["meta"]["highlight"] = { "body": [] }
             highlight["body"] = []
 
+        hits.append(h_dict)
         highlight["id"] = h.meta.id
         highlights.append(highlight)
 

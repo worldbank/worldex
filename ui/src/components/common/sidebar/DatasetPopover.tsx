@@ -5,6 +5,7 @@ import VisibilityIcon from '@mui/icons-material/Visibility';
 import { useDispatch, useSelector } from "react-redux";
 import { RootState } from "store/store";
 import { setFileUrl } from "store/previewSlice";
+import ReactMarkdown from 'react-markdown';
 
 // TODO: separate into a util file
 const isPreviewable = (file: string) => [
@@ -55,7 +56,7 @@ const FilesTable = ({files}: {files: string[]}) => <>
     </Table>
   </TableContainer>
 </>;
-  
+
 const DatasetPopover = ({ dataset, anchor, setAnchor }: { dataset: Dataset, anchor: any, setAnchor: any }) => {
   const open = Boolean(anchor);
   const dateFormat = "yyyy MMM d";
@@ -71,6 +72,11 @@ const DatasetPopover = ({ dataset, anchor, setAnchor }: { dataset: Dataset, anch
       }}
       >
       <div className="p-4 max-w-lg">
+        <article className="prose">
+          <ReactMarkdown>
+            {dataset.description}
+          </ReactMarkdown>
+        </article>
         {
           dataset.description.split("\n").map((desc: string, idx: number) => (
             <Typography key={idx} className="mb-1.5 text-sm">{desc}</Typography>
