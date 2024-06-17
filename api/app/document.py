@@ -109,7 +109,7 @@ class DatasetFacetedSearch(FacetedSearch):
 
                 query = Q('bool', should=shoulds, minimum_should_match=1)
 
-            search = search.highlight_options(pre_tags="*", post_tags="*")
+            search = search.highlight_options(pre_tags="**", post_tags="**")
             search = search.query(query)
 
         return search

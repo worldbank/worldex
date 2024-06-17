@@ -36,6 +36,11 @@ const slice = createSlice({
 
 export default slice.reducer;
 
+export const selectDatasetIds = createSelector(
+  (state: any) => state.selected.datasets,
+  (datasets: Dataset[]) => datasets.map((d: Dataset) => d.id),
+);
+
 export const setH3Index = (payload: string | null) => ({
   type: 'selected/setH3Index',
   payload,

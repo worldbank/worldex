@@ -10,7 +10,7 @@ import { DatasetCount } from 'components/common/types';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { useDispatch, useSelector } from 'react-redux';
 import { selectAccessibilities, selectSourceOrgFilters } from 'store/selectedFiltersSlice';
-import { resetByKey as resetSelectedByKeys, setH3Index as setSelectedH3Index } from 'store/selectedSlice';
+import { resetByKey as resetSelectedByKeys, selectDatasetIds, setH3Index as setSelectedH3Index } from 'store/selectedSlice';
 import { RootState } from 'store/store';
 import getSteppedZoomResolutionPair from 'utils/getSteppedZoomResolutionPair';
 import {
@@ -88,7 +88,7 @@ export default function DatasetCountLayer() {
   const dispatch = useDispatch();
   const sourceOrgs = useSelector(selectSourceOrgFilters);
   const accessibilities = useSelector(selectAccessibilities);
-  const { datasetIds } = useSelector((state: RootState) => state.selectedFilters);
+  const datasetIds = useSelector(selectDatasetIds);
 
   const domains = (import.meta.env.VITE_DATASET_COUNT_BINS).split(',').map(Number);
   const getColor = colorBins({

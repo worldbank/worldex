@@ -27,7 +27,6 @@ import {
   resetByKey as resetSelectedFiltersByKey,
   selectAccessibilities,
   selectSourceOrgFilters,
-  setDatasetIds,
 } from 'store/selectedFiltersSlice';
 import {
   resetByKey as resetSelectedByKey,
@@ -147,6 +146,7 @@ function Search({ className }: { className?: string }) {
       const yearEntity = entities.find((e: any) => e.label === 'year');
       const regionEntity = entities.find((e: any) => e.label === 'region');
       const countryEntity = entities.find((e: any) => e.label === 'country');
+      const hasLocationEntity = regionEntity || countryEntity;
       if (yearEntity) {
         keywordPayload_.min_year = yearEntity.text;
         keywordPayload_.max_year = yearEntity.text;
@@ -154,13 +154,12 @@ function Search({ className }: { className?: string }) {
 
       let labelWhitelist = ['statistical indicator'] as string[];
       setKeywordPayload(keywordPayload_);
-      if (regionEntity || countryEntity || entities.length === 0) {
-        let locationQ;
-        if (regionEntity || countryEntity) {
-          locationQ = [regionEntity?.text, countryEntity?.text].filter((e: string) => e).join(',');
-        } else {
-          locationQ = query;
-        }
+      if (hasLocationEntity || entities.length === 0) {
+        const locationQ = (
+          hasLocationEntity
+            ? [regionEntity?.text, countryEntity?.text].filter((e: string) => e).join(',')
+            : query
+        );
         const { data: nominatimResults } = await axios.get(
           'https://nominatim.openstreetmap.org/search',
           {
@@ -202,7 +201,6 @@ function Search({ className }: { className?: string }) {
       } else {
         dispatch(resetSelectedByKey('selectedDataset', 'h3Index'));
         dispatch(resetSearchByKey('location', 'lastZoom'));
-        dispatch(setDatasetIds(datasets.map((d: Dataset) => d.id)));
         dispatch(setDatasets(datasets));
       }
     } catch (err) {
@@ -241,15 +239,19 @@ function Search({ className }: { className?: string }) {
   };
 
   const selectLocation = async (event: React.ChangeEvent<HTMLInputElement>, location: any | null) => {
+    // this method only gets called if there are nominatim results
     setIsLoading(true);
+    const nonLocationEntities = entities.filter((e) => !['region', 'country'].includes(e));
+    const hasNonLocationEntities = Array.isArray(nonLocationEntities) && nonLocationEntities.length > 0;
     const hasNoEntities = Array.isArray(entities) && entities.length === 0;
+    const hasEntities = Array.isArray(entities) && entities.length > 0;
     let params = keywordPayload;
 
     let keywordQ;
-    if (hasNoEntities) {
-      console.info('No entities');
-      keywordQ = query;
-    } else {
+    let [candidateDatasets, candidateDatasetIds] = [[] as any[], [] as number[]];
+    // if (hasNonLocationEntities) {
+    if (hasEntities) {
+      // TODO: review if the ff steps are still necessary
       let labelWhitelist = ['statistical indicator'];
       if (location.skip) {
         labelWhitelist = [...labelWhitelist, 'region', 'country'];
@@ -266,13 +268,7 @@ function Search({ className }: { className?: string }) {
       } catch (err) {
         console.error(err.toJSON());
       }
-    }
-
-    let [candidateDatasets, candidateDatasetIds] = [[] as any[], [] as number[]];
-
-    if (keywordQ) {
-      // TODO: consider skipping keyword search if
-      // entity-stripped keyword query only has stop words left
+      // keyword search only proceeds with a non-empty keyword argument
       params = { ...keywordPayload, query: keywordQ };
       const { hits } = await getDatasetsByKeyword(params);
       candidateDatasets = hits;
@@ -288,7 +284,8 @@ function Search({ className }: { className?: string }) {
     dispatch(resetSearchByKey('location', 'lastZoom'));
 
     if (location.skip) {
-      dispatch(setDatasetIds(candidateDatasetIds));
+      // no need to further filter the candidate datasets
+      // TODO: unify these in one state slice
       dispatch(setDatasets(candidateDatasets));
       // temporary ux hack: reset map view for faster load time
       // instead of flying to the first ranked dataset
