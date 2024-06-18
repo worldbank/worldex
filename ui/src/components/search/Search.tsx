@@ -35,6 +35,7 @@ import {
 import { RootState } from 'store/store';
 import getSteppedZoomResolutionPair from 'utils/getSteppedZoomResolutionPair';
 import moveViewportToBbox from 'utils/moveViewportToBbox';
+import { stripEntities, getDatasetsByKeyword, prepSearchKeyword } from './utils';
 
 function SearchButton({ isLoading, disabled }: { isLoading: boolean, disabled?: boolean }) {
   return (
@@ -138,7 +139,7 @@ function Search({ className }: { className?: string }) {
 
       const keywordPayload_: any = {
         query,
-        size: 999,
+        size: 10000,
         source_org: sourceOrgs,
         accessibility: accessibilities,
       };
@@ -210,64 +211,14 @@ function Search({ className }: { className?: string }) {
     }
   };
 
-  const getDatasetsByKeyword = async (params?: any) => {
-    const { data } = await axios.get(
-      `${import.meta.env.VITE_API_URL}/search/keyword`,
-      { params: params ?? keywordPayload },
-    );
-    return data;
-  };
-
-  const stripEntities = (query: string, entities: any[]): string => {
-    if (!Array.isArray(entities) || entities.length === 0) {
-      return query;
-    }
-    let strippedQ = '';
-    entities.forEach((entity, idx) => {
-      const prevEntity = entities[idx - 1];
-      const nextEntity = entities[idx + 1];
-      if (!prevEntity) {
-        strippedQ += query.slice(0, entity.start);
-      } else {
-        strippedQ += query.slice(prevEntity.end, entity.start);
-      }
-      if (!nextEntity) {
-        strippedQ += query.slice(entity.end);
-      }
-    });
-    return strippedQ.trim();
-  };
-
   const selectLocation = async (event: React.ChangeEvent<HTMLInputElement>, location: any | null) => {
     setIsLoading(true);
-    const hasNoEntities = Array.isArray(entities) && entities.length === 0;
     let params = keywordPayload;
 
-    let keywordQ;
-    if (hasNoEntities) {
-      console.info('No entities');
-      keywordQ = query;
-    } else {
-      let labelWhitelist = ['statistical indicator'];
-      if (location.skip) {
-        labelWhitelist = [...labelWhitelist, 'region', 'country'];
-      }
-      const entitiesToStrip = entities.filter((e) => !labelWhitelist.includes(e.label));
-      keywordQ = stripEntities(query, entitiesToStrip);
-      try {
-        const { data } = await axios.get(
-          `${import.meta.env.VITE_API_URL}/search/strip_stop_words`,
-          { params: { query: keywordQ } },
-        );
-        const { tokens } = data;
-        keywordQ = tokens.map((t: any) => t.token).join(' ');
-      } catch (err) {
-        console.error(err.toJSON());
-      }
-    }
-
+    const keywordQ = await prepSearchKeyword(entities, query, location.skip);
     let [candidateDatasets, candidateDatasetIds] = [[] as any[], [] as number[]];
 
+    // perform keyword search
     if (keywordQ) {
       // TODO: consider skipping keyword search if
       // entity-stripped keyword query only has stop words left
@@ -286,7 +237,6 @@ function Search({ className }: { className?: string }) {
     dispatch(resetSearchByKey('location', 'lastZoom'));
 
     if (location.skip) {
-      dispatch(setDatasetIds(candidateDatasetIds));
       dispatch(setDatasets(candidateDatasets));
       // temporary ux hack: reset map view for faster load time
       // instead of flying to the first ranked dataset
