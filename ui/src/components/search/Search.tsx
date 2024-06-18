@@ -215,13 +215,12 @@ function Search({ className }: { className?: string }) {
     setIsLoading(true);
     let params = keywordPayload;
 
-    const keywordQ = await prepSearchKeyword(entities, query, location.skip);
+    const hasNoEntities = Array.isArray(entities) && entities.length === 0;
+    const keywordQ = hasNoEntities ? query : await prepSearchKeyword(query, entities, location.skip);
     let [candidateDatasets, candidateDatasetIds] = [[] as any[], [] as number[]];
 
     // perform keyword search
     if (keywordQ) {
-      // TODO: consider skipping keyword search if
-      // entity-stripped keyword query only has stop words left
       params = { ...keywordPayload, query: keywordQ };
       const { hits } = await getDatasetsByKeyword(params);
       candidateDatasets = hits;
