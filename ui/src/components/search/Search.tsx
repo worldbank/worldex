@@ -7,7 +7,7 @@ import {
 import booleanWithin from '@turf/boolean-within';
 import { multiPolygon, point, polygon } from '@turf/helpers';
 import axios from 'axios';
-import { Dataset } from 'components/common/types';
+import { Dataset, Entity } from 'components/common/types';
 import { cellToLatLng, getResolution } from 'h3-js';
 import isEqual from 'lodash.isequal';
 import isEqualWith from 'lodash.isequalwith';
@@ -66,7 +66,7 @@ function Search({ className }: { className?: string }) {
   const [options, setOptions] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
-  const [entities, setEntities] = useState([]);
+  const [entities, setEntities] = useState([] as Entity[]);
   const [keywordPayload, setKeywordPayload] = useState({});
 
   const viewState = useSelector((state: RootState) => state.carto.viewState);
@@ -125,7 +125,7 @@ function Search({ className }: { className?: string }) {
     setError(null);
 
     try {
-      let entities: any[] = [];
+      let entities = [] as Entity[];
       try {
         const { data: parseResults } = await axios.get(
           `${import.meta.env.VITE_API_URL}/search/parse`,
@@ -144,9 +144,9 @@ function Search({ className }: { className?: string }) {
         accessibility: accessibilities,
       };
 
-      const yearEntity = entities.find((e: any) => e.label === 'year');
-      const regionEntity = entities.find((e: any) => e.label === 'region');
-      const countryEntity = entities.find((e: any) => e.label === 'country');
+      const yearEntity = entities.find((e: Entity) => e.label === 'year');
+      const regionEntity = entities.find((e: Entity) => e.label === 'region');
+      const countryEntity = entities.find((e: Entity) => e.label === 'country');
       const hasLocationEntity = regionEntity || countryEntity;
       if (yearEntity) {
         keywordPayload_.min_year = yearEntity.text;
@@ -184,7 +184,7 @@ function Search({ className }: { className?: string }) {
       }
 
       setIsLoading(true);
-      const entitiesToStrip = entities.filter((e) => !labelWhitelist.includes(e.label));
+      const entitiesToStrip = entities.filter((e: Entity) => !labelWhitelist.includes(e.label));
       keywordPayload_.query = stripEntities(query, entitiesToStrip);
       try {
         const { data } = await axios.get(

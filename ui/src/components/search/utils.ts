@@ -1,6 +1,8 @@
 import axios from 'axios';
+import { Entity } from 'components/common/types';
 
-export const stripEntities = (query: string, entities: any[]): string => {
+// TODO: type entities
+export const stripEntities = (query: string, entities: Entity[]): string => {
   if (!Array.isArray(entities) || entities.length === 0) {
     return query;
   }
@@ -15,7 +17,7 @@ export const stripEntities = (query: string, entities: any[]): string => {
 };
 
 // TODO: type entities
-export const prepSearchKeyword = async (entities: any[], query: string, skipLocation: boolean) => {
+export const prepSearchKeyword = async (entities: Entity[], query: string, skipLocation: boolean) => {
   const hasNoEntities = Array.isArray(entities) && entities.length === 0;
   let keyword;
   if (hasNoEntities) {

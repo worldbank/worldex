@@ -18,6 +18,14 @@ export interface DatasetCount {
   dataset_count: number;
 }
 
+export interface Entity {
+  start: number;
+  end: number;
+  text: string;
+  label: string;
+  score: number;
+}
+
 // no actual range validation
 // longitude is x-coordinate, latitude is y-coordinate
 export interface BoundingBox {
