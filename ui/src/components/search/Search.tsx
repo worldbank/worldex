@@ -77,15 +77,16 @@ function Search({ className }: { className?: string }) {
 
   const dispatch = useDispatch();
 
-  const getSetDatasets = async ({ location, zoom, datasetIds }: { location: any, zoom: number, datasetIds?: number[] }) => {
+  const getSetDatasets = async ({ location, zoom, candidateDatasets }: { location: any, zoom: number, candidateDatasets?: Dataset[] }) => {
     // TODO: make this single purpose. lessen side effects and simply return datasets
     const [_, resolution] = getSteppedZoomResolutionPair(zoom);
     const body: any = {
       location: JSON.stringify(location.geojson),
       resolution,
     };
-    if (Array.isArray(datasetIds) && datasetIds.length > 0) {
-      body.dataset_ids = datasetIds;
+    const candidateDatasetIds = candidateDatasets.map((d: Dataset) => d.id);
+    if (Array.isArray(candidateDatasetIds) && candidateDatasetIds.length > 0) {
+      body.dataset_ids = candidateDatasetIds;
     } else {
       body.source_org = sourceOrgs;
       body.accessibility = accessibilities;
@@ -103,8 +104,11 @@ function Search({ className }: { className?: string }) {
     if (!Array.isArray(datasetsResults) || datasetsResults.length === 0) {
       return;
     }
-    dispatch(setDatasets(datasetsResults));
+    const datasetsResultsIds = datasetsResults.map((d: Dataset) => d.id);
+    const finalDatasets = candidateDatasets.filter((cd: Dataset) => datasetsResultsIds.includes(cd.id));
+    dispatch(setDatasets(finalDatasets));
     dispatch(setPendingLocationCheck(true));
+    // TODO: move to a utility
     if (selectedH3Index) {
       // deselect current tile if it's not among the tiles rendered inside the location feature
       const locationFeature = (location.geojson.type === 'Polygon' ? polygon : multiPolygon)(location.geojson.coordinates);
@@ -251,7 +255,7 @@ function Search({ className }: { className?: string }) {
       const { zoom } = moveViewportToBbox(bbox, viewState, dispatch, true);
       if (['Polygon', 'MultiPolygon'].includes(location.geojson.type)) {
         console.info('Filter by location', location);
-        const datasets = await getSetDatasets({ location, zoom, datasetIds: candidateDatasets.map((d: Dataset) => d.id) });
+        const datasets = await getSetDatasets({ location, zoom, candidateDatasets });
         if (Array.isArray(datasets) && datasets.length > 0) {
           console.info('Display datasets');
           dispatch(setLocation(location));
