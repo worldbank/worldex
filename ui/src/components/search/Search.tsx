@@ -77,14 +77,16 @@ function Search({ className }: { className?: string }) {
 
   const dispatch = useDispatch();
 
-  const getSetDatasets = async ({ location, zoom, candidateDatasets }: { location: any, zoom: number, candidateDatasets?: Dataset[] }) => {
+  const getSetDatasets = async ({ location, zoom, candidateDatasets = null }: { location: any, zoom: number, candidateDatasets?: Dataset[] }) => {
     // TODO: make this single purpose. lessen side effects and simply return datasets
     const [_, resolution] = getSteppedZoomResolutionPair(zoom);
     const body: any = {
       location: JSON.stringify(location.geojson),
       resolution,
     };
-    const candidateDatasetIds = candidateDatasets?.map((d: Dataset) => d.id) || [];
+    const isValidCandidateDatasets = Array.isArray(candidateDatasets) && candidateDatasets.length > 0;
+    const candidateDatasetIds = isValidCandidateDatasets ? candidateDatasets.map((d: Dataset) => d.id) : null;
+
     if (Array.isArray(candidateDatasetIds) && candidateDatasetIds.length > 0) {
       body.dataset_ids = candidateDatasetIds;
     } else {
@@ -105,13 +107,13 @@ function Search({ className }: { className?: string }) {
       return;
     }
     const datasetsResultsIds = datasetsResults.map((d: Dataset) => d.id);
-    const finalDatasets = candidateDatasets?.filter((cd: Dataset) => datasetsResultsIds.includes(cd.id)) || datasetsResults;
+    const finalDatasets = isValidCandidateDatasets ? candidateDatasets.filter((cd: Dataset) => datasetsResultsIds.includes(cd.id)) : datasetsResults;
     dispatch(setDatasets(finalDatasets));
     dispatch(setPendingLocationCheck(true));
     if (selectedH3Index) {
       deselectTile(selectedH3Index, resolution, location, dispatch);
     }
-    return datasetsResults;
+    return finalDatasets;
   };
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
