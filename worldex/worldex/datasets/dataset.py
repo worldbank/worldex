@@ -1,5 +1,6 @@
 """Provider for basic datasets
 """
+
 from datetime import date, datetime
 from pathlib import Path
 from typing import Optional
@@ -44,8 +45,7 @@ class BaseDataset(BaseModel):
 
     def set_dir(self, dir):
         self._dir = Path(dir)
-        if not self._dir.exists() or not self._dir.is_dir():
-            raise Exception(f"{dir} doest not exist or is not a directory")
+        self._dir.mkdir(exist_ok=True)
         return self
 
     def write(self, df):
