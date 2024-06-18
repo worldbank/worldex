@@ -33,6 +33,8 @@ const DatasetItem = ({idx, dataset}: {idx: number, dataset: Dataset}) => {
     dispatch(setSelectedDataset(datasetId));
   }
 
+  const descriptionHighlight = dataset?.meta?.highlight?.description
+
   return (
     <Stack
       direction="row"
@@ -52,20 +54,18 @@ const DatasetItem = ({idx, dataset}: {idx: number, dataset: Dataset}) => {
     >
       <Stack direction="column">
         <Box className="m-0">
-          <Typography className="text-sm">{idx+1}. {dataset.name}</Typography>
-        </Box>
-        <Box>
+          <article className="prose text-sm">
+            <ReactMarkdown>{`${(idx+1).toString()}. ${dataset?.meta?.highlight?.name?.join("...") || dataset.name}`}</ReactMarkdown>
+          </article>
           {
-            dataset?.meta?.highlight
-              ? (
-                <article className="prose text-sm">
-                  <ReactMarkdown>
-                    {dataset.meta.highlight?.description?.join("...")}
-                  </ReactMarkdown>
+            descriptionHighlight
+              && (
+                <article className="prose text-sm ml-7">
+                  <ReactMarkdown>{`${descriptionHighlight?.join("...")}`}</ReactMarkdown>
                 </article>
               )
-              : null
           }
+
         </Box>
       </Stack>
       <IconButton onClick={

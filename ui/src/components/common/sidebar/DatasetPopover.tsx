@@ -72,11 +72,6 @@ const DatasetPopover = ({ dataset, anchor, setAnchor }: { dataset: Dataset, anch
       }}
       >
       <div className="p-4 max-w-lg">
-        <article className="prose">
-          <ReactMarkdown>
-            {dataset.description}
-          </ReactMarkdown>
-        </article>
         {
           dataset.description.split("\n").map((desc: string, idx: number) => (
             <Typography key={idx} className="mb-1.5 text-sm">{desc}</Typography>
