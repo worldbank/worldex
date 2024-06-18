@@ -216,7 +216,8 @@ function Search({ className }: { className?: string }) {
     const keyword = hasNoEntities ? query : await prepSearchKeyword(query, entities, location.skip ? ['statistical indicator', 'region', 'country'] : ['statistical indicator']);
     let candidateDatasets = [] as Dataset[];
 
-    if (keyword) {
+    const selectedLocationFromRawQuery = hasNoEntities && !location.skip;
+    if (keyword && !selectedLocationFromRawQuery) {
       console.info('Search by keyword:', keyword);
       const { hits } = await getDatasetsByKeyword({ ...keywordPayload, query: keyword });
       if (hits.length === 0) {
@@ -228,6 +229,8 @@ function Search({ className }: { className?: string }) {
         return;
       }
       candidateDatasets = hits;
+    } else {
+      console.info('Skipping keyword search');
     }
 
     dispatch(resetSelectedByKey('selectedDataset', 'h3Index'));
