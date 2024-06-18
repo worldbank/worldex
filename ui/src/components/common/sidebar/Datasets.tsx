@@ -34,6 +34,7 @@ const DatasetItem = ({idx, dataset}: {idx: number, dataset: Dataset}) => {
   }
 
   const descriptionHighlight = dataset?.meta?.highlight?.description
+  const markdown = `${(idx+1).toString()}. ${dataset?.meta?.highlight?.name?.join("...") || dataset.name}`;
 
   return (
     <Stack
@@ -55,7 +56,9 @@ const DatasetItem = ({idx, dataset}: {idx: number, dataset: Dataset}) => {
       <Stack direction="column">
         <Box className="m-0">
           <article className="prose text-sm">
-            <ReactMarkdown>{`${(idx+1).toString()}. ${dataset?.meta?.highlight?.name?.join("...") || dataset.name}`}</ReactMarkdown>
+            <ReactMarkdown>
+              {markdown}
+            </ReactMarkdown>
           </article>
           {
             descriptionHighlight
