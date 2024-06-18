@@ -5,7 +5,6 @@ import { RootState } from './store';
 const initialState: any = {
   sourceOrgs: {},
   accessibilities: {},
-  // TODO: rename to candidate dataset ids
   datasetIds: [],
   h3IndexedDatasets: [],
 };
@@ -31,12 +30,6 @@ const slice = createSlice({
         ...state.accessibilities,
         ...action.payload,
       };
-    },
-    // not to be confused with the selected.datasets
-    // this are keyword-search-derived ids and needs
-    // to be a separate state for filtering purposes
-    setDatasetIds: (state, action) => {
-      state.datasetIds = action.payload;
     },
     // move this elsewhere
     setH3IndexedDatasets: (state, action) => {
@@ -97,11 +90,6 @@ export const selectAccessibilities = createSelector(
     return selectedAccessibilities;
   },
 );
-
-export const setDatasetIds = (payload: number[]) => ({
-  type: 'selectedFilters/setDatasetIds',
-  payload,
-});
 
 export const setH3IndexedDatasets = (payload: Dataset[]) => ({
   type: 'selectedFilters/setH3IndexedDatasets',

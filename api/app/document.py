@@ -34,7 +34,7 @@ class Dataset(Document):
     projection = Keyword()
     properties = Object()
     # we have a couple bboxes whose lonlats are all the same points
-    # indexing it as a GeoShape results in an error
+    # indexing them as GeoShape results in an error
     # `failed to parse field [bbox] of type [geo_shape]`
     bbox = Keyword()
 
@@ -109,6 +109,7 @@ class DatasetFacetedSearch(FacetedSearch):
 
                 query = Q('bool', should=shoulds, minimum_should_match=1)
 
+            search = search.highlight_options(pre_tags="**", post_tags="**")
             search = search.query(query)
 
         return search

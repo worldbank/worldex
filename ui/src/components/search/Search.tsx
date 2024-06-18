@@ -27,7 +27,6 @@ import {
   resetByKey as resetSelectedFiltersByKey,
   selectAccessibilities,
   selectSourceOrgFilters,
-  setDatasetIds,
 } from 'store/selectedFiltersSlice';
 import {
   resetByKey as resetSelectedByKey,
@@ -147,6 +146,7 @@ function Search({ className }: { className?: string }) {
       const yearEntity = entities.find((e: any) => e.label === 'year');
       const regionEntity = entities.find((e: any) => e.label === 'region');
       const countryEntity = entities.find((e: any) => e.label === 'country');
+      const hasLocationEntity = regionEntity || countryEntity;
       if (yearEntity) {
         keywordPayload_.min_year = yearEntity.text;
         keywordPayload_.max_year = yearEntity.text;
@@ -154,13 +154,12 @@ function Search({ className }: { className?: string }) {
 
       let labelWhitelist = ['statistical indicator'] as string[];
       setKeywordPayload(keywordPayload_);
-      if (regionEntity || countryEntity || entities.length === 0) {
-        let locationQ;
-        if (regionEntity || countryEntity) {
-          locationQ = [regionEntity?.text, countryEntity?.text].filter((e: string) => e).join(',');
-        } else {
-          locationQ = query;
-        }
+      if (hasLocationEntity || entities.length === 0) {
+        const locationQ = (
+          hasLocationEntity
+            ? [regionEntity?.text, countryEntity?.text].filter((e: string) => e).join(',')
+            : query
+        );
         const { data: nominatimResults } = await axios.get(
           'https://nominatim.openstreetmap.org/search',
           {
@@ -202,7 +201,6 @@ function Search({ className }: { className?: string }) {
       } else {
         dispatch(resetSelectedByKey('selectedDataset', 'h3Index'));
         dispatch(resetSearchByKey('location', 'lastZoom'));
-        dispatch(setDatasetIds(datasets.map((d: Dataset) => d.id)));
         dispatch(setDatasets(datasets));
       }
     } catch (err) {

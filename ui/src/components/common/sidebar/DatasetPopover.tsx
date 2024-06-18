@@ -5,6 +5,7 @@ import VisibilityIcon from '@mui/icons-material/Visibility';
 import { useDispatch, useSelector } from "react-redux";
 import { RootState } from "store/store";
 import { setFileUrl } from "store/previewSlice";
+import ReactMarkdown from 'react-markdown';
 
 // TODO: separate into a util file
 const isPreviewable = (file: string) => [

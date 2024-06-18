@@ -4,11 +4,9 @@ import { useDispatch, useSelector } from "react-redux";
 import { RootState } from "store/store";
 import { Dataset } from "../types";
 import Datasets from "./Datasets";
-import Overview from "./Overview";
-import Selected from "./Selected";
 import { selectAccessibilities, selectSourceOrgFilters, setH3IndexedDatasets } from "store/selectedFiltersSlice";
 import { useEffect } from "react";
-import { setDatasetCount, setDatasets } from "store/selectedSlice";
+import { selectDatasetIds, setDatasetCount, setDatasets } from "store/selectedSlice";
 import Search from "components/search/Search";
 import DeselectDatasetButton from "./DeselectDatasetButton";
 import DeselectTileButton from "./DeselectTileButton";
@@ -19,7 +17,7 @@ const Content = () => {
   const { h3Index, datasets: datasets_ }: { h3Index: string, datasets: Dataset[] } = useSelector((state: RootState) => state.selected);
   const { location }: { location: any } = useSelector((state: RootState) => state.search);
   const { h3IndexedDatasets } : { h3IndexedDatasets: Dataset[] } = useSelector((state: RootState) => state.selectedFilters);
-  const { datasetIds }: { datasetIds: number[] } = useSelector((state: RootState) => state.selectedFilters);
+  const datasetIds = useSelector(selectDatasetIds);
   const datasets = h3Index ? h3IndexedDatasets : datasets_;
 
   const { h3Index: selectedH3Index } = useSelector((state: RootState) => state.selected);

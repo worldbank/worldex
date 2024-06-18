@@ -8,6 +8,7 @@ import { BoundingBox, Dataset } from "../types";
 import classNames from "classnames";
 import DatasetPopover from "./DatasetPopover";
 import moveViewportToBbox from "utils/moveViewportToBbox";
+import ReactMarkdown from 'react-markdown';
 
 
 const DatasetItem = ({idx, dataset}: {idx: number, dataset: Dataset}) => {
@@ -32,6 +33,9 @@ const DatasetItem = ({idx, dataset}: {idx: number, dataset: Dataset}) => {
     dispatch(setSelectedDataset(datasetId));
   }
 
+  const descriptionHighlight = dataset?.meta?.highlight?.description
+  const datasetNameMd = `${(idx+1).toString()}. ${dataset?.meta?.highlight?.name?.join("...") || dataset.name}`;
+
   return (
     <Stack
       direction="row"
@@ -49,9 +53,23 @@ const DatasetItem = ({idx, dataset}: {idx: number, dataset: Dataset}) => {
         toggleVisibility(dataset.id, bbox);
       }}
     >
-      <Box className="m-0">
-        <Typography className="text-sm">{idx+1}. {dataset.name}</Typography>
-      </Box>
+      <Stack direction="column">
+        <Box className="m-0">
+          <article className="prose text-sm">
+            <ReactMarkdown>
+              {datasetNameMd}
+            </ReactMarkdown>
+          </article>
+          {
+            descriptionHighlight
+              && (
+                <article className="prose text-sm ml-7">
+                  <ReactMarkdown>{`${descriptionHighlight?.join("...")}`}</ReactMarkdown>
+                </article>
+              )
+          }
+        </Box>
+      </Stack>
       <IconButton onClick={
         (evt: React.MouseEvent<HTMLElement>) => {
           evt.stopPropagation();
@@ -85,47 +103,5 @@ const Datasets = ({ datasets }: { datasets: Dataset[] }) => {
     </List>
   );
 };
-
-// TODO: rm component
-const DatasetsByOrgs = ({ datasetsByOrgs, header }: { datasetsByOrgs: { [source_org: string]: Dataset[]; }, header?: string }) => (
-  <div>
-    {
-      Object.entries(datasetsByOrgs).map(([org, datasets]) => (
-        <Accordion
-          disableGutters
-          elevation={0}
-          key={org}
-          className="!relative"
-        >
-          <AccordionSummary>
-            <Typography className="font-bold">{org}</Typography>
-          </AccordionSummary>
-          <Divider />
-          <AccordionDetails
-            className="p-0"
-          >
-            <List className="m-0 p-0 max-h-[60vh] overflow-y-scroll">
-            {
-              datasets.map((dataset: Dataset, idx: number) => (
-                  <ListItem
-                    key={idx}
-                    className="p-0"
-                  >
-                    {/* TODO: consider semantic usage of ListItemX components */}
-                    <Stack direction="column" className="w-full">
-                      <DatasetItem idx={idx} dataset={dataset} />
-                      {idx + 1 < datasets.length && <Divider />}
-                    </Stack>
-                  </ListItem>
-              ))
-            }
-            </List>
-          </AccordionDetails>
-          <Divider />
-        </Accordion>
-      ))
-    }
-  </div>
-);
 
 export default Datasets;
