@@ -84,7 +84,7 @@ function Search({ className }: { className?: string }) {
       location: JSON.stringify(location.geojson),
       resolution,
     };
-    const candidateDatasetIds = candidateDatasets.map((d: Dataset) => d.id);
+    const candidateDatasetIds = candidateDatasets?.map((d: Dataset) => d.id) || [];
     if (Array.isArray(candidateDatasetIds) && candidateDatasetIds.length > 0) {
       body.dataset_ids = candidateDatasetIds;
     } else {
@@ -105,7 +105,7 @@ function Search({ className }: { className?: string }) {
       return;
     }
     const datasetsResultsIds = datasetsResults.map((d: Dataset) => d.id);
-    const finalDatasets = candidateDatasets.filter((cd: Dataset) => datasetsResultsIds.includes(cd.id));
+    const finalDatasets = candidateDatasets?.filter((cd: Dataset) => datasetsResultsIds.includes(cd.id)) || datasetsResults;
     dispatch(setDatasets(finalDatasets));
     dispatch(setPendingLocationCheck(true));
     if (selectedH3Index) {
