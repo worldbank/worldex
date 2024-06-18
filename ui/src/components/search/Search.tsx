@@ -239,19 +239,15 @@ function Search({ className }: { className?: string }) {
   };
 
   const selectLocation = async (event: React.ChangeEvent<HTMLInputElement>, location: any | null) => {
-    // this method only gets called if there are nominatim results
     setIsLoading(true);
-    const nonLocationEntities = entities.filter((e) => !['region', 'country'].includes(e));
-    const hasNonLocationEntities = Array.isArray(nonLocationEntities) && nonLocationEntities.length > 0;
     const hasNoEntities = Array.isArray(entities) && entities.length === 0;
-    const hasEntities = Array.isArray(entities) && entities.length > 0;
     let params = keywordPayload;
 
     let keywordQ;
-    let [candidateDatasets, candidateDatasetIds] = [[] as any[], [] as number[]];
-    // if (hasNonLocationEntities) {
-    if (hasEntities) {
-      // TODO: review if the ff steps are still necessary
+    if (hasNoEntities) {
+      console.info('No entities');
+      keywordQ = query;
+    } else {
       let labelWhitelist = ['statistical indicator'];
       if (location.skip) {
         labelWhitelist = [...labelWhitelist, 'region', 'country'];
@@ -268,7 +264,13 @@ function Search({ className }: { className?: string }) {
       } catch (err) {
         console.error(err.toJSON());
       }
-      // keyword search only proceeds with a non-empty keyword argument
+    }
+
+    let [candidateDatasets, candidateDatasetIds] = [[] as any[], [] as number[]];
+
+    if (keywordQ) {
+      // TODO: consider skipping keyword search if
+      // entity-stripped keyword query only has stop words left
       params = { ...keywordPayload, query: keywordQ };
       const { hits } = await getDatasetsByKeyword(params);
       candidateDatasets = hits;
@@ -284,8 +286,7 @@ function Search({ className }: { className?: string }) {
     dispatch(resetSearchByKey('location', 'lastZoom'));
 
     if (location.skip) {
-      // no need to further filter the candidate datasets
-      // TODO: unify these in one state slice
+      dispatch(setDatasetIds(candidateDatasetIds));
       dispatch(setDatasets(candidateDatasets));
       // temporary ux hack: reset map view for faster load time
       // instead of flying to the first ranked dataset
