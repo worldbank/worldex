@@ -4,19 +4,13 @@ export const stripEntities = (query: string, entities: any[]): string => {
   if (!Array.isArray(entities) || entities.length === 0) {
     return query;
   }
-  let strippedQ = '';
-  entities.forEach((entity, idx) => {
-    const prevEntity = entities[idx - 1];
-    const nextEntity = entities[idx + 1];
-    if (!prevEntity) {
-      strippedQ += query.slice(0, entity.start);
-    } else {
-      strippedQ += query.slice(prevEntity.end, entity.start);
-    }
-    if (!nextEntity) {
-      strippedQ += query.slice(entity.end);
-    }
-  });
+  const strippedQ = entities.reduce((acc, entity, idx, arr) => {
+    const prevEntity = arr[idx - 1];
+    const nextEntity = arr[idx + 1];
+    acc += prevEntity ? query.slice(prevEntity.end, entity.start) : query.slice(0, entity.start);
+    acc += !nextEntity ? query.slice(entity.end) : '';
+    return acc;
+  }, '');
   return strippedQ.trim();
 };
 
