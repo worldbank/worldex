@@ -35,7 +35,7 @@ import {
 import { RootState } from 'store/store';
 import getSteppedZoomResolutionPair from 'utils/getSteppedZoomResolutionPair';
 import moveViewportToBbox from 'utils/moveViewportToBbox';
-import { stripEntities, getDatasetsByKeyword, prepSearchKeyword } from './utils';
+import { getDatasetsByKeyword, prepSearchKeyword } from './utils';
 
 function SearchButton({ isLoading, disabled }: { isLoading: boolean, disabled?: boolean }) {
   return (
@@ -77,7 +77,7 @@ function Search({ className }: { className?: string }) {
 
   const dispatch = useDispatch();
 
-  const getDatasets = async ({ location, zoom, datasetIds }: { location: any, zoom: number, datasetIds?: number[] }) => {
+  const getSetDatasets = async ({ location, zoom, datasetIds }: { location: any, zoom: number, datasetIds?: number[] }) => {
     // TODO: make this single purpose. lessen side effects and simply return datasets
     const [_, resolution] = getSteppedZoomResolutionPair(zoom);
     const body: any = {
@@ -100,13 +100,10 @@ function Search({ className }: { className?: string }) {
         },
       },
     );
-    if (Array.isArray(datasetsResults) && datasetsResults.length > 0) {
-      dispatch(setDatasets(datasetsResults));
-    } else {
-      setError('No dataset results');
+    if (!Array.isArray(datasetsResults) || datasetsResults.length === 0) {
       return;
     }
-
+    dispatch(setDatasets(datasetsResults));
     dispatch(setPendingLocationCheck(true));
     if (selectedH3Index) {
       // deselect current tile if it's not among the tiles rendered inside the location feature
@@ -123,6 +120,7 @@ function Search({ className }: { className?: string }) {
     event.preventDefault();
     setIsLoading(true);
     setError(null);
+    console.group(`Performing search: ${query}`);
 
     try {
       let entities = [] as Entity[];
@@ -133,6 +131,7 @@ function Search({ className }: { className?: string }) {
         );
         entities = parseResults.entities;
         setEntities(entities);
+        console.info(Array.isArray(entities) && entities.length > 0 ? 'Entities found' : 'No entities found', entities);
       } catch (err) {
         console.error(err.toJSON());
       }
@@ -153,7 +152,7 @@ function Search({ className }: { className?: string }) {
         keywordPayload_.max_year = yearEntity.text;
       }
 
-      let labelWhitelist = ['statistical indicator'] as string[];
+      let labelsToKeep = ['statistical indicator'] as string[];
       setKeywordPayload(keywordPayload_);
       if (hasLocationEntity || entities.length === 0) {
         const locationQ = (
@@ -161,6 +160,7 @@ function Search({ className }: { className?: string }) {
             ? [regionEntity?.text, countryEntity?.text].filter((e: string) => e).join(',')
             : query
         );
+        console.info(`Querying nominatim: ${locationQ}`);
         const { data: nominatimResults } = await axios.get(
           'https://nominatim.openstreetmap.org/search',
           {
@@ -177,31 +177,25 @@ function Search({ className }: { className?: string }) {
             (result: any, other: any) => isEqualWith(result, other, (result: any, other: any) => isEqual(result.geojson.coordinates, other.geojson.coordinates)),
           );
           setOptions([{ display_name: 'Skip geography filtering', name: 'Skip geography filtering', skip: true }, ...dedupedResults]);
+          console.info('Display nominatim results');
           return;
         } else {
-          labelWhitelist = [...labelWhitelist, 'region', 'country'];
+          console.info('No nominatim results');
+          labelsToKeep = ['statistical indicator', 'region', 'country'];
         }
       }
 
-      setIsLoading(true);
-      const entitiesToStrip = entities.filter((e: Entity) => !labelWhitelist.includes(e.label));
-      keywordPayload_.query = stripEntities(query, entitiesToStrip);
-      try {
-        const { data } = await axios.get(
-          `${import.meta.env.VITE_API_URL}/search/strip_stop_words`,
-          { params: { query: keywordPayload_.query } },
-        );
-        const { tokens } = data;
-        keywordPayload_.query = tokens.map((t: any) => t.token).join(' ');
-      } catch (err) {
-        console.error(err.toJSON());
-      }
+      keywordPayload_.query = await prepSearchKeyword(query, entities, labelsToKeep);
+      console.info('Search by keyword:', keywordPayload_.query);
       const { hits: datasets } = await getDatasetsByKeyword(keywordPayload_);
       if (Array.isArray(datasets) && datasets.length === 0) {
-        setError('No dataset results');
+        const msg = 'No dataset results';
+        console.info(msg);
+        setError(msg);
       } else {
         dispatch(resetSelectedByKey('selectedDataset', 'h3Index'));
         dispatch(resetSearchByKey('location', 'lastZoom'));
+        console.info('Displaying datasets');
         dispatch(setDatasets(datasets));
       }
     } catch (err) {
@@ -209,6 +203,7 @@ function Search({ className }: { className?: string }) {
     } finally {
       setIsLoading(false);
     }
+    console.groupEnd();
   };
 
   const selectLocation = async (event: React.ChangeEvent<HTMLInputElement>, location: any | null) => {
@@ -216,24 +211,28 @@ function Search({ className }: { className?: string }) {
     setIsLoading(true);
 
     const hasNoEntities = Array.isArray(entities) && entities.length === 0;
-    const keywordQ = hasNoEntities ? query : await prepSearchKeyword(query, entities, location.skip);
+    const keyword = hasNoEntities ? query : await prepSearchKeyword(query, entities, location.skip ? ['statistical indicator', 'region', 'country'] : ['statistical indicator']);
     let candidateDatasets = [] as Dataset[];
 
-    if (keywordQ) {
-      // perform keyword search if
-      const { hits } = await getDatasetsByKeyword({ ...keywordPayload, query: keywordQ });
-      candidateDatasets = hits;
-      if (candidateDatasets.length === 0) {
+    if (keyword) {
+      console.info('Search by keyword:', keyword);
+      const { hits } = await getDatasetsByKeyword({ ...keywordPayload, query: keyword });
+      if (hits.length === 0) {
+        // there's no candidate datasets to location-filter
+        console.info('No dataset results; location filtering unnecessary');
         setError('No dataset results');
         setIsLoading(false);
+        console.groupEnd();
         return;
       }
+      candidateDatasets = hits;
     }
 
     dispatch(resetSelectedByKey('selectedDataset', 'h3Index'));
     dispatch(resetSearchByKey('location', 'lastZoom'));
 
     if (location.skip) {
+      console.info('Skip location filtering; display datasets');
       dispatch(setDatasets(candidateDatasets));
       // temporary ux hack: reset map view for faster load time
       // instead of flying to the first ranked dataset
@@ -246,15 +245,22 @@ function Search({ className }: { className?: string }) {
       };
       const { zoom } = moveViewportToBbox(bbox, viewState, dispatch, true);
       if (['Polygon', 'MultiPolygon'].includes(location.geojson.type)) {
-        const datasets = await getDatasets({ location, zoom, datasetIds: candidateDatasets.map((d: Dataset) => d.id) });
+        console.info('Filter by location', location);
+        const datasets = await getSetDatasets({ location, zoom, datasetIds: candidateDatasets.map((d: Dataset) => d.id) });
         if (Array.isArray(datasets) && datasets.length > 0) {
+          console.info('Display datasets');
           dispatch(setLocation(location));
           moveViewportToBbox(bbox, viewState, dispatch);
           dispatch(setLastZoom(zoom));
+        } else {
+          const message = 'No dataset results';
+          console.info(message);
+          setError(message);
         }
       }
     }
     setIsLoading(false);
+    console.groupEnd();
   };
 
   const resetSearch = () => {
@@ -270,7 +276,7 @@ function Search({ className }: { className?: string }) {
 
   useEffect(() => {
     if (location && lastZoom) {
-      getDatasets({ location, zoom: lastZoom });
+      getSetDatasets({ location, zoom: lastZoom });
     }
   }, [sourceOrgs, accessibilities]);
 

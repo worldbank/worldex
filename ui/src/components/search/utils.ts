@@ -1,7 +1,7 @@
 import axios from 'axios';
 import { Entity } from 'components/common/types';
 
-export const stripEntities = (query: string, entities: Entity[]): string => {
+const stripEntities = (query: string, entities: Entity[]): string => {
   if (!Array.isArray(entities) || entities.length === 0) {
     return query;
   }
@@ -15,8 +15,7 @@ export const stripEntities = (query: string, entities: Entity[]): string => {
   return strippedQ.trim();
 };
 
-export const prepSearchKeyword = async (query: string, entities: Entity[], skipLocation: boolean) => {
-  const labelsToKeep = skipLocation ? ['statistical indicator', 'region', 'country'] : ['statistical indicator'];
+export const prepSearchKeyword = async (query: string, entities: Entity[], labelsToKeep: string[]) => {
   const entitiesToStrip = entities.filter((e) => !labelsToKeep.includes(e.label));
   const stripped = stripEntities(query, entitiesToStrip);
   try {
