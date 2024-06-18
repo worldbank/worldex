@@ -197,6 +197,8 @@ function Search({ className }: { className?: string }) {
         dispatch(resetSearchByKey('location', 'lastZoom'));
         console.info('Displaying datasets');
         dispatch(setDatasets(datasets));
+        // @ts-ignore
+        dispatch(setViewState({ latitude: 0, longitude: 0, zoom: 2 }));
       }
     } catch (err) {
       console.error(err.toJSON());
