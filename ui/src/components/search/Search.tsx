@@ -138,7 +138,7 @@ function Search({ className }: { className?: string }) {
 
       const keywordPayload_: any = {
         query,
-        size: 10000,
+        size: 999,
         source_org: sourceOrgs,
         accessibility: accessibilities,
       };
