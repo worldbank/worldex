@@ -34,7 +34,7 @@ const DatasetItem = ({idx, dataset}: {idx: number, dataset: Dataset}) => {
   }
 
   const descriptionHighlight = dataset?.meta?.highlight?.description
-  const markdown = `${(idx+1).toString()}. ${dataset?.meta?.highlight?.name?.join("...") || dataset.name}`;
+  const datasetNameMd = `${(idx+1).toString()}. ${dataset?.meta?.highlight?.name?.join("...") || dataset.name}`;
 
   return (
     <Stack
@@ -57,7 +57,7 @@ const DatasetItem = ({idx, dataset}: {idx: number, dataset: Dataset}) => {
         <Box className="m-0">
           <article className="prose text-sm">
             <ReactMarkdown>
-              {markdown}
+              {datasetNameMd}
             </ReactMarkdown>
           </article>
           {
@@ -68,7 +68,6 @@ const DatasetItem = ({idx, dataset}: {idx: number, dataset: Dataset}) => {
                 </article>
               )
           }
-
         </Box>
       </Stack>
       <IconButton onClick={
@@ -104,47 +103,5 @@ const Datasets = ({ datasets }: { datasets: Dataset[] }) => {
     </List>
   );
 };
-
-// TODO: rm component
-const DatasetsByOrgs = ({ datasetsByOrgs, header }: { datasetsByOrgs: { [source_org: string]: Dataset[]; }, header?: string }) => (
-  <div>
-    {
-      Object.entries(datasetsByOrgs).map(([org, datasets]) => (
-        <Accordion
-          disableGutters
-          elevation={0}
-          key={org}
-          className="!relative"
-        >
-          <AccordionSummary>
-            <Typography className="font-bold">{org}</Typography>
-          </AccordionSummary>
-          <Divider />
-          <AccordionDetails
-            className="p-0"
-          >
-            <List className="m-0 p-0 max-h-[60vh] overflow-y-scroll">
-            {
-              datasets.map((dataset: Dataset, idx: number) => (
-                  <ListItem
-                    key={idx}
-                    className="p-0"
-                  >
-                    {/* TODO: consider semantic usage of ListItemX components */}
-                    <Stack direction="column" className="w-full">
-                      <DatasetItem idx={idx} dataset={dataset} />
-                      {idx + 1 < datasets.length && <Divider />}
-                    </Stack>
-                  </ListItem>
-              ))
-            }
-            </List>
-          </AccordionDetails>
-          <Divider />
-        </Accordion>
-      ))
-    }
-  </div>
-);
 
 export default Datasets;
