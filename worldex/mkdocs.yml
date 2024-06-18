@@ -14,7 +14,8 @@ nav:
       - Protected Planet: notebooks/index_protectedplanet.ipynb
       - UNHCR: notebooks/index_unhcr.ipynb
       - World Bank Catalog: notebooks/index_worldbankcatalog.ipynb
-      # - Building a custom provider: notebooks/custom_provider.ipynb
+  - Tutorials:
+      - Building a custom provider: notebooks/custom_provider.ipynb
 theme:
   name: material
   features:
