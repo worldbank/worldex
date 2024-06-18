@@ -1,5 +1,9 @@
+import { multiPolygon, point, polygon } from '@turf/helpers';
 import axios from 'axios';
 import { Entity } from 'components/common/types';
+import booleanWithin from '@turf/boolean-within';
+import { cellToLatLng, getResolution } from 'h3-js';
+import { resetByKey as resetSelectedByKey } from 'store/selectedSlice';
 
 const stripEntities = (query: string, entities: Entity[]): string => {
   if (!Array.isArray(entities) || entities.length === 0) {
@@ -36,4 +40,13 @@ export const getDatasetsByKeyword = async (params: any) => {
     { params },
   );
   return data;
+};
+
+export const deselectTile = (h3Index: string, resolution: number, location: any, dispatch: any) => {
+  // deselect current tile if it's not among the tiles rendered inside the location feature
+  const locationFeature = (location.geojson.type === 'Polygon' ? polygon : multiPolygon)(location.geojson.coordinates);
+  const selectedTilePoint = point(cellToLatLng(h3Index).reverse());
+  if (getResolution(h3Index) !== resolution || !booleanWithin(selectedTilePoint, locationFeature)) {
+    dispatch(resetSelectedByKey('h3Index'));
+  }
 };

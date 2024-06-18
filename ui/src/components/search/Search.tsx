@@ -35,7 +35,7 @@ import {
 import { RootState } from 'store/store';
 import getSteppedZoomResolutionPair from 'utils/getSteppedZoomResolutionPair';
 import moveViewportToBbox from 'utils/moveViewportToBbox';
-import { getDatasetsByKeyword, prepSearchKeyword } from './utils';
+import { deselectTile, getDatasetsByKeyword, prepSearchKeyword } from './utils';
 
 function SearchButton({ isLoading, disabled }: { isLoading: boolean, disabled?: boolean }) {
   return (
@@ -108,14 +108,8 @@ function Search({ className }: { className?: string }) {
     const finalDatasets = candidateDatasets.filter((cd: Dataset) => datasetsResultsIds.includes(cd.id));
     dispatch(setDatasets(finalDatasets));
     dispatch(setPendingLocationCheck(true));
-    // TODO: move to a utility
     if (selectedH3Index) {
-      // deselect current tile if it's not among the tiles rendered inside the location feature
-      const locationFeature = (location.geojson.type === 'Polygon' ? polygon : multiPolygon)(location.geojson.coordinates);
-      const selectedTilePoint = point(cellToLatLng(selectedH3Index).reverse());
-      if (getResolution(selectedH3Index) !== resolution || !booleanWithin(selectedTilePoint, locationFeature)) {
-        dispatch(resetSelectedByKey('h3Index'));
-      }
+      deselectTile(selectedH3Index, resolution, location, dispatch);
     }
     return datasetsResults;
   };
