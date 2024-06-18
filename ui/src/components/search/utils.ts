@@ -31,7 +31,7 @@ export const prepSearchKeyword = async (query: string, entities: Entity[], skipL
   }
 };
 
-export const getDatasetsByKeyword = async (params?: any) => {
+export const getDatasetsByKeyword = async (params: any) => {
   const { data } = await axios.get(
     `${import.meta.env.VITE_API_URL}/search/keyword`,
     { params },

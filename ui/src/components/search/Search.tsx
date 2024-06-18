@@ -212,24 +212,22 @@ function Search({ className }: { className?: string }) {
   };
 
   const selectLocation = async (event: React.ChangeEvent<HTMLInputElement>, location: any | null) => {
+    // will only be called if there are nominatim results
     setIsLoading(true);
-    let params = keywordPayload;
 
     const hasNoEntities = Array.isArray(entities) && entities.length === 0;
     const keywordQ = hasNoEntities ? query : await prepSearchKeyword(query, entities, location.skip);
-    let [candidateDatasets, candidateDatasetIds] = [[] as any[], [] as number[]];
+    let candidateDatasets = [] as Dataset[];
 
-    // perform keyword search
     if (keywordQ) {
-      params = { ...keywordPayload, query: keywordQ };
-      const { hits } = await getDatasetsByKeyword(params);
+      // perform keyword search if
+      const { hits } = await getDatasetsByKeyword({ ...keywordPayload, query: keywordQ });
       candidateDatasets = hits;
       if (candidateDatasets.length === 0) {
         setError('No dataset results');
         setIsLoading(false);
         return;
       }
-      candidateDatasetIds = candidateDatasets ? candidateDatasets.map((d: Dataset) => d.id) : null;
     }
 
     dispatch(resetSelectedByKey('selectedDataset', 'h3Index'));
@@ -248,7 +246,7 @@ function Search({ className }: { className?: string }) {
       };
       const { zoom } = moveViewportToBbox(bbox, viewState, dispatch, true);
       if (['Polygon', 'MultiPolygon'].includes(location.geojson.type)) {
-        const datasets = await getDatasets({ location, zoom, datasetIds: candidateDatasetIds });
+        const datasets = await getDatasets({ location, zoom, datasetIds: candidateDatasets.map((d: Dataset) => d.id) });
         if (Array.isArray(datasets) && datasets.length > 0) {
           dispatch(setLocation(location));
           moveViewportToBbox(bbox, viewState, dispatch);
