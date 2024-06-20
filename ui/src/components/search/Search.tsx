@@ -20,6 +20,7 @@ import {
   setLocation,
   setPendingLocationCheck,
   setChippedEntities,
+  appendChippedEntities,
 } from 'store/searchSlice';
 import {
   resetByKey as resetSelectedFiltersByKey,
