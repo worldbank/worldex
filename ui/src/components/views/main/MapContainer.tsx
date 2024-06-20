@@ -7,7 +7,6 @@ import {
   Grid, useMediaQuery, Theme, GridProps,
 } from '@mui/material';
 import { styled } from '@mui/material/styles';
-import LocationSearch from 'components/common/LocationSearch';
 import { RootState } from 'store/store';
 import PreviewErrorSnackbar from 'components/common/PreviewErrorSnackbar';
 
