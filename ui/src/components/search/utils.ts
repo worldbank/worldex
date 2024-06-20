@@ -5,6 +5,10 @@ import booleanWithin from '@turf/boolean-within';
 import { cellToLatLng, getResolution } from 'h3-js';
 import { resetByKey as resetSelectedByKey } from 'store/selectedSlice';
 
+export const getEntitiesByLabels = (entities: Entity[], ...labels: string[]) => (
+  entities.filter((e: Entity) => labels.includes(e.label))
+);
+
 const stripEntities = (query: string, entities: Entity[]): string => {
   if (!Array.isArray(entities) || entities.length === 0) {
     return query;

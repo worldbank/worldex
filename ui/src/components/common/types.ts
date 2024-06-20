@@ -19,11 +19,11 @@ export interface DatasetCount {
 }
 
 export interface Entity {
-  start: number;
-  end: number;
+  start?: number;
+  end?: number;
   text: string;
   label: string;
-  score: number;
+  score?: number;
 }
 
 // no actual range validation
