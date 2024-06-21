@@ -4,6 +4,7 @@ import SearchIcon from '@mui/icons-material/Search';
 import {
   Autocomplete, Chip, CircularProgress, IconButton, TextField,
 } from '@mui/material';
+import DeleteIcon from '@mui/icons-material/Delete';
 import axios from 'axios';
 import { Dataset, Entity } from 'components/common/types';
 import isEqual from 'lodash.isequal';
@@ -20,7 +21,7 @@ import {
   setLocation,
   setPendingLocationCheck,
   setChippedEntities,
-  appendChippedEntities,
+  removeChippedEntityByLabel,
 } from 'store/searchSlice';
 import {
   resetByKey as resetSelectedFiltersByKey,
@@ -120,6 +121,80 @@ function Search({ className }: { className?: string }) {
     return finalDatasets;
   };
 
+  const afterParse = async ({ chipped = false, entities }: { chipped?: boolean, entities?: Entity[] }) => {
+    // console.group(`Performing search:`, entities);
+
+    console.log(entities);
+    const keywordPayload_: any = {
+      query,
+      size: 999,
+      source_org: sourceOrgs,
+      accessibility: accessibilities,
+    };
+
+    const yearEntity = entities.find((e: Entity) => e.label === 'year');
+    const regionEntity = entities.find((e: Entity) => e.label === 'region');
+    const countryEntity = entities.find((e: Entity) => e.label === 'country');
+    const hasLocationEntity = regionEntity || countryEntity;
+    if (yearEntity) {
+      keywordPayload_.min_year = yearEntity.text;
+      keywordPayload_.max_year = yearEntity.text;
+    }
+
+    let labelsToKeep = ['statistical indicator'] as string[];
+    setKeywordPayload(keywordPayload_);
+    if (!chipped && (hasLocationEntity || entities.length === 0)) {
+      const locationQ = (
+        hasLocationEntity
+          ? [regionEntity?.text, countryEntity?.text].filter((e: string) => e).join(',')
+          : query
+      );
+      console.info(`Querying nominatim: ${locationQ}`);
+      const { data: nominatimResults } = await axios.get(
+        'https://nominatim.openstreetmap.org/search',
+        {
+          params: {
+            q: locationQ,
+            format: 'json',
+            polygon_geojson: 1,
+          },
+        },
+      );
+      if (Array.isArray(nominatimResults) && nominatimResults.length > 0) {
+        const dedupedResults = uniqWith(
+          nominatimResults,
+          (result: any, other: any) => isEqualWith(result, other, (result: any, other: any) => isEqual(result.geojson.coordinates, other.geojson.coordinates)),
+        );
+        setOptions([{ display_name: 'Skip geography filtering', name: 'Skip geography filtering', skip: true }, ...dedupedResults]);
+        console.info('Display nominatim results');
+        return;
+      } else {
+        console.info('No nominatim results');
+        labelsToKeep = ['statistical indicator', 'region', 'country'];
+      }
+    }
+
+    keywordPayload_.query = await prepSearchKeyword(query, entities, labelsToKeep);
+    setKeywordPayload(keywordPayload_);
+    console.info('Search by keyword:', keywordPayload_.query);
+    const { hits: datasets } = await getDatasetsByKeyword(keywordPayload_);
+    if (Array.isArray(datasets) && datasets.length === 0) {
+      const msg = 'No dataset results';
+      console.info(msg);
+      setError(msg);
+    } else {
+      dispatch(resetSelectedByKey('selectedDataset', 'h3Index'));
+      dispatch(resetSearchByKey('location', 'lastZoom'));
+      console.info('Displaying datasets');
+      dispatch(setDatasets(datasets));
+      dispatch(setChippedEntities({ label: 'raw', text: keywordPayload_.query }));
+      // @ts-ignore
+      dispatch(setViewState({ latitude: 0, longitude: 0, zoom: 2 }));
+    }
+    setIsLoading(false);
+    console.groupEnd();
+  };
+
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     setIsLoading(true);
@@ -140,77 +215,13 @@ function Search({ className }: { className?: string }) {
         console.error(err.toJSON());
       }
 
-      const keywordPayload_: any = {
-        query,
-        size: 999,
-        source_org: sourceOrgs,
-        accessibility: accessibilities,
-      };
-
-      const yearEntity = entities.find((e: Entity) => e.label === 'year');
-      const regionEntity = entities.find((e: Entity) => e.label === 'region');
-      const countryEntity = entities.find((e: Entity) => e.label === 'country');
-      const hasLocationEntity = regionEntity || countryEntity;
-      if (yearEntity) {
-        keywordPayload_.min_year = yearEntity.text;
-        keywordPayload_.max_year = yearEntity.text;
-      }
-
-      let labelsToKeep = ['statistical indicator'] as string[];
-      setKeywordPayload(keywordPayload_);
-      if (hasLocationEntity || entities.length === 0) {
-        const locationQ = (
-          hasLocationEntity
-            ? [regionEntity?.text, countryEntity?.text].filter((e: string) => e).join(',')
-            : query
-        );
-        console.info(`Querying nominatim: ${locationQ}`);
-        const { data: nominatimResults } = await axios.get(
-          'https://nominatim.openstreetmap.org/search',
-          {
-            params: {
-              q: locationQ,
-              format: 'json',
-              polygon_geojson: 1,
-            },
-          },
-        );
-        if (Array.isArray(nominatimResults) && nominatimResults.length > 0) {
-          const dedupedResults = uniqWith(
-            nominatimResults,
-            (result: any, other: any) => isEqualWith(result, other, (result: any, other: any) => isEqual(result.geojson.coordinates, other.geojson.coordinates)),
-          );
-          setOptions([{ display_name: 'Skip geography filtering', name: 'Skip geography filtering', skip: true }, ...dedupedResults]);
-          console.info('Display nominatim results');
-          return;
-        } else {
-          console.info('No nominatim results');
-          labelsToKeep = ['statistical indicator', 'region', 'country'];
-        }
-      }
-
-      keywordPayload_.query = await prepSearchKeyword(query, entities, labelsToKeep);
-      console.info('Search by keyword:', keywordPayload_.query);
-      const { hits: datasets } = await getDatasetsByKeyword(keywordPayload_);
-      if (Array.isArray(datasets) && datasets.length === 0) {
-        const msg = 'No dataset results';
-        console.info(msg);
-        setError(msg);
-      } else {
-        dispatch(resetSelectedByKey('selectedDataset', 'h3Index'));
-        dispatch(resetSearchByKey('location', 'lastZoom'));
-        console.info('Displaying datasets');
-        dispatch(setDatasets(datasets));
-        dispatch(setChippedEntities({ label: 'raw', text: keywordPayload_.query }));
-        // @ts-ignore
-        dispatch(setViewState({ latitude: 0, longitude: 0, zoom: 2 }));
-      }
+      afterParse({ entities });
     } catch (err) {
       console.error(err.toJSON());
     } finally {
       setIsLoading(false);
     }
-    console.groupEnd();
+    // console.groupEnd();
   };
 
   const selectLocation = async (event: React.ChangeEvent<HTMLInputElement>, location: any | null) => {
@@ -230,7 +241,9 @@ function Search({ className }: { className?: string }) {
     if (keyword && !selectedLocationFromRawQuery) {
       chips = [{ text: keyword, label: 'keyword' }];
       console.info('Search by keyword:', keyword);
-      const { hits } = await getDatasetsByKeyword({ ...keywordPayload, query: keyword });
+      const keywordPayload_ = { ...setKeywordPayload, query: keyword };
+      setKeywordPayload(keywordPayload_);
+      const { hits } = await getDatasetsByKeyword(keywordPayload_);
       if (hits.length === 0) {
         // there's no candidate datasets to location-filter
         console.info('No dataset results; location filtering unnecessary');
@@ -255,6 +268,7 @@ function Search({ className }: { className?: string }) {
       // @ts-ignore
       dispatch(setViewState({ latitude: 0, longitude: 0, zoom: 2 }));
       chips = [...getEntitiesByLabels(entities, 'year'), ...chips];
+      // TODO: defer display of chipped entities
       dispatch(setChippedEntities(...chips));
     } else {
       const [minLat, maxLat, minLon, maxLon] = location.boundingbox.map(parseFloat);
@@ -358,6 +372,50 @@ function Search({ className }: { className?: string }) {
             {
               chippedEntities.map((e: Entity) => (
                 <Chip
+                  deleteIcon={<ClearIcon color="error" />}
+                  onDelete={
+                    () => {
+                      // @ts-ignore
+                      console.info(e.text, keywordPayload?.query);
+                      // @ts-ignore
+                      if (e.text === keywordPayload?.query) {
+                        setKeywordPayload({ ...keywordPayload, query: null });
+                        dispatch(removeChippedEntityByLabel('keyword', 'raw'));
+                      }
+                      // if (e.text === )
+                      // let hasEmptiedEntities = false;
+                      // let hasEmptiedKeyword = false;
+                      // console.group();
+                      // console.info('before', entities);
+                      // // @ts-ignore
+                      // console.log(e.text, ';', keywordPayload?.query);
+                      // // @ts-ignore
+                      // if (e.text === keywordPayload?.query) {
+                      //   console.log('foooo');
+                      //   hasEmptiedKeyword = true;
+                      //   setKeywordPayload({ ...keywordPayload, query: null });
+                      //   dispatch(setChippedEntities(chippedEntities.filter((ce: Entity) => {
+                      //     console.info();
+                      //     return ce.label !== 'raw';
+                      //   })));
+                      //   afterParse({ chipped: true });
+                      // } else {
+                      //   const newEntities = entities.filter((ety: Entity) => {
+                      //     // console.log(ety.label, e.label);
+                      //     console.info();
+                      //     return ety.label !== e.label;
+                      //   });
+                      //   hasEmptiedEntities = !Array.isArray(newEntities) || newEntities.length === 0;
+                      //   console.info('after', newEntities);
+                      //   setEntities(newEntities);
+                      //   afterParse({ chipped: true, entities: newEntities });
+                      // }
+                      // console.groupEnd();
+                      // if (hasEmptiedEntities && hasEmptiedKeyword) {
+                      //   resetSearch();
+                      // }
+                    }
+                  }
                   className="first:ml-0 ml-1.5"
                   key={e.label}
                   label={e.text}

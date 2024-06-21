@@ -33,6 +33,11 @@ const slice = createSlice({
     appendChippedEntities: (state, action) => {
       state.chippedEntities = [...state.chippedEntities, ...action.payload];
     },
+    removeChippedEntityByLabel: (state, action) => {
+      const labels = action.payload;
+      console.log(labels);
+      state.chippedEntities = state.chippedEntities.filter((ce: Entity) => !labels.includes(ce.label));
+    },
     resetByKey: (state, action) => {
       action.payload.forEach((key: string) => {
         state[key] = initialState[key];
@@ -65,6 +70,10 @@ export const setChippedEntities = (...payload: Entity[]) => ({
 });
 export const appendChippedEntities = (...payload: Entity[]) => ({
   type: 'search/appendChippedEntities',
+  payload,
+});
+export const removeChippedEntityByLabel = (...payload: string[]) => ({
+  type: 'search/removeChippedEntityByLabel',
   payload,
 });
 export const resetByKey = (...payload: string[]) => ({
