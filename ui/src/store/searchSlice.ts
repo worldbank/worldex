@@ -7,7 +7,6 @@ const initialState: any = {
   location: null,
   lastZoom: null,
   pendingLocationCheck: false,
-  chippedEntities: [],
   // consider moving datasets here
 };
 
@@ -26,17 +25,6 @@ const slice = createSlice({
     },
     setPendingLocationCheck: (state, action) => {
       state.pendingLocationCheck = action.payload;
-    },
-    setChippedEntities: (state, action) => {
-      state.chippedEntities = [...action.payload];
-    },
-    appendChippedEntities: (state, action) => {
-      state.chippedEntities = [...state.chippedEntities, ...action.payload];
-    },
-    removeChippedEntityByLabel: (state, action) => {
-      const labels = action.payload;
-      console.log(labels);
-      state.chippedEntities = state.chippedEntities.filter((ce: Entity) => !labels.includes(ce.label));
     },
     resetByKey: (state, action) => {
       action.payload.forEach((key: string) => {
@@ -62,18 +50,6 @@ export const setLastZoom = (payload: any) => ({
 });
 export const setPendingLocationCheck = (payload: boolean) => ({
   type: 'search/setPendingLocationCheck',
-  payload,
-});
-export const setChippedEntities = (...payload: Entity[]) => ({
-  type: 'search/setChippedEntities',
-  payload,
-});
-export const appendChippedEntities = (...payload: Entity[]) => ({
-  type: 'search/appendChippedEntities',
-  payload,
-});
-export const removeChippedEntityByLabel = (...payload: string[]) => ({
-  type: 'search/removeChippedEntityByLabel',
   payload,
 });
 export const resetByKey = (...payload: string[]) => ({

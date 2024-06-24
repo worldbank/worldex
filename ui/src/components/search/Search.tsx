@@ -20,8 +20,6 @@ import {
   setLastZoom,
   setLocation,
   setPendingLocationCheck,
-  setChippedEntities,
-  removeChippedEntityByLabel,
 } from 'store/searchSlice';
 import {
   resetByKey as resetSelectedFiltersByKey,
@@ -76,12 +74,21 @@ function Search({ className }: { className?: string }) {
   const [keywordPayload, setKeywordPayload] = useState({});
 
   const viewState = useSelector((state: RootState) => state.carto.viewState);
-  const { location, lastZoom, chippedEntities } = useSelector((state: RootState) => state.search);
+  const { location, lastZoom } = useSelector((state: RootState) => state.search);
   const { candidateDatasets, h3Index: selectedH3Index }: { candidateDatasets: Dataset[], h3Index: string } = useSelector((state: RootState) => state.selected);
   const sourceOrgs = useSelector(selectSourceOrgFilters);
   const accessibilities = useSelector(selectAccessibilities);
 
   const dispatch = useDispatch();
+
+  const updateKeywordEntity = (keywordEntity: any) => {
+    const newEntities = [
+      ...entities.filter((e: Entity) => e.label !== 'keyword'),
+      { ...keywordEntity, label: 'keyword' },
+    ];
+    setEntities(newEntities);
+    return newEntities;
+  };
 
   const getSetDatasets = async ({ location, zoom, candidateDatasets = null }: { location: any, zoom: number, candidateDatasets?: Dataset[] }) => {
     // TODO: make this single purpose. lessen side effects and simply return datasets
@@ -148,21 +155,23 @@ function Search({ className }: { className?: string }) {
       console.log('current candidate datasets', candidateDatasets);
       dispatch(resetSearchByKey('location'));
       dispatch(setDatasets(candidateDatasets));
-    } else if (['keyword', 'raw'].includes(deletedChipLabel)) {
+    } else if (deletedChipLabel === 'keyword') {
       // still need to consider where year as a chip is still there
       // so we might need a generalized, conditional keyword search still
       // presumably there's still location (which is maybe not always true)
-      const [minLat, maxLat, minLon, maxLon] = location.boundingbox.map(parseFloat);
-      const bbox = {
-        minLat, maxLat, minLon, maxLon,
-      };
-      const { zoom } = moveViewportToBbox(bbox, viewState, dispatch, true);
-      getSetDatasets({ location, zoom });
+      const noMoreNonLocationEntities = entities.filter((e: Entity) => !['country', 'region'].includes(e.label)).length === 0;
+      if (noMoreNonLocationEntities) {
+        const [minLat, maxLat, minLon, maxLon] = location.boundingbox.map(parseFloat);
+        const bbox = {
+          minLat, maxLat, minLon, maxLon,
+        };
+        const { zoom } = moveViewportToBbox(bbox, viewState, dispatch, true);
+        getSetDatasets({ location, zoom });
+      }
     }
   };
 
   const afterParse = async ({ chipped = false, entities }: { chipped?: boolean, entities?: Entity[] }) => {
-    console.log(entities);
     const keywordPayload_: any = {
       query,
       size: 999,
@@ -174,6 +183,7 @@ function Search({ className }: { className?: string }) {
     const regionEntity = entities.find((e: Entity) => e.label === 'region');
     const countryEntity = entities.find((e: Entity) => e.label === 'country');
     const hasLocationEntity = regionEntity || countryEntity;
+    const keywordEntity = entities.find((e: Entity) => e.label === 'keyword');
     if (yearEntity) {
       keywordPayload_.min_year = yearEntity.text;
       keywordPayload_.max_year = yearEntity.text;
@@ -181,11 +191,11 @@ function Search({ className }: { className?: string }) {
 
     let labelsToKeep = ['statistical indicator'] as string[];
     setKeywordPayload(keywordPayload_);
-    if (hasLocationEntity || entities.length === 0) {
+    if (hasLocationEntity || keywordEntity) {
       const locationQ = (
         hasLocationEntity
           ? [regionEntity?.text, countryEntity?.text].filter((e: string) => e).join(',')
-          : query
+          : keywordEntity.text
       );
       console.info(`Querying nominatim: ${locationQ}`);
       const { data: nominatimResults } = await axios.get(
@@ -212,9 +222,12 @@ function Search({ className }: { className?: string }) {
       }
     }
 
-    keywordPayload_.query = await prepSearchKeyword(query, entities, labelsToKeep);
+    const keyword = await prepSearchKeyword(query, entities, labelsToKeep);
+    console.info('prepped', keyword);
+    updateKeywordEntity({ raw: false, text: keyword });
+    keywordPayload_.query = keyword;
     setKeywordPayload(keywordPayload_);
-    console.info('Search by keyword:', keywordPayload_.query);
+    console.info('Search by keyword:', keyword);
     const { hits: datasets } = await getDatasetsByKeyword(keywordPayload_);
     if (Array.isArray(datasets) && datasets.length === 0) {
       const msg = 'No dataset results';
@@ -225,12 +238,35 @@ function Search({ className }: { className?: string }) {
       dispatch(resetSearchByKey('location', 'lastZoom'));
       console.info('Displaying datasets');
       dispatch(setDatasets(datasets));
-      dispatch(setChippedEntities({ label: 'raw', text: keywordPayload_.query }));
+      // setEntities([
+      //   ...entities.filter((e: Entity) => e.label !== 'keyword'),
+      //   { label: 'keyword', text: keywordPayload_.query },
+      // ]);
+      // dispatch(setChippedEntities({ label: 'raw', text: keywordPayload_.query }));
       // @ts-ignore
       dispatch(setViewState({ latitude: 0, longitude: 0, zoom: 2 }));
     }
     setIsLoading(false);
     console.groupEnd();
+  };
+
+  const parseEntities = async () => {
+    try {
+      const { data: parseResults } = await axios.get(
+        `${import.meta.env.VITE_API_URL}/search/parse`,
+        { params: { query }, timeout: 6000 },
+      );
+      const { entities } = parseResults;
+      if (Array.isArray(entities) && entities.length > 0) {
+        console.info('Entities parsed', entities);
+        return entities;
+      } else {
+        console.info('No entities parsed');
+        return [{ label: 'keyword', text: query, raw: true }];
+      }
+    } catch (err) {
+      console.error(err.toJSON());
+    }
   };
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
@@ -240,19 +276,8 @@ function Search({ className }: { className?: string }) {
     console.group(`Performing search: ${query}`);
 
     try {
-      let entities = [] as Entity[];
-      try {
-        const { data: parseResults } = await axios.get(
-          `${import.meta.env.VITE_API_URL}/search/parse`,
-          { params: { query }, timeout: 6000 },
-        );
-        entities = parseResults.entities;
-        setEntities(entities);
-        console.info(Array.isArray(entities) && entities.length > 0 ? 'Entities found' : 'No entities found', entities);
-      } catch (err) {
-        console.error(err.toJSON());
-      }
-
+      const entities = await parseEntities();
+      setEntities(entities);
       afterParse({ entities });
     } catch (err) {
       console.error(err.toJSON());
@@ -266,22 +291,30 @@ function Search({ className }: { className?: string }) {
     // will only be called if there are nominatim results
     setIsLoading(true);
 
-    const hasNoEntities = Array.isArray(entities) && entities.length === 0;
-    const keyword = hasNoEntities ? query : await prepSearchKeyword(query, entities, location.skip ? ['statistical indicator', 'region', 'country'] : ['statistical indicator']);
+    const keywordEntity = entities?.filter((e: Entity) => e.label === 'keyword')[0];
+    const onlyKeywordEntity = entities.length === 1 && keywordEntity;
+    const keyword_ = onlyKeywordEntity ? keywordEntity.text : await prepSearchKeyword(query, entities, location.skip ? ['statistical indicator', 'region', 'country'] : ['statistical indicator']);
+    console.info('selecting location with keyword', keyword_);
+    const updatedEntities = updateKeywordEntity({ raw: false, text: keyword_ });
     let candidateDatasets = [] as Dataset[];
-    let chips = [] as Entity[];
 
-    const selectedLocationFromRawQuery = hasNoEntities && !location.skip;
-    if (selectedLocationFromRawQuery) {
-      chips = [{ text: keyword, label: 'keyword' }];
+    const hasNoLocationEntities = updatedEntities.filter((e: Entity) => !['region', 'country'].includes(e.label)).length === 0;
+    const selectedLocationFromRawQuery = hasNoLocationEntities && !location.skip;
+
+    if (location.skip) {
+      // it will be used for keyword search instead
+      setEntities(updatedEntities.filter((e: Entity) => !['region', 'country'].includes(e.label)));
     }
 
-    if (keyword && !selectedLocationFromRawQuery) {
-      chips = [{ text: keyword, label: 'keyword' }];
-      console.info('Search by keyword:', keyword);
-      const keywordPayload_ = { ...setKeywordPayload, query: keyword };
+    if (keyword_ && !selectedLocationFromRawQuery) {
+      // we skip keyword search if we have a raw query from which location is selected from
+      console.info('Search by keyword:', keyword_);
+      const keywordPayload_ = { ...setKeywordPayload, query: keyword_ };
+      console.info('Updating keyword entity', keyword_);
+
       setKeywordPayload(keywordPayload_);
       const { hits } = await getDatasetsByKeyword(keywordPayload_);
+      console.info('hits', hits);
       if (hits.length === 0) {
         // there's no candidate datasets to location-filter
         console.info('No dataset results; location filtering unnecessary');
@@ -306,9 +339,6 @@ function Search({ className }: { className?: string }) {
       // instead of flying to the first ranked dataset
       // @ts-ignore
       dispatch(setViewState({ latitude: 0, longitude: 0, zoom: 2 }));
-      chips = [...getEntitiesByLabels(entities, 'year'), ...chips];
-      // TODO: defer display of chipped entities
-      dispatch(setChippedEntities(...chips));
     } else {
       const [minLat, maxLat, minLon, maxLon] = location.boundingbox.map(parseFloat);
       const bbox = {
@@ -323,8 +353,6 @@ function Search({ className }: { className?: string }) {
           dispatch(setLocation(location));
           moveViewportToBbox(bbox, viewState, dispatch);
           dispatch(setLastZoom(zoom));
-          chips = [...entities.filter((e: Entity) => ['region', 'country', 'year'].includes(e.label)), ...chips];
-          dispatch(setChippedEntities(...chips));
         } else {
           const message = 'No dataset results';
           console.info(message);
@@ -342,7 +370,7 @@ function Search({ className }: { className?: string }) {
     setError('');
     setOptions([]);
     dispatch(resetPreviewByKey('fileUrl', 'isLoadingPreview', 'errorMessage'));
-    dispatch(resetSearchByKey('location', 'lastZoom', 'chippedEntities'));
+    dispatch(resetSearchByKey('location', 'lastZoom'));
     dispatch(resetSelectedByKey('datasets', 'candidateDatasets'));
     dispatch(resetSelectedFiltersByKey('datasetIds', 'h3IndexedDatasets'));
   };
@@ -406,56 +434,57 @@ function Search({ className }: { className?: string }) {
         />
       </form>
       {
-        chippedEntities && (
+        entities && (
           <div className="mt-1.5">
             {
-              chippedEntities.map((e: Entity) => (
+              !error && !isLoading && entities.filter((e: Entity) => !!e.text).map((ce: Entity) => (
                 <Chip
                   deleteIcon={<ClearIcon color="error" />}
                   onDelete={
                     () => {
                       // @ts-ignore
-                      console.info(e.text, keywordPayload?.query);
+                      console.info(ce.text, keywordPayload?.query);
                       let hasEmptiedEntities = false;
                       // @ts-ignore
                       let hasEmptiedKeyword = !(keywordPayload?.query);
                       let afterParseArgs = {
-                        deletedChipLabel: e.label,
+                        deletedChipLabel: ce.label,
                         // @ts-ignore
                         entities: null,
                         hasEmptiedKeyword,
                         hasEmptiedEntities,
                       };
+                      const newEntities = entities.filter((e: Entity) => e.label !== ce.label);
+                      setEntities(newEntities);
                       // @ts-ignore
-                      if (e.text === keywordPayload?.query) {
+                      if (ce.text === keywordPayload?.query) {
                         console.info('setting keyword payload to have a null query');
                         // @ts-ignore
                         const kpay = { ...keywordPayload, query: null };
                         setKeywordPayload(kpay);
                         // @ts-ignore
                         afterParseArgs.keywordPayload = kpay;
-                        dispatch(removeChippedEntityByLabel('keyword', 'raw'));
                         hasEmptiedKeyword = true;
                         // component level entities - we should simplify this
                         // @ts-ignore
                         afterParseArgs.entities = entities;
                       } else {
-                        const newEntities = entities.filter((ety: Entity) => ety.label !== e.label);
-                        hasEmptiedEntities = !Array.isArray(newEntities) || newEntities.length === 0;
-                        console.log(`removing entity ${e.label}`);
+                        console.log(`removing entity ${ce.label}`);
                         setEntities(newEntities);
-                        dispatch(removeChippedEntityByLabel(e.label));
                         // @ts-ignore
                         afterParseArgs.entities = newEntities;
                       }
 
                       // @ts-ignore
-                      const noKeyword = !keywordPayload.query;
-                      const noEntities = !entities?.length;
+                      hasEmptiedEntities = !Array.isArray(newEntities) || newEntities.length === 0;
+                      afterParseArgs.hasEmptiedEntities = hasEmptiedEntities;
+                      // @ts-ignore
+                      console.info(keywordPayload.query, entities);
+                      console.info(hasEmptiedKeyword, hasEmptiedEntities);
 
                       afterParseArgs = { ...afterParseArgs, hasEmptiedKeyword, hasEmptiedEntities };
 
-                      if ((noKeyword || hasEmptiedKeyword) && (noEntities || hasEmptiedEntities)) {
+                      if (newEntities.length === 0) {
                         resetSearch();
                       } else {
                         onChipDelete(afterParseArgs);
@@ -496,8 +525,8 @@ function Search({ className }: { className?: string }) {
                     }
                   }
                   className="first:ml-0 ml-1.5"
-                  key={e.label}
-                  label={e.text}
+                  key={ce.label}
+                  label={ce.text}
                   variant="outlined"
                 />
               ))
