@@ -30,6 +30,7 @@ import {
 } from 'store/selectedFiltersSlice';
 import {
   resetByKey as resetSelectedByKey,
+  setCandidateDatasets,
   setDatasets,
 } from 'store/selectedSlice';
 import { RootState } from 'store/store';
@@ -76,7 +77,7 @@ function Search({ className }: { className?: string }) {
 
   const viewState = useSelector((state: RootState) => state.carto.viewState);
   const { location, lastZoom, chippedEntities } = useSelector((state: RootState) => state.search);
-  const { h3Index: selectedH3Index }: { h3Index: string } = useSelector((state: RootState) => state.selected);
+  const { candidateDatasets, h3Index: selectedH3Index }: { candidateDatasets: Dataset[], h3Index: string } = useSelector((state: RootState) => state.selected);
   const sourceOrgs = useSelector(selectSourceOrgFilters);
   const accessibilities = useSelector(selectAccessibilities);
 
@@ -121,9 +122,46 @@ function Search({ className }: { className?: string }) {
     return finalDatasets;
   };
 
-  const afterParse = async ({ chipped = false, entities }: { chipped?: boolean, entities?: Entity[] }) => {
-    // console.group(`Performing search:`, entities);
+  const onChipDelete = async ({
+    deletedChipLabel,
+    entities,
+    keywordPayload,
+    hasEmptiedKeyword,
+    hasEmptiedEntities,
+  }: {
+    deletedChipLabel: string,
+    entities: Entity[],
+    keywordPayload?: any,
+    hasEmptiedKeyword: boolean,
+    hasEmptiedEntities: boolean
+  }) => {
+    // entities can only be changed one at a time, so either:
+    // 1. the keyword entity is removed
+    // 2. the location entity is removed
+    // 2. a non-location entity is removed
+    const yearEntity = entities.find((e: Entity) => e.label === 'year');
+    const regionEntity = entities.find((e: Entity) => e.label === 'region');
+    const countryEntity = entities.find((e: Entity) => e.label === 'country');
+    const hasLocationEntity = regionEntity || countryEntity;
 
+    if (['region', 'country'].includes(deletedChipLabel)) {
+      console.log('current candidate datasets', candidateDatasets);
+      dispatch(resetSearchByKey('location'));
+      dispatch(setDatasets(candidateDatasets));
+    } else if (['keyword', 'raw'].includes(deletedChipLabel)) {
+      // still need to consider where year as a chip is still there
+      // so we might need a generalized, conditional keyword search still
+      // presumably there's still location (which is maybe not always true)
+      const [minLat, maxLat, minLon, maxLon] = location.boundingbox.map(parseFloat);
+      const bbox = {
+        minLat, maxLat, minLon, maxLon,
+      };
+      const { zoom } = moveViewportToBbox(bbox, viewState, dispatch, true);
+      getSetDatasets({ location, zoom });
+    }
+  };
+
+  const afterParse = async ({ chipped = false, entities }: { chipped?: boolean, entities?: Entity[] }) => {
     console.log(entities);
     const keywordPayload_: any = {
       query,
@@ -143,7 +181,7 @@ function Search({ className }: { className?: string }) {
 
     let labelsToKeep = ['statistical indicator'] as string[];
     setKeywordPayload(keywordPayload_);
-    if (!chipped && (hasLocationEntity || entities.length === 0)) {
+    if (hasLocationEntity || entities.length === 0) {
       const locationQ = (
         hasLocationEntity
           ? [regionEntity?.text, countryEntity?.text].filter((e: string) => e).join(',')
@@ -259,6 +297,7 @@ function Search({ className }: { className?: string }) {
 
     dispatch(resetSelectedByKey('selectedDataset', 'h3Index'));
     dispatch(resetSearchByKey('location', 'lastZoom'));
+    dispatch(setCandidateDatasets(candidateDatasets));
 
     if (location.skip) {
       console.info('Skip location filtering; display datasets');
@@ -304,7 +343,7 @@ function Search({ className }: { className?: string }) {
     setOptions([]);
     dispatch(resetPreviewByKey('fileUrl', 'isLoadingPreview', 'errorMessage'));
     dispatch(resetSearchByKey('location', 'lastZoom', 'chippedEntities'));
-    dispatch(resetSelectedByKey('datasets'));
+    dispatch(resetSelectedByKey('datasets', 'candidateDatasets'));
     dispatch(resetSelectedFiltersByKey('datasetIds', 'h3IndexedDatasets'));
   };
 
@@ -377,11 +416,51 @@ function Search({ className }: { className?: string }) {
                     () => {
                       // @ts-ignore
                       console.info(e.text, keywordPayload?.query);
+                      let hasEmptiedEntities = false;
+                      // @ts-ignore
+                      let hasEmptiedKeyword = !(keywordPayload?.query);
+                      let afterParseArgs = {
+                        deletedChipLabel: e.label,
+                        // @ts-ignore
+                        entities: null,
+                        hasEmptiedKeyword,
+                        hasEmptiedEntities,
+                      };
                       // @ts-ignore
                       if (e.text === keywordPayload?.query) {
-                        setKeywordPayload({ ...keywordPayload, query: null });
+                        console.info('setting keyword payload to have a null query');
+                        // @ts-ignore
+                        const kpay = { ...keywordPayload, query: null };
+                        setKeywordPayload(kpay);
+                        // @ts-ignore
+                        afterParseArgs.keywordPayload = kpay;
                         dispatch(removeChippedEntityByLabel('keyword', 'raw'));
+                        hasEmptiedKeyword = true;
+                        // component level entities - we should simplify this
+                        // @ts-ignore
+                        afterParseArgs.entities = entities;
+                      } else {
+                        const newEntities = entities.filter((ety: Entity) => ety.label !== e.label);
+                        hasEmptiedEntities = !Array.isArray(newEntities) || newEntities.length === 0;
+                        console.log(`removing entity ${e.label}`);
+                        setEntities(newEntities);
+                        dispatch(removeChippedEntityByLabel(e.label));
+                        // @ts-ignore
+                        afterParseArgs.entities = newEntities;
                       }
+
+                      // @ts-ignore
+                      const noKeyword = !keywordPayload.query;
+                      const noEntities = !entities?.length;
+
+                      afterParseArgs = { ...afterParseArgs, hasEmptiedKeyword, hasEmptiedEntities };
+
+                      if ((noKeyword || hasEmptiedKeyword) && (noEntities || hasEmptiedEntities)) {
+                        resetSearch();
+                      } else {
+                        onChipDelete(afterParseArgs);
+                      }
+
                       // if (e.text === )
                       // let hasEmptiedEntities = false;
                       // let hasEmptiedKeyword = false;
