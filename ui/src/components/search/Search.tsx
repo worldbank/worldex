@@ -130,7 +130,7 @@ function Search({ className }: { className?: string }) {
     return finalDatasets;
   };
 
-  const onChipDelete = async ({
+  const reviseResults = async ({
     deletedChipLabel,
     entities,
     keywordPayload,
@@ -139,10 +139,6 @@ function Search({ className }: { className?: string }) {
     entities: Entity[],
     keywordPayload?: any,
   }) => {
-    // entities can only be changed one at a time, so either:
-    // 1. the keyword entity is removed
-    // 2. the location entity is removed
-    // 2. a non-location entity is removed
     console.info('on chip delete', deletedChipLabel);
     console.info('entities', entities);
     const yearEntity = entities.find((e: Entity) => e.label === 'year');
@@ -365,6 +361,44 @@ function Search({ className }: { className?: string }) {
     }
   };
 
+  const handleDeleteFactory = (ce: Entity) => (
+    () => {
+      // @ts-ignore
+      console.info(ce.text, keywordPayload?.query);
+      // @ts-ignore
+      const newEntities = entities.filter((e: Entity) => e.label !== ce.label);
+      const afterParseArgs = {
+        deletedChipLabel: ce.label,
+        // @ts-ignore
+        entities: newEntities,
+      };
+      setEntities(newEntities);
+      afterParseArgs.entities = newEntities;
+
+      // @ts-ignore
+      if (ce.text === keywordPayload?.query) {
+        console.info('emptying out keyword');
+        // @ts-ignore
+        const kpay = { ...keywordPayload, query: null };
+        setKeywordPayload(kpay);
+        // @ts-ignore
+        afterParseArgs.keywordPayload = kpay;
+        // @ts-ignore
+      } else {
+        console.log(`removing entity ${ce.label}`);
+      }
+
+      // @ts-ignore
+      console.info(keywordPayload.query, entities);
+      console.info('newEntities', newEntities);
+      if (newEntities.length === 0) {
+        resetSearch();
+      } else {
+        reviseResults(afterParseArgs);
+      }
+    }
+  );
+
   const resetSearch = () => {
     setEntities([]);
     setQuery('');
@@ -385,6 +419,7 @@ function Search({ className }: { className?: string }) {
   // use Autocomplete as the base component since it conveniently
   // combines free text search and dropdown functionalities
 
+  // TODO: consider separating the search autocomplete component and entities into diff files
   return (
     <div className={className}>
       <form className="w-full" onSubmit={handleSubmit} onReset={resetSearch}>
@@ -441,43 +476,7 @@ function Search({ className }: { className?: string }) {
               !error && !isLoading && showChips && entities.filter((e: Entity) => !!e.text).map((ce: Entity) => (
                 <Chip
                   deleteIcon={<ClearIcon color="error" />}
-                  onDelete={
-                    () => {
-                      // @ts-ignore
-                      console.info(ce.text, keywordPayload?.query);
-                      // @ts-ignore
-                      const newEntities = entities.filter((e: Entity) => e.label !== ce.label);
-                      const afterParseArgs = {
-                        deletedChipLabel: ce.label,
-                        // @ts-ignore
-                        entities: newEntities,
-                      };
-                      setEntities(newEntities);
-                      afterParseArgs.entities = newEntities;
-
-                      // @ts-ignore
-                      if (ce.text === keywordPayload?.query) {
-                        console.info('emptying out keyword');
-                        // @ts-ignore
-                        const kpay = { ...keywordPayload, query: null };
-                        setKeywordPayload(kpay);
-                        // @ts-ignore
-                        afterParseArgs.keywordPayload = kpay;
-                        // @ts-ignore
-                      } else {
-                        console.log(`removing entity ${ce.label}`);
-                      }
-
-                      // @ts-ignore
-                      console.info(keywordPayload.query, entities);
-                      console.info('newEntities', newEntities);
-                      if (newEntities.length === 0) {
-                        resetSearch();
-                      } else {
-                        onChipDelete(afterParseArgs);
-                      }
-                    }
-                  }
+                  onDelete={handleDeleteFactory(ce)}
                   className="first:ml-0 ml-1.5"
                   key={ce.label}
                   label={ce.text}
