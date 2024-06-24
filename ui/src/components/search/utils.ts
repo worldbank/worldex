@@ -4,6 +4,8 @@ import { Entity } from 'components/common/types';
 import booleanWithin from '@turf/boolean-within';
 import { cellToLatLng, getResolution } from 'h3-js';
 import { resetByKey as resetSelectedByKey } from 'store/selectedSlice';
+import { ViewState } from '@carto/react-redux';
+import { Dispatch } from 'react';
 
 export const getEntitiesByLabels = (entities: Entity[], ...labels: string[]) => (
   entities.filter((e: Entity) => labels.includes(e.label))
