@@ -19,12 +19,12 @@ import {
   setLastZoom,
   setLocation,
   setPendingLocationCheck,
-  setChippedEntities
+  setChippedEntities,
 } from 'store/searchSlice';
 import {
   resetByKey as resetSelectedFiltersByKey,
   selectAccessibilities,
-  selectSourceOrgFilters
+  selectSourceOrgFilters,
 } from 'store/selectedFiltersSlice';
 import {
   resetByKey as resetSelectedByKey,
@@ -288,7 +288,7 @@ function Search({ className }: { className?: string }) {
     setError('');
     setOptions([]);
     dispatch(resetPreviewByKey('fileUrl', 'isLoadingPreview', 'errorMessage'));
-    dispatch(resetSearchByKey('location', 'lastZoom'));
+    dispatch(resetSearchByKey('location', 'lastZoom', 'chippedEntities'));
     dispatch(resetSelectedByKey('datasets'));
     dispatch(resetSelectedFiltersByKey('datasetIds', 'h3IndexedDatasets'));
   };
