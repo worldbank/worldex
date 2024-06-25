@@ -51,3 +51,8 @@ export const deselectTile = (h3Index: string, resolution: number, location: any,
     dispatch(resetSelectedByKey('h3Index'));
   }
 };
+
+export const updateKeywordEntity = ({ keywordEntity, entities }: { keywordEntity: any, entities: Entity[] }) => ([
+  ...entities.filter((e: Entity) => e.label !== 'keyword'),
+  { ...keywordEntity, label: 'keyword' },
+]);

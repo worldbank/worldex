@@ -37,6 +37,7 @@ import {
   deselectTile,
   getDatasetsByKeyword,
   prepSearchKeyword,
+  updateKeywordEntity,
 } from './utils';
 
 function SearchButton({ isLoading, disabled }: { isLoading: boolean, disabled?: boolean }) {
@@ -79,15 +80,6 @@ function Search({ className }: { className?: string }) {
   const accessibilities = useSelector(selectAccessibilities);
 
   const dispatch = useDispatch();
-
-  const updateKeywordEntity = async (keywordEntity: any) => {
-    const newEntities = [
-      ...entities.filter((e: Entity) => e.label !== 'keyword'),
-      { ...keywordEntity, label: 'keyword' },
-    ];
-    await setEntities(newEntities);
-    return newEntities;
-  };
 
   // TODO: make this single purpose. lessen side effects and simply return datasets
   const getSetDatasets = async ({ location, zoom, candidateDatasets = null }: { location: any, zoom: number, candidateDatasets?: Dataset[] }) => {
@@ -141,6 +133,7 @@ function Search({ className }: { className?: string }) {
     if (['region', 'country'].includes(deletedChipLabel)) {
       dispatch(resetSearchByKey('location'));
       dispatch(setDatasets(candidateDatasets));
+      console.info('Display revised datasets');
     } else if (deletedChipLabel === 'keyword') {
       const noMoreNonLocationEntities = entities.filter((e: Entity) => !['country', 'region'].includes(e.label)).length === 0;
       if (noMoreNonLocationEntities) {
@@ -149,7 +142,14 @@ function Search({ className }: { className?: string }) {
           minLat, maxLat, minLon, maxLon,
         };
         const { zoom } = moveViewportToBbox(bbox, viewState, dispatch, true);
-        await getSetDatasets({ location, zoom });
+        const datasets = await getSetDatasets({ location, zoom });
+        if (Array.isArray(datasets) && datasets.length > 1) {
+          console.info('Display revised datasets');
+        } else {
+          const message = 'No dataset results';
+          console.info(message);
+          setError(message);
+        }
       }
     } else if (deletedChipLabel === 'year') {
       const { min_year, max_year, ...keywordPayload_ } = keywordPayload;
@@ -163,9 +163,17 @@ function Search({ className }: { className?: string }) {
           minLat, maxLat, minLon, maxLon,
         };
         const { zoom } = moveViewportToBbox(bbox, viewState, dispatch, true);
-        await getSetDatasets({ location, zoom, candidateDatasets });
+        const datasets = await getSetDatasets({ location, zoom, candidateDatasets });
+        if (Array.isArray(datasets) && datasets.length > 1) {
+          console.info('Display revised datasets');
+        } else {
+          const message = 'No dataset results';
+          console.info(message);
+          setError(message);
+        }
       } else {
         dispatch(setDatasets(candidateDatasets));
+        console.info('Display revised datasets');
       }
     }
     setShowChips(true);
@@ -173,6 +181,7 @@ function Search({ className }: { className?: string }) {
 
   // TODO: rename to something more descriptive
   const afterParse = async ({ entities }: { entities?: Entity[] }) => {
+    console.log('after parse entities', entities);
     const keywordPayload_: any = {
       query,
       size: 999,
@@ -225,7 +234,9 @@ function Search({ className }: { className?: string }) {
     }
 
     const keyword = await prepSearchKeyword(query, entities, labelsToKeep);
-    await updateKeywordEntity({ raw: false, text: keyword });
+    const newEntities = await updateKeywordEntity({ keywordEntity: { raw: false, text: keyword }, entities });
+    await setEntities(newEntities);
+
     keywordPayload_.query = keyword;
     await setKeywordPayload(keywordPayload_);
     console.info('Search by keyword:', keyword);
@@ -300,7 +311,8 @@ function Search({ className }: { className?: string }) {
     const keywordEntity = entities?.filter((e: Entity) => e.label === 'keyword')[0];
     const onlyKeywordEntity = entities.length === 1 && keywordEntity;
     const keyword_ = onlyKeywordEntity ? keywordEntity.text : await prepSearchKeyword(query, entities, location.skip ? ['region', 'country', 'statistical indicator'] : ['statistical indicator']);
-    const updatedEntities = await updateKeywordEntity({ raw: false, text: keyword_ });
+    const updatedEntities = await updateKeywordEntity({ keywordEntity: { raw: false, text: keyword_ }, entities });
+    await setEntities(updatedEntities);
     let candidateDatasets = [] as Dataset[];
 
     const hasNoLocationEntities = updatedEntities.filter((e: Entity) => !['region', 'country'].includes(e.label)).length === 0;
@@ -418,6 +430,7 @@ function Search({ className }: { className?: string }) {
     }
   }, [sourceOrgs, accessibilities]);
 
+  console.info(entities);
   // use Autocomplete as the base component since it conveniently
   // combines free text search and dropdown functionalities
   // TODO: consider separating the search autocomplete component and entities into diff files
@@ -474,9 +487,10 @@ function Search({ className }: { className?: string }) {
         entities && (
           <div className="mt-1.5">
             {
-              !error
-                && !isLoading
-                && showChips
+              // !error
+              //   && !isLoading
+              //   && showChips
+              true
                 && entities.filter((e: Entity) => !!e.text && e.label !== 'statistical indicator')
                   .map((chippedEntity: Entity) => (
                     <Chip
