@@ -140,31 +140,31 @@ function Search({ className }: { className?: string }) {
     if (['region', 'country'].includes(deletedChipLabel)) {
       dispatch(resetSearchByKey('location'));
       dispatch(setDatasets(candidateDatasets));
-    } else {
-      const [minLat, maxLat, minLon, maxLon] = location.boundingbox.map(parseFloat);
-      const bbox = {
-        minLat, maxLat, minLon, maxLon,
-      };
-      const { zoom } = moveViewportToBbox(bbox, viewState, dispatch, true);
-      if (deletedChipLabel === 'keyword') {
-        const noMoreNonLocationEntities = entities.filter((e: Entity) => !['country', 'region'].includes(e.label)).length === 0;
-        if (noMoreNonLocationEntities) {
-          const [minLat, maxLat, minLon, maxLon] = location.boundingbox.map(parseFloat);
-          const bbox = {
-            minLat, maxLat, minLon, maxLon,
-          };
-          const { zoom } = moveViewportToBbox(bbox, viewState, dispatch, true);
-          getSetDatasets({ location, zoom });
-        }
-      } else if (deletedChipLabel === 'year') {
-        const { min_year, max_year, ...keywordPayload_ } = keywordPayload;
-        const { hits: candidateDatasets } = await getDatasetsByKeyword(keywordPayload_);
-        dispatch(setCandidateDatasets(candidateDatasets));
-        if (location) {
-          getSetDatasets({ location, zoom, candidateDatasets });
-        } else {
-          dispatch(setDatasets(candidateDatasets));
-        }
+    } else if (deletedChipLabel === 'keyword') {
+      const noMoreNonLocationEntities = entities.filter((e: Entity) => !['country', 'region'].includes(e.label)).length === 0;
+      if (noMoreNonLocationEntities) {
+        const [minLat, maxLat, minLon, maxLon] = location.boundingbox.map(parseFloat);
+        const bbox = {
+          minLat, maxLat, minLon, maxLon,
+        };
+        const { zoom } = moveViewportToBbox(bbox, viewState, dispatch, true);
+        getSetDatasets({ location, zoom });
+      }
+    } else if (deletedChipLabel === 'year') {
+      const { min_year, max_year, ...keywordPayload_ } = keywordPayload;
+      const { hits: candidateDatasets } = await getDatasetsByKeyword(keywordPayload_);
+      dispatch(setCandidateDatasets(candidateDatasets));
+      if (location) {
+        // deduplicate this or at least allow zoom to be
+        // automatically derived from location if not provided
+        const [minLat, maxLat, minLon, maxLon] = location.boundingbox.map(parseFloat);
+        const bbox = {
+          minLat, maxLat, minLon, maxLon,
+        };
+        const { zoom } = moveViewportToBbox(bbox, viewState, dispatch, true);
+        getSetDatasets({ location, zoom, candidateDatasets });
+      } else {
+        dispatch(setDatasets(candidateDatasets));
       }
     }
   };
@@ -370,13 +370,24 @@ function Search({ className }: { className?: string }) {
 
   const handleDeleteFactory = (ce: Entity) => (
     () => {
-      console.info(`Removing entity ${ce.label}`);
+      console.info(`Removing ${ce.label} entity`);
       // @ts-ignore
-      const oneLessEntities = entities.filter((e: Entity) => e.label !== ce.label);
-      setEntities(oneLessEntities);
+      let newEntities = entities.filter((e: Entity) => e.label !== ce.label);
+      if (ce.label === 'keyword') {
+        // only allow year filtering if keyword is present
+        newEntities = newEntities.filter((e: Entity) => e.label !== 'year');
+      }
+
+      console.log(newEntities);
+      if (newEntities.length === 0) {
+        resetSearch();
+        return;
+      }
+
+      setEntities(newEntities);
       const reviseArgs = {
         deletedChipLabel: ce.label,
-        entities: oneLessEntities,
+        entities: newEntities,
         keywordPayload,
       };
 
@@ -389,11 +400,7 @@ function Search({ className }: { className?: string }) {
         reviseArgs.keywordPayload = keywordPayload_;
       }
 
-      if (oneLessEntities.length === 0) {
-        resetSearch();
-      } else {
-        reviseResults(reviseArgs);
-      }
+      reviseResults(reviseArgs);
     }
   );
 
