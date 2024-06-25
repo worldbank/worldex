@@ -29,8 +29,8 @@ export default function DatasetCoverageLayer() {
       // between different datasets/locations are segregated
       id: (
         location && location.place_id
-          ? `dataset-${selectedDataset}-${location.place_id}-tile-layer`
-          : `dataset-${selectedDataset}-coverage-tile-layer`
+          ? `dataset-${selectedDataset?.id}-${location.place_id}-tile-layer`
+          : `dataset-${selectedDataset?.id}-coverage-tile-layer`
       ),
       data: source.data,
       maxZoom: steppedZoom,
@@ -39,7 +39,7 @@ export default function DatasetCoverageLayer() {
           method: 'POST',
           body: JSON.stringify({
             resolution: getSteppedZoomResolutionPair(tile.index.z)[1],
-            dataset_id: selectedDataset,
+            dataset_id: selectedDataset?.id,
             location: (
               location && ['Polygon', 'MultiPolygon'].includes(location.geojson.type)
                 ? JSON.stringify(location.geojson)
@@ -70,7 +70,7 @@ export default function DatasetCoverageLayer() {
         extruded: false,
       }),
       updateTriggers: {
-        id: [selectedDataset, location?.place_id],
+        id: [selectedDataset?.id, location?.place_id],
         minZoom: [steppedZoom],
         maxZoom: [steppedZoom],
       },

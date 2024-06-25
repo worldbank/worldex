@@ -14,17 +14,21 @@ import HidePreviewButton from "./HidePreviewButton";
 
 
 const Content = () => {
-  const { h3Index, datasets: datasets_ }: { h3Index: string, datasets: Dataset[] } = useSelector((state: RootState) => state.selected);
+  const { selectedDataset, h3Index, datasets: datasets_ }: { selectedDataset: Dataset, h3Index: string, datasets: Dataset[] } = useSelector((state: RootState) => state.selected);
   const { location }: { location: any } = useSelector((state: RootState) => state.search);
   const { h3IndexedDatasets } : { h3IndexedDatasets: Dataset[] } = useSelector((state: RootState) => state.selectedFilters);
   const datasetIds = useSelector(selectDatasetIds);
-  const datasets = h3Index ? h3IndexedDatasets : datasets_;
+  let retainSelectedDataset = false;
+  let datasets = h3Index ? h3IndexedDatasets : datasets_;
+  if ((!Array.isArray(datasets) || datasets.length === 0) && selectedDataset) {
+    datasets = [selectedDataset];
+    retainSelectedDataset = true;
+  }
 
   const { h3Index: selectedH3Index } = useSelector((state: RootState) => state.selected);
   const sourceOrgs = useSelector(selectSourceOrgFilters);
   const accessibilities = useSelector(selectAccessibilities);
   const { datasetCount }: { datasetCount: number } = useSelector((state: RootState) => state.selected);
-  const { selectedDataset } = useSelector((state: RootState) => state.selected);
   const { fileUrl: previewFileUrl, isLoadingPreview } = useSelector((state: RootState) => state.preview);
 
   const isFiltered = (
@@ -85,7 +89,7 @@ const Content = () => {
             { selectedH3Index ? `Tile ${selectedH3Index} datasets` : `Total datasets`}
             { isFiltered ? ' (filtered)' : ''}
             {": "}
-            { datasets.length || datasetCount }
+            { retainSelectedDataset ? datasetCount : (datasets.length || datasetCount) }
           </span>
         </Typography>
         {

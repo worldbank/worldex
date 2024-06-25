@@ -17,12 +17,12 @@ const DatasetItem = ({idx, dataset}: {idx: number, dataset: Dataset}) => {
   const viewState = useSelector((state: RootState) => state.carto.viewState);
   const { location } = useSelector((state: RootState) => state.search);
   const dispatch = useDispatch();
-  const toggleVisibility = (datasetId: number, bbox: BoundingBox) => {
+  const toggleVisibility = (dataset: Dataset, bbox: BoundingBox) => {
     if (anchor) {
       // do not do anything if popover is active
       return;
     }
-    if (datasetId === selectedDataset) {
+    if (dataset.id === selectedDataset?.id) {
       dispatch(setSelectedDataset(null));
       return;
     }
@@ -30,7 +30,7 @@ const DatasetItem = ({idx, dataset}: {idx: number, dataset: Dataset}) => {
     if (!['Polygon', 'MultiPolygon'].includes(location?.geojson.type)) {
       moveViewportToBbox(bbox, viewState, dispatch);
     }
-    dispatch(setSelectedDataset(datasetId));
+    dispatch(setSelectedDataset(dataset));
   }
 
   const descriptionHighlight = dataset?.meta?.highlight?.description
@@ -45,12 +45,12 @@ const DatasetItem = ({idx, dataset}: {idx: number, dataset: Dataset}) => {
         "justify-between",
         "hover:bg-sky-100",
         "cursor-pointer",
-        {"bg-sky-100": selectedDataset === dataset.id},
+        {"bg-sky-100": selectedDataset?.id === dataset.id},
       )}
       onClick={(evt: React.MouseEvent<HTMLElement>) => {
         const [minLon, minLat, maxLon, maxLat] = dataset.bbox;
         const bbox = { minLon, minLat, maxLon, maxLat };
-        toggleVisibility(dataset.id, bbox);
+        toggleVisibility(dataset, bbox);
       }}
     >
       <Stack direction="column">

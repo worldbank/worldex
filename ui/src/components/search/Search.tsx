@@ -27,6 +27,7 @@ import {
   resetByKey as resetSelectedFiltersByKey,
   selectAccessibilities,
   selectSourceOrgFilters,
+  setH3IndexedDatasets,
 } from 'store/selectedFiltersSlice';
 import {
   resetByKey as resetSelectedByKey,
@@ -71,7 +72,8 @@ function Search({ className }: { className?: string }) {
 
   const viewState = useSelector((state: RootState) => state.carto.viewState);
   const { location, lastZoom } = useSelector((state: RootState) => state.search);
-  const { h3Index: selectedH3Index }: { h3Index: string } = useSelector((state: RootState) => state.selected);
+  const { datasets, selectedDataset, h3Index: selectedH3Index }: { datasets: Dataset[], selectedDataset: Dataset, h3Index: string } = useSelector((state: RootState) => state.selected);
+  const { h3IndexedDatasets }: { h3IndexedDatasets: Dataset[] } = useSelector((state: RootState) => state.selectedFilters);
   const sourceOrgs = useSelector(selectSourceOrgFilters);
   const accessibilities = useSelector(selectAccessibilities);
 
