@@ -14,7 +14,7 @@ import { SLIPPY_TILE_LAYER_ID } from 'components/layers/SlippyTileLayer';
 import { DATASET_COUNT_LAYER_ID } from 'components/layers/DatasetCountLayer';
 import { DATASET_COVERAGE_LAYER_ID } from 'components/layers/DatasetCoverageLayer';
 import { GEOJSON_PREVIEW_LAYER_ID } from 'components/layers/GeojsonPreviewLayer';
-import { SEARCH_LAYER_ID } from 'components/layers/SearchLayer';
+import { LOCATION_LAYER_ID } from 'components/layers/LocationLayer';
 import { TIF_PREVIEW_LAYER_ID } from 'components/layers/TifPreviewLayer';
 import datasetCoverageSource from 'data/sources/datasetCoverageSource';
 import { useDispatch, useSelector } from 'react-redux';
@@ -96,12 +96,12 @@ export default function Main() {
     );
     dispatch(
       addLayer({
-        id: SEARCH_LAYER_ID,
+        id: LOCATION_LAYER_ID,
       }),
     );
 
     return () => {
-      dispatch(removeLayer(SEARCH_LAYER_ID));
+      dispatch(removeLayer(LOCATION_LAYER_ID));
       dispatch(removeLayer(DATASET_COUNT_LAYER_ID));
       dispatch(removeSource(h3CellsSource.id));
     };

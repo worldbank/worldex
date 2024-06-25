@@ -2,13 +2,10 @@ import { setViewState } from '@carto/react-redux';
 import ClearIcon from '@mui/icons-material/Clear';
 import SearchIcon from '@mui/icons-material/Search';
 import {
-  Autocomplete, CircularProgress, IconButton, TextField,
+  Autocomplete, Chip, CircularProgress, IconButton, TextField,
 } from '@mui/material';
-import booleanWithin from '@turf/boolean-within';
-import { multiPolygon, point, polygon } from '@turf/helpers';
 import axios from 'axios';
 import { Dataset, Entity } from 'components/common/types';
-import { cellToLatLng, getResolution } from 'h3-js';
 import isEqual from 'lodash.isequal';
 import isEqualWith from 'lodash.isequalwith';
 import uniqWith from 'lodash.uniqwith';
@@ -22,12 +19,12 @@ import {
   setLastZoom,
   setLocation,
   setPendingLocationCheck,
+  setChippedEntities,
 } from 'store/searchSlice';
 import {
   resetByKey as resetSelectedFiltersByKey,
   selectAccessibilities,
   selectSourceOrgFilters,
-  setH3IndexedDatasets,
 } from 'store/selectedFiltersSlice';
 import {
   resetByKey as resetSelectedByKey,
@@ -36,7 +33,12 @@ import {
 import { RootState } from 'store/store';
 import getSteppedZoomResolutionPair from 'utils/getSteppedZoomResolutionPair';
 import moveViewportToBbox from 'utils/moveViewportToBbox';
-import { deselectTile, getDatasetsByKeyword, prepSearchKeyword } from './utils';
+import {
+  deselectTile,
+  getDatasetsByKeyword,
+  getEntitiesByLabels,
+  prepSearchKeyword,
+} from './utils';
 
 function SearchButton({ isLoading, disabled }: { isLoading: boolean, disabled?: boolean }) {
   return (
@@ -71,9 +73,8 @@ function Search({ className }: { className?: string }) {
   const [keywordPayload, setKeywordPayload] = useState({});
 
   const viewState = useSelector((state: RootState) => state.carto.viewState);
-  const { location, lastZoom } = useSelector((state: RootState) => state.search);
-  const { datasets, selectedDataset, h3Index: selectedH3Index }: { datasets: Dataset[], selectedDataset: Dataset, h3Index: string } = useSelector((state: RootState) => state.selected);
-  const { h3IndexedDatasets }: { h3IndexedDatasets: Dataset[] } = useSelector((state: RootState) => state.selectedFilters);
+  const { location, lastZoom, chippedEntities } = useSelector((state: RootState) => state.search);
+  const { h3Index: selectedH3Index }: { h3Index: string } = useSelector((state: RootState) => state.selected);
   const sourceOrgs = useSelector(selectSourceOrgFilters);
   const accessibilities = useSelector(selectAccessibilities);
 
@@ -199,6 +200,7 @@ function Search({ className }: { className?: string }) {
         dispatch(resetSearchByKey('location', 'lastZoom'));
         console.info('Displaying datasets');
         dispatch(setDatasets(datasets));
+        dispatch(setChippedEntities({ label: 'raw', text: keywordPayload_.query }));
         // @ts-ignore
         dispatch(setViewState({ latitude: 0, longitude: 0, zoom: 2 }));
       }
@@ -217,9 +219,15 @@ function Search({ className }: { className?: string }) {
     const hasNoEntities = Array.isArray(entities) && entities.length === 0;
     const keyword = hasNoEntities ? query : await prepSearchKeyword(query, entities, location.skip ? ['statistical indicator', 'region', 'country'] : ['statistical indicator']);
     let candidateDatasets = [] as Dataset[];
+    let chips = [] as Entity[];
 
     const selectedLocationFromRawQuery = hasNoEntities && !location.skip;
+    if (selectedLocationFromRawQuery) {
+      chips = [{ text: keyword, label: 'keyword' }];
+    }
+
     if (keyword && !selectedLocationFromRawQuery) {
+      chips = [{ text: keyword, label: 'keyword' }];
       console.info('Search by keyword:', keyword);
       const { hits } = await getDatasetsByKeyword({ ...keywordPayload, query: keyword });
       if (hits.length === 0) {
@@ -245,6 +253,8 @@ function Search({ className }: { className?: string }) {
       // instead of flying to the first ranked dataset
       // @ts-ignore
       dispatch(setViewState({ latitude: 0, longitude: 0, zoom: 2 }));
+      chips = [...getEntitiesByLabels(entities, 'year'), ...chips];
+      dispatch(setChippedEntities(...chips));
     } else {
       const [minLat, maxLat, minLon, maxLon] = location.boundingbox.map(parseFloat);
       const bbox = {
@@ -259,6 +269,8 @@ function Search({ className }: { className?: string }) {
           dispatch(setLocation(location));
           moveViewportToBbox(bbox, viewState, dispatch);
           dispatch(setLastZoom(zoom));
+          chips = [...entities.filter((e: Entity) => ['region', 'country', 'year'].includes(e.label)), ...chips];
+          dispatch(setChippedEntities(...chips));
         } else {
           const message = 'No dataset results';
           console.info(message);
@@ -276,7 +288,7 @@ function Search({ className }: { className?: string }) {
     setError('');
     setOptions([]);
     dispatch(resetPreviewByKey('fileUrl', 'isLoadingPreview', 'errorMessage'));
-    dispatch(resetSearchByKey('location', 'lastZoom'));
+    dispatch(resetSearchByKey('location', 'lastZoom', 'chippedEntities'));
     dispatch(resetSelectedByKey('datasets'));
     dispatch(resetSelectedFiltersByKey('datasetIds', 'h3IndexedDatasets'));
   };
@@ -291,53 +303,71 @@ function Search({ className }: { className?: string }) {
   // combines free text search and dropdown functionalities
 
   return (
-    <form className={`w-full ${className}`} onSubmit={handleSubmit} onReset={resetSearch}>
-      <Autocomplete
-        id="location-search"
-        options={options}
-        // disable filtering based on substring matching; simply use all of nominatim's results
-        filterOptions={(options, state) => options}
-        getOptionLabel={(option) => option.display_name || option.name}
-        isOptionEqualToValue={(option, value) => option.place_id === value.place_id}
-        inputValue={query}
-        onChange={selectLocation}
-        renderInput={(params) => (
-          <TextField
-            // eslint-disable-next-line react/jsx-props-no-spreading
-            {...params}
-            label="Search for datasets"
-            error={!!error}
-            helperText={error}
-            variant="outlined"
-            value={query}
-            onChange={
-              (event: React.ChangeEvent<HTMLInputElement>) => {
-                setError('');
-                setQuery(event.target.value);
+    <div className={className}>
+      <form className="w-full" onSubmit={handleSubmit} onReset={resetSearch}>
+        <Autocomplete
+          id="location-search"
+          options={options}
+          // disable filtering based on substring matching; simply use all of nominatim's results
+          filterOptions={(options, state) => options}
+          getOptionLabel={(option) => option.display_name || option.name}
+          isOptionEqualToValue={(option, value) => option.place_id === value.place_id}
+          inputValue={query}
+          onChange={selectLocation}
+          renderInput={(params) => (
+            <TextField
+              // eslint-disable-next-line react/jsx-props-no-spreading
+              {...params}
+              label="Search for datasets"
+              error={!!error}
+              helperText={error}
+              variant="outlined"
+              value={query}
+              onChange={
+                (event: React.ChangeEvent<HTMLInputElement>) => {
+                  setError('');
+                  setQuery(event.target.value);
+                }
               }
+              InputProps={{
+                ...params.InputProps,
+                endAdornment: (
+                  <>
+                    <SearchButton isLoading={isLoading} disabled={query.trim() === ''} />
+                    <ClearButton />
+                  </>
+                ),
+              }}
+            />
+          )}
+          // disable popup and clear to reclaim their reserved space
+          // custom behavior is used in their place
+          forcePopupIcon={false}
+          disableClearable
+          // prevent the 'No options' notice from showing
+          // while the user is still inputting their query
+          open={options.length > 0}
+          openOnFocus={false}
+          onClose={(event: React.SyntheticEvent, reason: string) => { setOptions([]); }}
+        />
+      </form>
+      {
+        chippedEntities && (
+          <div className="mt-1.5">
+            {
+              chippedEntities.map((e: Entity) => (
+                <Chip
+                  className="first:ml-0 ml-1.5"
+                  key={e.label}
+                  label={e.text}
+                  variant="outlined"
+                />
+              ))
             }
-            InputProps={{
-              ...params.InputProps,
-              endAdornment: (
-                <>
-                  <SearchButton isLoading={isLoading} disabled={query.trim() === ''} />
-                  <ClearButton />
-                </>
-              ),
-            }}
-          />
-        )}
-        // disable popup and clear to reclaim their reserved space
-        // custom behavior is used in their place
-        forcePopupIcon={false}
-        disableClearable
-        // prevent the 'No options' notice from showing
-        // while the user is still inputting their query
-        open={options.length > 0}
-        openOnFocus={false}
-        onClose={(event: React.SyntheticEvent, reason: string) => { setOptions([]); }}
-      />
-    </form>
+          </div>
+        )
+      }
+    </div>
   );
 }
 

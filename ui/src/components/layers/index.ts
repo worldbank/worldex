@@ -1,4 +1,4 @@
-import SearchLayer from './SearchLayer';
+import LocationLayer from './LocationLayer';
 import DatasetCountLayer from './DatasetCountLayer';
 import DatasetCoverageLayer from './DatasetCoverageLayer';
 import GeojsonPreviewLayer from './GeojsonPreviewLayer';
@@ -8,7 +8,7 @@ import SlippyTileLayer from './SlippyTileLayer';
 
 export const getLayers = () => [
   DatasetCountLayer(),
-  SearchLayer(),
+  LocationLayer(),
   DatasetCoverageLayer(),
   SlippyTileLayer(),
   GeojsonPreviewLayer(),

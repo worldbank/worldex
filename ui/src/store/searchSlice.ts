@@ -1,11 +1,14 @@
 /* eslint-disable no-param-reassign */
 import { createSlice } from '@reduxjs/toolkit';
+import { Entity } from 'components/common/types';
 
 const initialState: any = {
   // query: null,
   location: null,
   lastZoom: null,
   pendingLocationCheck: false,
+  chippedEntities: [],
+  // consider moving datasets here
 };
 
 const slice = createSlice({
@@ -23,6 +26,12 @@ const slice = createSlice({
     },
     setPendingLocationCheck: (state, action) => {
       state.pendingLocationCheck = action.payload;
+    },
+    setChippedEntities: (state, action) => {
+      state.chippedEntities = [...action.payload];
+    },
+    appendChippedEntities: (state, action) => {
+      state.chippedEntities = [...state.chippedEntities, ...action.payload];
     },
     resetByKey: (state, action) => {
       action.payload.forEach((key: string) => {
@@ -48,6 +57,14 @@ export const setLastZoom = (payload: any) => ({
 });
 export const setPendingLocationCheck = (payload: boolean) => ({
   type: 'search/setPendingLocationCheck',
+  payload,
+});
+export const setChippedEntities = (...payload: Entity[]) => ({
+  type: 'search/setChippedEntities',
+  payload,
+});
+export const appendChippedEntities = (...payload: Entity[]) => ({
+  type: 'search/appendChippedEntities',
   payload,
 });
 export const resetByKey = (...payload: string[]) => ({
