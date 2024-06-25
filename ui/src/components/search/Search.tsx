@@ -80,12 +80,12 @@ function Search({ className }: { className?: string }) {
 
   const dispatch = useDispatch();
 
-  const updateKeywordEntity = (keywordEntity: any) => {
+  const updateKeywordEntity = async (keywordEntity: any) => {
     const newEntities = [
       ...entities.filter((e: Entity) => e.label !== 'keyword'),
       { ...keywordEntity, label: 'keyword' },
     ];
-    setEntities(newEntities);
+    await setEntities(newEntities);
     return newEntities;
   };
 
@@ -225,9 +225,9 @@ function Search({ className }: { className?: string }) {
     }
 
     const keyword = await prepSearchKeyword(query, entities, labelsToKeep);
-    updateKeywordEntity({ raw: false, text: keyword });
+    await updateKeywordEntity({ raw: false, text: keyword });
     keywordPayload_.query = keyword;
-    setKeywordPayload(keywordPayload_);
+    await setKeywordPayload(keywordPayload_);
     console.info('Search by keyword:', keyword);
     const { hits: datasets } = await getDatasetsByKeyword(keywordPayload_);
     if (Array.isArray(datasets) && datasets.length === 0) {
@@ -279,12 +279,13 @@ function Search({ className }: { className?: string }) {
     setShowChips(false);
     setIsLoading(true);
     setError(null);
+    await setEntities([]);
     console.group(`Performing search: ${query}`);
 
     try {
       const entities = await parseEntities();
-      setEntities(entities);
-      afterParse({ entities });
+      await setEntities(entities);
+      await afterParse({ entities });
     } catch (err) {
       console.error(err.toJSON());
     } finally {
@@ -299,7 +300,7 @@ function Search({ className }: { className?: string }) {
     const keywordEntity = entities?.filter((e: Entity) => e.label === 'keyword')[0];
     const onlyKeywordEntity = entities.length === 1 && keywordEntity;
     const keyword_ = onlyKeywordEntity ? keywordEntity.text : await prepSearchKeyword(query, entities, location.skip ? ['region', 'country', 'statistical indicator'] : ['statistical indicator']);
-    const updatedEntities = updateKeywordEntity({ raw: false, text: keyword_ });
+    const updatedEntities = await updateKeywordEntity({ raw: false, text: keyword_ });
     let candidateDatasets = [] as Dataset[];
 
     const hasNoLocationEntities = updatedEntities.filter((e: Entity) => !['region', 'country'].includes(e.label)).length === 0;
@@ -307,7 +308,7 @@ function Search({ className }: { className?: string }) {
 
     if (location.skip) {
       // drop region and country entities - they will be used for keyword search instead
-      setEntities(updatedEntities.filter((e: Entity) => !['region', 'country'].includes(e.label)));
+      await setEntities(updatedEntities.filter((e: Entity) => !['region', 'country'].includes(e.label)));
     }
 
     if (keyword_ && !selectedLocationFromRawQuery) {
