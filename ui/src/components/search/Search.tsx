@@ -4,7 +4,6 @@ import SearchIcon from '@mui/icons-material/Search';
 import {
   Autocomplete, Chip, CircularProgress, IconButton, TextField,
 } from '@mui/material';
-import DeleteIcon from '@mui/icons-material/Delete';
 import axios from 'axios';
 import { Dataset, Entity } from 'components/common/types';
 import isEqual from 'lodash.isequal';
@@ -37,7 +36,6 @@ import moveViewportToBbox from 'utils/moveViewportToBbox';
 import {
   deselectTile,
   getDatasetsByKeyword,
-  getEntitiesByLabels,
   prepSearchKeyword,
 } from './utils';
 
@@ -139,30 +137,40 @@ function Search({ className }: { className?: string }) {
     entities: Entity[],
     keywordPayload?: any,
   }) => {
-    const yearEntity = entities.find((e: Entity) => e.label === 'year');
-    const regionEntity = entities.find((e: Entity) => e.label === 'region');
-    const countryEntity = entities.find((e: Entity) => e.label === 'country');
-
     if (['region', 'country'].includes(deletedChipLabel)) {
       console.log('current candidate datasets', candidateDatasets);
       dispatch(resetSearchByKey('location'));
       dispatch(setDatasets(candidateDatasets));
-    } else if (deletedChipLabel === 'keyword') {
-      // still need to consider where year as a chip is still there
-      // so we might need a generalized, conditional keyword search still
-      // presumably there's still location (which is maybe not always true)
-      const noMoreNonLocationEntities = entities.filter((e: Entity) => !['country', 'region'].includes(e.label)).length === 0;
-      if (noMoreNonLocationEntities) {
-        const [minLat, maxLat, minLon, maxLon] = location.boundingbox.map(parseFloat);
-        const bbox = {
-          minLat, maxLat, minLon, maxLon,
-        };
-        const { zoom } = moveViewportToBbox(bbox, viewState, dispatch, true);
-        getSetDatasets({ location, zoom });
+    } else {
+      const [minLat, maxLat, minLon, maxLon] = location.boundingbox.map(parseFloat);
+      const bbox = {
+        minLat, maxLat, minLon, maxLon,
+      };
+      const { zoom } = moveViewportToBbox(bbox, viewState, dispatch, true);
+      if (deletedChipLabel === 'keyword') {
+        const noMoreNonLocationEntities = entities.filter((e: Entity) => !['country', 'region'].includes(e.label)).length === 0;
+        if (noMoreNonLocationEntities) {
+          const [minLat, maxLat, minLon, maxLon] = location.boundingbox.map(parseFloat);
+          const bbox = {
+            minLat, maxLat, minLon, maxLon,
+          };
+          const { zoom } = moveViewportToBbox(bbox, viewState, dispatch, true);
+          getSetDatasets({ location, zoom });
+        }
+      } else if (deletedChipLabel === 'year') {
+        const { min_year, max_year, ...keywordPayload_ } = keywordPayload;
+        const { hits: candidateDatasets } = await getDatasetsByKeyword(keywordPayload_);
+        dispatch(setCandidateDatasets(candidateDatasets));
+        if (location) {
+          getSetDatasets({ location, zoom, candidateDatasets });
+        } else {
+          dispatch(setDatasets(candidateDatasets));
+        }
       }
     }
   };
 
+  // TODO: rename to something more descriptive
   const afterParse = async ({ entities }: { entities?: Entity[] }) => {
     const keywordPayload_: any = {
       query,
@@ -205,7 +213,8 @@ function Search({ className }: { className?: string }) {
           nominatimResults,
           (result: any, other: any) => isEqualWith(result, other, (result: any, other: any) => isEqual(result.geojson.coordinates, other.geojson.coordinates)),
         );
-        setOptions([{ display_name: 'Skip geography filtering', name: 'Skip geography filtering', skip: true }, ...dedupedResults]);
+        const name = 'Skip geography filtering';
+        setOptions([{ display_name: name, name, skip: true }, ...dedupedResults]);
         console.info('Display nominatim results');
         return;
       } else {
@@ -272,7 +281,6 @@ function Search({ className }: { className?: string }) {
     } finally {
       setIsLoading(false);
     }
-    // console.groupEnd();
   };
 
   const selectOption = async (event: React.ChangeEvent<HTMLInputElement>, location: any | null) => {
@@ -295,8 +303,7 @@ function Search({ className }: { className?: string }) {
 
     if (keyword_ && !selectedLocationFromRawQuery) {
       // we skip keyword search if we have a raw query from which location is selected from
-      const keywordPayload_ = { ...setKeywordPayload, query: keyword_ };
-
+      const keywordPayload_ = { ...keywordPayload, query: keyword_ };
       setKeywordPayload(keywordPayload_);
       const { hits } = await getDatasetsByKeyword(keywordPayload_);
       if (hits.length === 0) {
@@ -356,14 +363,15 @@ function Search({ className }: { className?: string }) {
 
   const handleDeleteFactory = (ce: Entity) => (
     () => {
+      console.info(`Removing entity ${ce.label}`);
       // @ts-ignore
       const newEntities = entities.filter((e: Entity) => e.label !== ce.label);
+      setEntities(newEntities);
       const reviseArgs = {
         deletedChipLabel: ce.label,
         entities: newEntities,
+        keywordPayload,
       };
-      setEntities(newEntities);
-      reviseArgs.entities = newEntities;
 
       // @ts-ignore
       if (ce.text === keywordPayload?.query) {
@@ -372,8 +380,6 @@ function Search({ className }: { className?: string }) {
         setKeywordPayload(keywordPayload_);
         // @ts-ignore
         reviseArgs.keywordPayload = keywordPayload_;
-      } else {
-        console.log(`Removing entity ${ce.label}`);
       }
 
       if (newEntities.length === 0) {
@@ -403,7 +409,6 @@ function Search({ className }: { className?: string }) {
 
   // use Autocomplete as the base component since it conveniently
   // combines free text search and dropdown functionalities
-
   // TODO: consider separating the search autocomplete component and entities into diff files
   return (
     <div className={className}>
@@ -458,13 +463,13 @@ function Search({ className }: { className?: string }) {
         entities && (
           <div className="mt-1.5">
             {
-              !error && !isLoading && showChips && entities.filter((e: Entity) => !!e.text).map((ce: Entity) => (
+              !error && !isLoading && showChips && entities.filter((e: Entity) => !!e.text).map((chippedEntity: Entity) => (
                 <Chip
                   deleteIcon={<ClearIcon color="error" />}
-                  onDelete={handleDeleteFactory(ce)}
+                  onDelete={handleDeleteFactory(chippedEntity)}
                   className="first:ml-0 ml-1.5"
-                  key={ce.label}
-                  label={ce.text}
+                  key={chippedEntity.label}
+                  label={chippedEntity.text}
                   variant="outlined"
                 />
               ))
