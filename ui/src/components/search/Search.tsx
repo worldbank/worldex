@@ -462,16 +462,24 @@ function Search({ className }: { className?: string }) {
         entities && (
           <div className="mt-1.5">
             {
-              !error && !isLoading && showChips && entities.filter((e: Entity) => !!e.text).map((chippedEntity: Entity) => (
-                <Chip
-                  deleteIcon={<ClearIcon color="error" />}
-                  onDelete={handleDeleteFactory(chippedEntity)}
-                  className="first:ml-0 ml-1.5"
-                  key={chippedEntity.label}
-                  label={chippedEntity.text}
-                  variant="outlined"
-                />
-              ))
+              !error
+                && !isLoading
+                && showChips
+                && entities.filter(
+                  // we do not have special handling for stat indicator
+                  // entities so we disable interaction with it for now
+                  (e: Entity) => !!e.text && e.label !== 'statistical indicator',
+                )
+                  .map((chippedEntity: Entity) => (
+                    <Chip
+                      deleteIcon={<ClearIcon color="error" />}
+                      onDelete={handleDeleteFactory(chippedEntity)}
+                      className="first:ml-0 ml-1.5"
+                      key={chippedEntity.label}
+                      label={chippedEntity.text}
+                      variant="outlined"
+                    />
+                  ))
             }
           </div>
         )
