@@ -188,7 +188,7 @@ function Search({ className }: { className?: string }) {
       keywordPayload_.max_year = yearEntity.text;
     }
 
-    let labelsToKeep = ['statistical indicator'] as string[];
+    let labelsToKeep = [] as string[];
     setKeywordPayload(keywordPayload_);
     if (hasLocationEntity || keywordEntity) {
       const locationQ = (
@@ -218,7 +218,7 @@ function Search({ className }: { className?: string }) {
         return;
       } else {
         console.info('No nominatim results');
-        labelsToKeep = ['statistical indicator', 'region', 'country'];
+        labelsToKeep = ['region', 'country'];
       }
     }
 
@@ -249,7 +249,15 @@ function Search({ className }: { className?: string }) {
     try {
       const { data: parseResults } = await axios.get(
         `${import.meta.env.VITE_API_URL}/search/parse`,
-        { params: { query }, timeout: 6000 },
+        {
+          params: {
+            query,
+            // we exclude 'statistical indicator' from the default labels
+            // since we don't have special handling for it right now
+            labels: ['year', 'country', 'region'],
+          },
+          timeout: 6000,
+        },
       );
       const { entities } = parseResults;
       if (Array.isArray(entities) && entities.length > 0) {
@@ -288,7 +296,7 @@ function Search({ className }: { className?: string }) {
 
     const keywordEntity = entities?.filter((e: Entity) => e.label === 'keyword')[0];
     const onlyKeywordEntity = entities.length === 1 && keywordEntity;
-    const keyword_ = onlyKeywordEntity ? keywordEntity.text : await prepSearchKeyword(query, entities, location.skip ? ['statistical indicator', 'region', 'country'] : ['statistical indicator']);
+    const keyword_ = onlyKeywordEntity ? keywordEntity.text : await prepSearchKeyword(query, entities, location.skip ? ['region', 'country'] : []);
     const updatedEntities = updateKeywordEntity({ raw: false, text: keyword_ });
     let candidateDatasets = [] as Dataset[];
 
@@ -465,11 +473,7 @@ function Search({ className }: { className?: string }) {
               !error
                 && !isLoading
                 && showChips
-                && entities.filter(
-                  // we do not have special handling for stat indicator
-                  // entities so we disable interaction with it for now
-                  (e: Entity) => !!e.text && e.label !== 'statistical indicator',
-                )
+                && entities.filter((e: Entity) => !!e.text)
                   .map((chippedEntity: Entity) => (
                     <Chip
                       deleteIcon={<ClearIcon color="error" />}
