@@ -139,8 +139,6 @@ function Search({ className }: { className?: string }) {
     entities: Entity[],
     keywordPayload?: any,
   }) => {
-    console.info('on chip delete', deletedChipLabel);
-    console.info('entities', entities);
     const yearEntity = entities.find((e: Entity) => e.label === 'year');
     const regionEntity = entities.find((e: Entity) => e.label === 'region');
     const countryEntity = entities.find((e: Entity) => e.label === 'country');
@@ -217,7 +215,6 @@ function Search({ className }: { className?: string }) {
     }
 
     const keyword = await prepSearchKeyword(query, entities, labelsToKeep);
-    console.info('prepped', keyword);
     updateKeywordEntity({ raw: false, text: keyword });
     keywordPayload_.query = keyword;
     setKeywordPayload(keywordPayload_);
@@ -285,7 +282,6 @@ function Search({ className }: { className?: string }) {
     const keywordEntity = entities?.filter((e: Entity) => e.label === 'keyword')[0];
     const onlyKeywordEntity = entities.length === 1 && keywordEntity;
     const keyword_ = onlyKeywordEntity ? keywordEntity.text : await prepSearchKeyword(query, entities, location.skip ? ['statistical indicator', 'region', 'country'] : ['statistical indicator']);
-    console.info('selecting location with keyword', keyword_);
     const updatedEntities = updateKeywordEntity({ raw: false, text: keyword_ });
     let candidateDatasets = [] as Dataset[];
 
@@ -299,13 +295,10 @@ function Search({ className }: { className?: string }) {
 
     if (keyword_ && !selectedLocationFromRawQuery) {
       // we skip keyword search if we have a raw query from which location is selected from
-      console.info('Search by keyword:', keyword_);
       const keywordPayload_ = { ...setKeywordPayload, query: keyword_ };
-      console.info('Updating keyword entity', keyword_);
 
       setKeywordPayload(keywordPayload_);
       const { hits } = await getDatasetsByKeyword(keywordPayload_);
-      console.info('hits', hits);
       if (hits.length === 0) {
         // there's no candidate datasets to location-filter
         console.info('No dataset results; location filtering unnecessary');
@@ -364,37 +357,29 @@ function Search({ className }: { className?: string }) {
   const handleDeleteFactory = (ce: Entity) => (
     () => {
       // @ts-ignore
-      console.info(ce.text, keywordPayload?.query);
-      // @ts-ignore
       const newEntities = entities.filter((e: Entity) => e.label !== ce.label);
-      const afterParseArgs = {
+      const reviseArgs = {
         deletedChipLabel: ce.label,
-        // @ts-ignore
         entities: newEntities,
       };
       setEntities(newEntities);
-      afterParseArgs.entities = newEntities;
+      reviseArgs.entities = newEntities;
 
       // @ts-ignore
       if (ce.text === keywordPayload?.query) {
-        console.info('emptying out keyword');
         // @ts-ignore
-        const kpay = { ...keywordPayload, query: null };
-        setKeywordPayload(kpay);
+        const keywordPayload_ = { ...keywordPayload, query: null };
+        setKeywordPayload(keywordPayload_);
         // @ts-ignore
-        afterParseArgs.keywordPayload = kpay;
-        // @ts-ignore
+        reviseArgs.keywordPayload = keywordPayload_;
       } else {
-        console.log(`removing entity ${ce.label}`);
+        console.log(`Removing entity ${ce.label}`);
       }
 
-      // @ts-ignore
-      console.info(keywordPayload.query, entities);
-      console.info('newEntities', newEntities);
       if (newEntities.length === 0) {
         resetSearch();
       } else {
-        reviseResults(afterParseArgs);
+        reviseResults(reviseArgs);
       }
     }
   );
