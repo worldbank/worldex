@@ -53,7 +53,7 @@ export const setDatasetCount = (payload: number) => ({
   type: 'selected/setDatasetCount',
   payload,
 });
-export const setSelectedDataset = (payload: number) => ({
+export const setSelectedDataset = (payload: Dataset) => ({
   type: 'selected/setSelectedDataset',
   payload,
 });

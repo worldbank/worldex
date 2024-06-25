@@ -205,7 +205,7 @@ export default function DatasetCountLayer() {
       ),
       updateTriggers: {
         // TODO: create a separate location-filtered layer?
-        id: [selectedDataset, location?.place_id],
+        id: [selectedDataset?.id, location?.place_id],
         getLineColor: [selectedH3Index, shouldDim],
         getFillColor: [selectedH3Index, shouldDim],
         getLineWidth: [selectedH3Index, shouldDim],
