@@ -181,7 +181,6 @@ function Search({ className }: { className?: string }) {
 
   // TODO: rename to something more descriptive
   const afterParse = async ({ entities }: { entities?: Entity[] }) => {
-    console.log('after parse entities', entities);
     const keywordPayload_: any = {
       query,
       size: 999,
@@ -430,7 +429,6 @@ function Search({ className }: { className?: string }) {
     }
   }, [sourceOrgs, accessibilities]);
 
-  console.info(entities);
   // use Autocomplete as the base component since it conveniently
   // combines free text search and dropdown functionalities
   // TODO: consider separating the search autocomplete component and entities into diff files
