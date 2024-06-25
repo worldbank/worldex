@@ -477,7 +477,7 @@ function Search({ className }: { className?: string }) {
               !error
                 && !isLoading
                 && showChips
-                && entities.filter((e: Entity) => !!e.text)
+                && entities.filter((e: Entity) => !!e.text && e.label !== 'statistical indicator')
                   .map((chippedEntity: Entity) => (
                     <Chip
                       deleteIcon={<ClearIcon color="error" />}
