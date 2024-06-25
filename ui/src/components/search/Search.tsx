@@ -121,6 +121,7 @@ function Search({ className }: { className?: string }) {
     const datasetsResultsIds = datasetsResults.map((d: Dataset) => d.id);
     const finalDatasets = isValidCandidateDatasets ? candidateDatasets.filter((cd: Dataset) => datasetsResultsIds.includes(cd.id)) : datasetsResults;
     dispatch(setDatasets(finalDatasets));
+    setShowChips(true);
     dispatch(setPendingLocationCheck(true));
     if (selectedH3Index) {
       deselectTile(selectedH3Index, resolution, location, dispatch);
@@ -148,7 +149,7 @@ function Search({ className }: { className?: string }) {
           minLat, maxLat, minLon, maxLon,
         };
         const { zoom } = moveViewportToBbox(bbox, viewState, dispatch, true);
-        getSetDatasets({ location, zoom });
+        await getSetDatasets({ location, zoom });
       }
     } else if (deletedChipLabel === 'year') {
       const { min_year, max_year, ...keywordPayload_ } = keywordPayload;
@@ -162,11 +163,12 @@ function Search({ className }: { className?: string }) {
           minLat, maxLat, minLon, maxLon,
         };
         const { zoom } = moveViewportToBbox(bbox, viewState, dispatch, true);
-        getSetDatasets({ location, zoom, candidateDatasets });
+        await getSetDatasets({ location, zoom, candidateDatasets });
       } else {
         dispatch(setDatasets(candidateDatasets));
       }
     }
+    setShowChips(true);
   };
 
   // TODO: rename to something more descriptive
@@ -188,7 +190,7 @@ function Search({ className }: { className?: string }) {
       keywordPayload_.max_year = yearEntity.text;
     }
 
-    let labelsToKeep = [] as string[];
+    let labelsToKeep = ['statistical indicator'] as string[];
     setKeywordPayload(keywordPayload_);
     if (hasLocationEntity || keywordEntity) {
       const locationQ = (
@@ -218,7 +220,7 @@ function Search({ className }: { className?: string }) {
         return;
       } else {
         console.info('No nominatim results');
-        labelsToKeep = ['region', 'country'];
+        labelsToKeep = ['statistical indicator', 'region', 'country'];
       }
     }
 
@@ -296,7 +298,7 @@ function Search({ className }: { className?: string }) {
 
     const keywordEntity = entities?.filter((e: Entity) => e.label === 'keyword')[0];
     const onlyKeywordEntity = entities.length === 1 && keywordEntity;
-    const keyword_ = onlyKeywordEntity ? keywordEntity.text : await prepSearchKeyword(query, entities, location.skip ? ['region', 'country'] : []);
+    const keyword_ = onlyKeywordEntity ? keywordEntity.text : await prepSearchKeyword(query, entities, location.skip ? ['region', 'country', 'statistical indicator'] : ['statistical indicator']);
     const updatedEntities = updateKeywordEntity({ raw: false, text: keyword_ });
     let candidateDatasets = [] as Dataset[];
 
@@ -372,13 +374,7 @@ function Search({ className }: { className?: string }) {
     () => {
       console.info(`Removing ${ce.label} entity`);
       // @ts-ignore
-      let newEntities = entities.filter((e: Entity) => e.label !== ce.label);
-      if (ce.label === 'keyword') {
-        // only allow year filtering if keyword is present
-        newEntities = newEntities.filter((e: Entity) => e.label !== 'year');
-      }
-
-      console.log(newEntities);
+      const newEntities = entities.filter((e: Entity) => e.label !== ce.label);
       if (newEntities.length === 0) {
         resetSearch();
         return;
