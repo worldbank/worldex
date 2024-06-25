@@ -89,8 +89,8 @@ function Search({ className }: { className?: string }) {
     return newEntities;
   };
 
+  // TODO: make this single purpose. lessen side effects and simply return datasets
   const getSetDatasets = async ({ location, zoom, candidateDatasets = null }: { location: any, zoom: number, candidateDatasets?: Dataset[] }) => {
-    // TODO: make this single purpose. lessen side effects and simply return datasets
     const [_, resolution] = getSteppedZoomResolutionPair(zoom);
     const body: any = {
       location: JSON.stringify(location.geojson),
@@ -138,7 +138,6 @@ function Search({ className }: { className?: string }) {
     keywordPayload?: any,
   }) => {
     if (['region', 'country'].includes(deletedChipLabel)) {
-      console.log('current candidate datasets', candidateDatasets);
       dispatch(resetSearchByKey('location'));
       dispatch(setDatasets(candidateDatasets));
     } else {
@@ -365,11 +364,11 @@ function Search({ className }: { className?: string }) {
     () => {
       console.info(`Removing entity ${ce.label}`);
       // @ts-ignore
-      const newEntities = entities.filter((e: Entity) => e.label !== ce.label);
-      setEntities(newEntities);
+      const oneLessEntities = entities.filter((e: Entity) => e.label !== ce.label);
+      setEntities(oneLessEntities);
       const reviseArgs = {
         deletedChipLabel: ce.label,
-        entities: newEntities,
+        entities: oneLessEntities,
         keywordPayload,
       };
 
@@ -382,7 +381,7 @@ function Search({ className }: { className?: string }) {
         reviseArgs.keywordPayload = keywordPayload_;
       }
 
-      if (newEntities.length === 0) {
+      if (oneLessEntities.length === 0) {
         resetSearch();
       } else {
         reviseResults(reviseArgs);
