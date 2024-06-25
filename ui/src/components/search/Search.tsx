@@ -303,6 +303,29 @@ function Search({ className }: { className?: string }) {
     }
   };
 
+  const selectLocation = async ({ location, candidateDatasets = null }: { location: any, candidateDatasets: Dataset[] }) => {
+    const [minLat, maxLat, minLon, maxLon] = location.boundingbox.map(parseFloat);
+    const bbox = {
+      minLat, maxLat, minLon, maxLon,
+    };
+    const { zoom } = moveViewportToBbox(bbox, viewState, dispatch, true);
+    if (['Polygon', 'MultiPolygon'].includes(location.geojson.type)) {
+      console.info('Filter by location', location);
+      const datasets = await getSetDatasets({ location, zoom, candidateDatasets });
+      if (Array.isArray(datasets) && datasets.length > 0) {
+        console.info('Display datasets');
+        dispatch(setLocation(location));
+        moveViewportToBbox(bbox, viewState, dispatch);
+        dispatch(setLastZoom(zoom));
+        setShowChips(true);
+      } else {
+        const message = 'No dataset results';
+        console.info(message);
+        setError(message);
+      }
+    }
+  };
+
   const selectOption = async (event: React.ChangeEvent<HTMLInputElement>, location: any | null) => {
     // will only be called if there are nominatim results
     setIsLoading(true);
@@ -353,33 +376,10 @@ function Search({ className }: { className?: string }) {
       // @ts-ignore
       dispatch(setViewState({ latitude: 0, longitude: 0, zoom: 2 }));
     } else {
-      selectLocation({ location, candidateDatasets });
+      await selectLocation({ location, candidateDatasets });
     }
     setIsLoading(false);
     console.groupEnd();
-  };
-
-  const selectLocation = async ({ location, candidateDatasets = null }: { location: any, candidateDatasets: Dataset[] }) => {
-    const [minLat, maxLat, minLon, maxLon] = location.boundingbox.map(parseFloat);
-    const bbox = {
-      minLat, maxLat, minLon, maxLon,
-    };
-    const { zoom } = moveViewportToBbox(bbox, viewState, dispatch, true);
-    if (['Polygon', 'MultiPolygon'].includes(location.geojson.type)) {
-      console.info('Filter by location', location);
-      const datasets = await getSetDatasets({ location, zoom, candidateDatasets });
-      if (Array.isArray(datasets) && datasets.length > 0) {
-        console.info('Display datasets');
-        dispatch(setLocation(location));
-        moveViewportToBbox(bbox, viewState, dispatch);
-        dispatch(setLastZoom(zoom));
-        setShowChips(true);
-      } else {
-        const message = 'No dataset results';
-        console.info(message);
-        setError(message);
-      }
-    }
   };
 
   const handleDeleteFactory = (ce: Entity) => (
@@ -444,6 +444,7 @@ function Search({ className }: { className?: string }) {
           isOptionEqualToValue={(option, value) => option.place_id === value.place_id}
           inputValue={query}
           onChange={selectOption}
+          onBlur={console.groupEnd}
           renderInput={(params) => (
             <TextField
               // eslint-disable-next-line react/jsx-props-no-spreading
@@ -485,10 +486,10 @@ function Search({ className }: { className?: string }) {
         entities && (
           <div className="mt-1.5">
             {
-              // !error
-              //   && !isLoading
-              //   && showChips
-              true
+              !error
+                && !isLoading
+                && showChips
+              // true
                 && entities.filter((e: Entity) => !!e.text && e.label !== 'statistical indicator')
                   .map((chippedEntity: Entity) => (
                     <Chip
