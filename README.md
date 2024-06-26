@@ -38,17 +38,19 @@ If you are on an ARM-based device (e.g. M1/M2 MacBooks), comment out the followi
 ```
 dockerfile: arm64.Dockerfile
 ```
-This will build a more appropriate image for your host machine. Otherwise, the PostGIS service will still run but performance/queries will be much slower on your local environment.
+The PostGIS build will be more performant on your local machine this way.
 
 ## `docker compose up`
 
 to run the development environment on local. Simply interrupt to stop the cluster or `docker compose down` if you ran it in detached mode.
 
-Note however that this doesn't start a dev server for the vite app however. You'll have to run `yarn` to install the dependencies and
+Note that this doesn't start a dev server for the vite app. You'll have to run `yarn` to install the dependencies and
 
 ### `yarn start`
 
-to run the dev server. Our current reason for excluding this from the compose cluster is that while we can bind-mount the source code for hot reloads, we cannot do the same for `node_modules` in case the dependencies were installed on a different architecture (e.g. mac host, linux container).
+to run the dev server. We exclude the vite app from the compose cluster since we cannot bind mount `node_modules` if the dependencies were installed on a different architecture (e.g. mac host, linux container).
+
+You may need `--force` if you encounter issues with the lockfile.
 
 Outside of development context that requires hot reloads, you can run the following.
 
