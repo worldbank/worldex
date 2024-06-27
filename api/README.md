@@ -26,7 +26,7 @@ docker compose cp worldex.dump db:worldex.dump
 From inside the container (either via `docker compose exec -it db /bin/bash` or `docker compose db <command>` directly), run
 
 ```
-pg_restore -Fc -j 8 -f worldex.dump
+pg_restore -U worldex -Fc -j 8 -d worldex worldex.dump -v
 ```
 
 You can set the `-j` (`--jobs`) value to the number of cores on your CPU for starters. For more information, see the `number-of-jobs` section on https://www.postgresql.org/docs/current/app-pgrestore.html to know the appropriate value.
