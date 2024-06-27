@@ -6,7 +6,7 @@ import { Tile2DHeader, TileLoadProps } from '@deck.gl/geo-layers/typed/tileset-2
 import { ArrowLoader } from '@loaders.gl/arrow';
 import { load } from '@loaders.gl/core';
 import { Typography } from '@mui/material';
-import { DatasetCount } from 'components/common/types';
+import { Dataset, DatasetCount } from 'components/common/types';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { useDispatch, useSelector } from 'react-redux';
 import { selectAccessibilities, selectSourceOrgFilters } from 'store/selectedFiltersSlice';
@@ -19,6 +19,7 @@ import {
   getPlaceholderInAncestors,
   getPlaceholderInChildren,
 } from 'utils/tileRefinement';
+import splitIntoDomains from 'utils/splitIntoBins';
 
 export const DATASET_COUNT_LAYER_ID = 'datasetCountLayer';
 
@@ -81,16 +82,17 @@ const refinementStrategy = (allTiles: Tile2DHeader[]) => {
 export default function DatasetCountLayer() {
   const datasetH3Layer = useSelector((state: RootState) => state.carto.layers[DATASET_COUNT_LAYER_ID]);
   const source = useSelector((state: RootState) => selectSourceById(state, datasetH3Layer?.source));
-  const { selectedDataset, h3Index: selectedH3Index } = useSelector((state: RootState) => state.selected);
-  const { steppedZoom } = useSelector((state: RootState) => state.app);
-  const { location } = useSelector((state: RootState) => state.search);
+  const { selectedDataset, h3Index: selectedH3Index, datasets }: { selectedDataset: Dataset, h3Index: string, datasets: Dataset[] } = useSelector((state: RootState) => state.selected);
+  const { steppedZoom }: { steppedZoom: number } = useSelector((state: RootState) => state.app);
+  const { location }: { location: any } = useSelector((state: RootState) => state.search);
   const { fileUrl } = useSelector((state: RootState) => state.preview);
   const dispatch = useDispatch();
   const sourceOrgs = useSelector(selectSourceOrgFilters);
   const accessibilities = useSelector(selectAccessibilities);
   const datasetIds = useSelector(selectDatasetIds);
 
-  const domains = (import.meta.env.VITE_DATASET_COUNT_BINS).split(',').map(Number);
+  const default_bins = (import.meta.env.VITE_DATASET_COUNT_BINS).split(',').map(Number);
+  const domains = Array.isArray(datasets) && datasets.length > 0 ? splitIntoDomains(datasets.length) : default_bins;
   const getColor = colorBins({
     attr: 'dataset_count',
     domains,
