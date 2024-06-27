@@ -2,11 +2,12 @@ export const splitIntoBins = (n: number, maxBins: number = 5): number[] => {
   const baseSize = Math.floor(n / maxBins);
   const binsWithExtra = n % maxBins;
   const bins = Array(maxBins).fill(baseSize);
+  // eslint-disable-next-line no-plusplus
   for (let i = 0; i < binsWithExtra; i++) {
-      bins[i] += 1;
+    bins[i] += 1;
   }
   return bins.filter((b: number) => b > 0);
-}
+};
 
 export const splitIntoDomains = (n: number, maxBins: number = 5): number[] => (
   splitIntoBins(n, maxBins).reduce((acc: number[], curr: number, idx: number) => (
