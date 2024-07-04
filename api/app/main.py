@@ -8,8 +8,7 @@ from fastapi.middleware.cors import CORSMiddleware
 app = FastAPI(
     title=settings.project_name,
     version=settings.version,
-    # disable for prod
-    # openapi_url=None,
+    openapi_url=settings.openapi_url,
 )
 
 app.add_middleware(
