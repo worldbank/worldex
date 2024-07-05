@@ -1,5 +1,6 @@
-from pydantic_settings import BaseSettings
 from typing import Optional
+
+from pydantic_settings import BaseSettings
 
 
 class Settings(BaseSettings):
@@ -8,3 +9,5 @@ class Settings(BaseSettings):
     database_url: str
     database_echo_query: bool = False
     allow_origins: str
+    # disable by default
+    openapi_url: str = ""
