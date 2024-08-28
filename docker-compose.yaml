@@ -63,7 +63,8 @@ services:
       dockerfile: arm64.Dockerfile
     command: postgres -c 'config_file=/etc/postgresql/postgresql.conf'
     volumes:
-      - pg_data:/var/lib/postgresql/data
+      # - pg_data:/var/lib/postgresql/data
+      - pg_data_trimmed:/var/lib/postgresql/data
       - ./postgis-h3/postgresql.8gb.conf:/etc/postgresql/postgresql.conf
     ports:
       - 5432:5432
@@ -99,5 +100,6 @@ services:
     healthcheck:
       test: curl --fail localhost:6333/readyz || exit 1
 volumes:
-  pg_data:
+  # pg_data:
+  pg_data_trimmed:
   qdrant_storage:
