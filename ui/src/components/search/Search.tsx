@@ -130,7 +130,7 @@ function Search({ className }: { className?: string }) {
       try {
         const { data: parseResults } = await axios.get(
           `${import.meta.env.VITE_API_URL}/search/parse`,
-          { params: { query }, timeout: 6000 },
+          { params: { query }, timeout: 15000 },
         );
         entities = parseResults.entities;
         setEntities(entities);
